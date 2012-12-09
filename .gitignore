@@ -1,0 +1,8 @@
+*.o
+*.plist
+*.bundle
+tmp/
+.yardoc/
+doc/
+pkg/
+
