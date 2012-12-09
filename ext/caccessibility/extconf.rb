@@ -1,11 +1,10 @@
 require 'mkmf'
 
-$CFLAGS << ' -std=c99 -Wall -Werror -pedantic'
-$LIBS   << ' -framework Foundation -framework ApplicationServices -framework CoreGraphics'
+$CFLAGS << ' -std=c99 -Wall -Werror -pedantic -ObjC'
+$LIBS   << ' -framework Foundation -framework ApplicationServices -framework CoreGraphics -framework Cocoa'
 
 if RUBY_ENGINE == 'macruby'
-  $LIBS << ' -framework Cocoa'
-  $CFLAGS << ' -ObjC -fobjc-gc'
+  $CFLAGS << ' -fobjc-gc'
 else
   unless RbConfig::CONFIG["CC"].match /clang/
     clang = `which clang`.chomp

@@ -1,7 +1,7 @@
 require 'accessibility/core/version'
 
 module Accessibility
-  module Core
+  class Element
   end
 end
 
