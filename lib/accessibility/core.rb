@@ -162,6 +162,18 @@ class CGRect
 end
 
 ##
+# accessibility-core extensions to `Range`
+class Range
+  ##
+  # Returns the receiver, since the receiver is already a {Range}
+  #
+  # @return [Range]
+  def to_range
+    self
+  end
+end
+
+##
 # accessibility-core extensions to `Array`
 class Array
   ##
