@@ -490,9 +490,16 @@ rb_acore_set_timeout_to(VALUE self, VALUE seconds)
 void
 Init_caccessibility()
 {
-  if (!AXAPIEnabled()) {
-    rb_raise(rb_eRuntimeError, "\n------------------------------------------------------------------------\nUniversal Access is disabled on this machine.\n\nPlease enable it in the System Preferences.\n\nSee https://github.com/Marketcircle/AXElements#getting-setup\n------------------------------------------------------------------------\n");
-  }
+  if (!AXAPIEnabled())
+    rb_raise(
+	     rb_eRuntimeError,
+	     "\n"                                                                         \
+	     "------------------------------------------------------------------------\n" \
+	     "Universal Access is disabled on this machine.\n\n"                          \
+	     "Please enable it in the System Preferences.\n\n"                            \
+	     "See https://github.com/Marketcircle/AXElements#getting-setup\n"             \
+	     "------------------------------------------------------------------------\n"
+	     );
 
   sel_new      = rb_intern("new");
   sel_x        = rb_intern("x");
