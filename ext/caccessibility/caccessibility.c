@@ -3,8 +3,12 @@
 
 static VALUE rb_mAccessibility;
 static VALUE rb_cElement;
+static VALUE rb_cCGPoint;
 
 static ID sel_new;
+static ID sel_x;
+static ID sel_y;
+static ID sel_to_point;
 static ID ivar_ref;
 static ID ivar_pid;
 
@@ -25,7 +29,7 @@ rb_acore_wrap_ref(AXUIElementRef ref)
 {
   return Data_Wrap_Struct(rb_cElement, NULL, rb_acore_element_finalizer, (void*)ref);
 }
-#define AXWRAP(x) (rb_acore_wrap_ref(x))
+#define UNAX(x) (rb_acore_wrap_ref(x))
 
 static
 AXUIElementRef
@@ -36,7 +40,75 @@ rb_acore_unwrap_ref(VALUE obj)
   // normally, we would return *ref, but that seems to fuck things up
   return (AXUIElementRef)ref;
 }
-#define AXUNWRAP(x) (rb_acore_unwrap_ref(x))
+#define AX(x) (rb_acore_unwrap_ref(x))
+
+static
+VALUE
+rb_acore_wrap_point(CGPoint point)
+{
+  // TODO: Data_Wrap_Struct instead
+#if NOT_MACRUBY
+  return rb_struct_new(rb_cCGPoint, DBL2NUM(point.x), DBL2NUM(point.y));
+#else
+  return rb_funcall(rb_cCGPoint, sel_new, 2, DBL2NUM(point.x), DBL2NUM(point.y));
+#endif
+}
+#define UNPOINT(x) (rb_acore_wrap_point(x))
+
+static
+CGPoint
+rb_acore_unwrap_point(VALUE point)
+{
+  point = rb_funcall(point, sel_to_point, 0);
+
+#if NOT_MACRUBY
+  double x = NUM2DBL(rb_struct_getmember(point, sel_x));
+  double y = NUM2DBL(rb_struct_getmember(point, sel_y));
+  return CGPointMake(x, y);
+
+#else
+  CGPoint* ptr;
+  Data_Get_Struct(point, CGPoint, ptr);
+  return *ptr;
+
+#endif
+}
+#define POINT(x) (rb_acore_unwrap_point(x))
+
+static inline
+VALUE
+rb_acore_wrap_value_point(AXValueRef value)
+{
+  CGPoint point;
+  AXValueGetValue(value, kAXValueCGPointType, &point);
+  return UNPOINT(point);
+}
+
+static
+VALUE
+rb_acore_wrap_value(AXValueRef value)
+{
+  switch (AXValueGetType(value))
+    {
+    case kAXValueIllegalType:
+      // TODO better error message
+      rb_raise(rb_eArgError, "herped when you should have derped");
+    case kAXValueCGPointType:
+      return rb_acore_wrap_value_point(value);
+    case kAXValueCGSizeType:
+    case kAXValueCGRectType:
+    case kAXValueCFRangeType:
+    case kAXValueAXErrorType:
+      break;
+    default:
+      rb_bug("You've found a bug in something...not sure who to blame");
+    }
+
+  return Qnil; // unreachable
+}
+#define UNVALUE(x) (rb_acore_wrap_value(x))
+
+#define IS_SYSTEM_WIDE(x) (CFEqual(AX(x), AXUIElementCreateSystemWide()))
 
 static
 void
@@ -61,12 +133,13 @@ static
 VALUE
 rb_acore_application_for(VALUE self, VALUE pid)
 {
+  // TODO release memory instead of leaking it (whole function is a leak)
   [[NSRunLoop currentRunLoop] runUntilDate:[NSDate date]];
 
   pid_t the_pid = NUM2PIDT(pid);
 
   if ([NSRunningApplication runningApplicationWithProcessIdentifier:the_pid])
-    return AXWRAP(AXUIElementCreateApplication(the_pid));
+    return UNAX(AXUIElementCreateApplication(the_pid));
   else
     rb_raise(rb_eArgError, "pid `%d' must belong to a running application", the_pid);
 
@@ -89,7 +162,7 @@ static
 VALUE
 rb_acore_system_wide(VALUE self)
 {
-  return AXWRAP(AXUIElementCreateSystemWide());
+  return UNAX(AXUIElementCreateSystemWide());
 }
 
 
@@ -121,7 +194,7 @@ rb_acore_attributes(VALUE self)
   CFIndex   length = 0;
   const char* name = NULL;
 
-  OSStatus code = AXUIElementCopyAttributeNames(AXUNWRAP(self), &attrs);
+  OSStatus code = AXUIElementCopyAttributeNames(AX(self), &attrs);
   switch (code)
     {
     case kAXErrorSuccess:
@@ -184,7 +257,7 @@ rb_acore_attribute(VALUE self, VALUE name)
 							  kCFAllocatorNull
 							  );
   OSStatus code = AXUIElementCopyAttributeValue(
-						AXUNWRAP(self),
+						AX(self),
 						attr_name,
 						&attr
 						);
@@ -193,9 +266,10 @@ rb_acore_attribute(VALUE self, VALUE name)
     {
     case kAXErrorSuccess:
       CFShow(attr);
-      CFRelease(attr);
+      // CFRelease(attr); // LEAK!
+      if (CFGetTypeID(attr) == AXValueGetTypeID())
+	return UNVALUE(attr);
       return Qtrue;
-      break;
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return Qnil;
@@ -222,7 +296,7 @@ VALUE
 rb_acore_role(VALUE self)
 {
   CFTypeRef value = NULL;
-  OSStatus   code = AXUIElementCopyAttributeValue(AXUNWRAP(self), kAXRoleAttribute, &value);
+  OSStatus   code = AXUIElementCopyAttributeValue(AX(self), kAXRoleAttribute, &value);
 
   switch (code)
     {
@@ -255,7 +329,7 @@ VALUE
 rb_acore_subrole(VALUE self)
 {
   CFTypeRef value = NULL;
-  OSStatus   code = AXUIElementCopyAttributeValue(AXUNWRAP(self), kAXSubroleAttribute, &value);
+  OSStatus   code = AXUIElementCopyAttributeValue(AX(self), kAXSubroleAttribute, &value);
 
   switch (code)
     {
@@ -294,14 +368,14 @@ rb_acore_pid(VALUE self)
     return cached_pid;
 
   pid_t     pid = 0;
-  OSStatus code = AXUIElementGetPid(AXUNWRAP(self), &pid);
+  OSStatus code = AXUIElementGetPid(AX(self), &pid);
 
   switch (code)
     {
     case kAXErrorSuccess:
       break;
     case kAXErrorInvalidUIElement:
-      if (CFEqual(AXUNWRAP(self), AXUIElementCreateSystemWide())) {
+      if (IS_SYSTEM_WIDE(self)) {
 	pid = 0;
 	break;
       }
@@ -328,6 +402,59 @@ rb_acore_application(VALUE self)
 }
 
 
+/*
+ * Find the top most element at the given point on the screen
+ *
+ * If the receiver is a regular application or element then the return
+ * will be specific to the application. If the receiver is the system
+ * wide object then the return is the top most element regardless of
+ * application.
+ *
+ * The coordinates should be specified using the flipped coordinate
+ * system (origin is in the top-left, increasing downward and to the right
+ * as if reading a book in English).
+ *
+ * If more than one element is at the position then the z-order of the
+ * elements will be used to determine which is "on top".
+ *
+ * This method will safely return `nil` if there is no UI element at the
+ * give point.
+ *
+ * @example
+ *
+ *   Element.system_wide.element_at [453, 200]  # table
+ *   app.element_at CGPoint.new(453, 200)       # table
+ *
+ * @param point [CGPoint,#to_point]
+ * @return [AXUIElementRef,nil]
+ */
+static
+VALUE
+rb_acore_element_at(VALUE self, VALUE point)
+{
+  AXUIElementRef ref = NULL;
+  CGPoint          p = POINT(point);
+  OSStatus      code = AXUIElementCopyElementAtPosition(AX(self), p.x, p.y, &ref);
+
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return UNAX(ref);
+    case kAXErrorNoValue:
+      return Qnil;
+    case kAXErrorInvalidUIElement:
+      if (!IS_SYSTEM_WIDE(self))
+	return rb_acore_element_at(rb_acore_system_wide(rb_cElement), point);
+      else
+	return Qnil;
+    default:
+      rb_acore_handle_error(self, code); // point, nil, nil
+    }
+
+  return Qnil; // unreachable
+}
+
+
 void
 Init_caccessibility()
 {
@@ -335,11 +462,18 @@ Init_caccessibility()
     rb_raise(rb_eRuntimeError, "\n------------------------------------------------------------------------\nUniversal Access is disabled on this machine.\n\nPlease enable it in the System Preferences.\n\nSee https://github.com/Marketcircle/AXElements#getting-setup\n------------------------------------------------------------------------\n");
   }
 
-  sel_new  = rb_intern("new");
+  sel_new      = rb_intern("new");
+  sel_x        = rb_intern("x");
+  sel_y        = rb_intern("y");
+  sel_to_point = rb_intern("to_point");
+
   ivar_ref = rb_intern("@ref");
   ivar_pid = rb_intern("@pid");
 
-  rb_mAccessibility = rb_define_module("Accessibility");
+  // on either supported Ruby, these should be defined by now
+  rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
+  rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
+
 
   /*
    * Document-module: Accessibility::Element
@@ -376,4 +510,5 @@ Init_caccessibility()
   rb_define_method(rb_cElement, "subrole",     rb_acore_subrole,     0);
   rb_define_method(rb_cElement, "pid",         rb_acore_pid,         0);
   rb_define_method(rb_cElement, "application", rb_acore_application, 0);
+  rb_define_method(rb_cElement, "element_at",  rb_acore_element_at,  1);
 }
