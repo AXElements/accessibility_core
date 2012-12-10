@@ -94,7 +94,7 @@ else
     #
     # @return [String]
     def inspect
-      "#<CGSize width=#{self.x.to_f} height=#{self.y.to_f}>"
+      "#<CGSize width=#{self.width.to_f} height=#{self.height.to_f}>"
     end
 
   end
