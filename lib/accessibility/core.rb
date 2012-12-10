@@ -26,14 +26,6 @@ if RUBY_ENGINE == 'macruby'
     end
   end
 
-  # accessibility-core extensions for `CFRange`
-  class CFRange
-    # @return [Range]
-    def to_ruby
-      Range.new location, (location + length - 1)
-    end
-  end
-
 
 else
 
