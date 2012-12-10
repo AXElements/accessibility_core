@@ -455,6 +455,38 @@ rb_acore_element_at(VALUE self, VALUE point)
 }
 
 
+/*
+ * Change the timeout value for the given element
+ *
+ * If you change the timeout on the system wide object, it affets all timeouts.
+ *
+ * Setting the global timeout to `0` seconds will reset the timeout value
+ * to the system default. The system default timeout value is `6 seconds`
+ * as of the writing of this documentation, but Apple has not publicly
+ * documented this (we had to ask in person at WWDC).
+ *
+ * @param seconds [Number]
+ * @return [Number]
+ */
+static
+VALUE
+rb_acore_set_timeout_to(VALUE self, VALUE seconds)
+{
+  float timeout = NUM2DBL(seconds);
+  OSStatus code = AXUIElementSetMessagingTimeout(AX(self), timeout);
+
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return seconds;
+    default:
+      rb_acore_handle_error(self, code); // seconds
+    }
+
+  return Qnil; // unreachable
+}
+
+
 void
 Init_caccessibility()
 {
@@ -504,11 +536,12 @@ Init_caccessibility()
   rb_define_singleton_method(rb_cElement, "application_for", rb_acore_application_for, 1);
   rb_define_singleton_method(rb_cElement, "system_wide",     rb_acore_system_wide,     0);
 
-  rb_define_method(rb_cElement, "attributes",  rb_acore_attributes,  0);
-  rb_define_method(rb_cElement, "attribute",   rb_acore_attribute,   1);
-  rb_define_method(rb_cElement, "role",        rb_acore_role,        0);
-  rb_define_method(rb_cElement, "subrole",     rb_acore_subrole,     0);
-  rb_define_method(rb_cElement, "pid",         rb_acore_pid,         0);
-  rb_define_method(rb_cElement, "application", rb_acore_application, 0);
-  rb_define_method(rb_cElement, "element_at",  rb_acore_element_at,  1);
+  rb_define_method(rb_cElement, "attributes",     rb_acore_attributes,     0);
+  rb_define_method(rb_cElement, "attribute",      rb_acore_attribute,      1);
+  rb_define_method(rb_cElement, "role",           rb_acore_role,           0);
+  rb_define_method(rb_cElement, "subrole",        rb_acore_subrole,        0);
+  rb_define_method(rb_cElement, "pid",            rb_acore_pid,            0);
+  rb_define_method(rb_cElement, "application",    rb_acore_application,    0);
+  rb_define_method(rb_cElement, "element_at",     rb_acore_element_at,     1);
+  rb_define_method(rb_cElement, "set_timeout_to", rb_acore_set_timeout_to, 1);
 }
