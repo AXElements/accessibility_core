@@ -3,12 +3,22 @@
 
 static VALUE rb_mAccessibility;
 static VALUE rb_cElement;
+
 static VALUE rb_cCGPoint;
+static VALUE rb_cCGSize;
+static VALUE rb_cCGRect;
 
 static ID sel_new;
 static ID sel_x;
 static ID sel_y;
+static ID sel_width;
+static ID sel_height;
+static ID sel_origin;
+static ID sel_size;
 static ID sel_to_point;
+static ID sel_to_size;
+static ID sel_to_rect;
+static ID sel_to_range;
 static ID ivar_ref;
 static ID ivar_pid;
 
@@ -75,6 +85,108 @@ rb_acore_unwrap_point(VALUE point)
 }
 #define POINT(x) (rb_acore_unwrap_point(x))
 
+static
+VALUE
+rb_acore_wrap_size(CGSize size)
+{
+  // TODO: Data_Wrap_Struct instead
+#if NOT_MACRUBY
+  return rb_struct_new(rb_cCGSize, DBL2NUM(size.width), DBL2NUM(size.height));
+#else
+  return rb_funcall(rb_cCGSize, sel_new, 2, DBL2NUM(size.width), DBL2NUM(size.height));
+#endif
+}
+#define UNSIZE(x) (rb_acore_wrap_size(x))
+
+/* static */
+/* CGSize */
+/* rb_acore_unwrap_size(VALUE size) */
+/* { */
+/*   size = rb_funcall(size, sel_to_size, 0); */
+
+/* #if NOT_MACRUBY */
+/*   double width  = NUM2DBL(rb_struct_getmember(size, sel_width)); */
+/*   double height = NUM2DBL(rb_struct_getmember(size, sel_height)); */
+/*   return CGSizeMake(width, height); */
+
+/* #else */
+/*   CGSize* ptr; */
+/*   Data_Get_Struct(point, CGSize, ptr); */
+/*   return *ptr; */
+
+/* #endif */
+/* } */
+/* #define SIZE(x) (rb_acore_unwrap_size(x)) */
+
+static
+VALUE
+rb_acore_wrap_rect(CGRect rect)
+{
+  // TODO: Data_Wrap_Struct instead
+#if NOT_MACRUBY
+  return rb_struct_new(rb_cCGRect, UNPOINT(rect.origin), UNSIZE(rect.size));
+#else
+  return rb_funcall(rb_cCGRect, sel_new, 2, UNPOINT(rect.origin), UNSIZE(rect.size));
+#endif
+}
+#define UNRECT(x) (rb_acore_wrap_rect(x))
+
+/* static */
+/* CGRect */
+/* rb_acore_unwrap_rect(VALUE rect) */
+/* { */
+/*   rect = rb_funcall(rect, sel_to_rect, 0); */
+
+/* #if NOT_MACRUBY */
+/*   CGPoint origin = POINT(rb_struct_getmember(rect, sel_origin)); */
+/*   CGSize    size = SIZE(rb_struct_getmember(rect, sel_size)); */
+/*   return CGRectMake(origin.x, origin.y, size.width, size.height); */
+
+/* #else */
+/*   CGRect* ptr; */
+/*   Data_Get_Struct(point, CGRect, ptr); */
+/*   return *ptr; */
+
+/* #endif */
+/* } */
+/* #define RECT(x) (rb_acore_unwrap_rect(x)) */
+
+static inline
+VALUE
+rb_acore_wrap_range(CFRange range)
+{
+  return rb_range_new(range.location, range.length, 0);
+}
+#define UNRANGE(x) (rb_acore_wrap_range(x))
+
+/* static */
+/* CFRange */
+/* rb_acore_unwrap_range(VALUE range) */
+/* { */
+/*   VALUE b, e; */
+/*   int exclusive; */
+
+/*   range = rb_funcall(range, sel_to_range, 0); */
+/*   rb_range_values(range, &b, &e, &exclusive); */
+
+/*   int begin = NUM2INT(b); */
+/*   int   end = NUM2INT(e); */
+
+/*   if (begin < 0 || end < 0) */
+/*     // We don't know what the max length of the range will be, so we */
+/*     // can't count backwards. */
+/*     rb_raise( */
+/* 	     rb_eArgError, */
+/* 	     "negative values are not allowed in ranges " \ */
+/* 	     "that are converted to CFRange structures." */
+/* 	     ); */
+
+/*   int length = exclusive ? end-begin : end-begin + 1; */
+/*   return CFRangeMake(begin, length); */
+/* } */
+/* #define RANGE(x) (rb_acore_unwrap_range(x)) */
+
+
 static inline
 VALUE
 rb_acore_wrap_value_point(AXValueRef value)
@@ -82,6 +194,42 @@ rb_acore_wrap_value_point(AXValueRef value)
   CGPoint point;
   AXValueGetValue(value, kAXValueCGPointType, &point);
   return UNPOINT(point);
+}
+
+static inline
+VALUE
+rb_acore_wrap_value_size(AXValueRef value)
+{
+  CGSize size;
+  AXValueGetValue(value, kAXValueCGSizeType, &size);
+  return UNSIZE(size);
+}
+
+static inline
+VALUE
+rb_acore_wrap_value_rect(AXValueRef value)
+{
+  CGRect rect;
+  AXValueGetValue(value, kAXValueCGRectType, &rect);
+  return UNRECT(rect);
+}
+
+static inline
+VALUE
+rb_acore_wrap_value_range(AXValueRef value)
+{
+  CFRange range;
+  AXValueGetValue(value, kAXValueCFRangeType, &range);
+  return UNRANGE(range);
+}
+
+static inline
+VALUE
+rb_acore_wrap_value_error(AXValueRef value)
+{
+  OSStatus code;
+  AXValueGetValue(value, kAXValueAXErrorType, &code);
+  return INT2NUM(code);
 }
 
 static
@@ -96,10 +244,13 @@ rb_acore_wrap_value(AXValueRef value)
     case kAXValueCGPointType:
       return rb_acore_wrap_value_point(value);
     case kAXValueCGSizeType:
+      return rb_acore_wrap_value_size(value);
     case kAXValueCGRectType:
+      return rb_acore_wrap_value_rect(value);
     case kAXValueCFRangeType:
+      return rb_acore_wrap_value_range(value);
     case kAXValueAXErrorType:
-      break;
+      return rb_acore_wrap_value_error(value);
     default:
       rb_bug("You've found a bug in something...not sure who to blame");
     }
@@ -504,13 +655,22 @@ Init_caccessibility()
   sel_new      = rb_intern("new");
   sel_x        = rb_intern("x");
   sel_y        = rb_intern("y");
+  sel_width    = rb_intern("width");
+  sel_height   = rb_intern("height");
+  sel_origin   = rb_intern("origin");
+  sel_size     = rb_intern("size");
   sel_to_point = rb_intern("to_point");
+  sel_to_size  = rb_intern("to_size");
+  sel_to_rect  = rb_intern("to_rect");
+  sel_to_range = rb_intern("to_range");
 
   ivar_ref = rb_intern("@ref");
   ivar_pid = rb_intern("@pid");
 
   // on either supported Ruby, these should be defined by now
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
+  rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
+  rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
 
 
