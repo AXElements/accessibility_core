@@ -1,5 +1,5 @@
 #include "ruby.h"
-#include <Cocoa/Cocoa.h>
+#import <Cocoa/Cocoa.h>
 
 static VALUE rb_mAccessibility;
 static VALUE rb_cElement;
