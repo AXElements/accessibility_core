@@ -197,4 +197,4 @@ end
 # NSURL -> URI
 # NSDate -> Time
 
-require 'caccessibility' # the bundle
+require 'accessibility/core.bundle'

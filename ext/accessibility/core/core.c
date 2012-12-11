@@ -22,39 +22,39 @@ static ID sel_to_range;
 static ID ivar_ref;
 static ID ivar_pid;
 
+#ifdef NOT_MACRUBY
+#define RELEASE(x) CFRelease(x)
+#else
+#define RELEASE(x) CFMakeCollectable(x)
+#endif
+
 static
 void
-rb_acore_element_finalizer(void* obj)
+ref_finalizer(void* obj)
 {
-#ifdef NOT_MACRUBY
-  CFRelease((CFTypeRef)obj);
-#else
-  CFMakeCollectable((CFTypeRef)obj);
-#endif
+  RELEASE((CFTypeRef)obj);
 }
 
 static
 VALUE
-rb_acore_wrap_ref(AXUIElementRef ref)
+wrap_ref(AXUIElementRef ref)
 {
-  return Data_Wrap_Struct(rb_cElement, NULL, rb_acore_element_finalizer, (void*)ref);
+  return Data_Wrap_Struct(rb_cElement, NULL, ref_finalizer, (void*)ref);
 }
-#define UNAX(x) (rb_acore_wrap_ref(x))
 
 static
 AXUIElementRef
-rb_acore_unwrap_ref(VALUE obj)
+unwrap_ref(VALUE obj)
 {
   AXUIElementRef* ref;
   Data_Get_Struct(obj, AXUIElementRef, ref);
   // normally, we would return *ref, but that seems to fuck things up
   return (AXUIElementRef)ref;
 }
-#define AX(x) (rb_acore_unwrap_ref(x))
 
 static
 VALUE
-rb_acore_wrap_point(CGPoint point)
+wrap_point(CGPoint point)
 {
   // TODO: Data_Wrap_Struct instead
 #if NOT_MACRUBY
@@ -63,11 +63,10 @@ rb_acore_wrap_point(CGPoint point)
   return rb_funcall(rb_cCGPoint, sel_new, 2, DBL2NUM(point.x), DBL2NUM(point.y));
 #endif
 }
-#define UNPOINT(x) (rb_acore_wrap_point(x))
 
 static
 CGPoint
-rb_acore_unwrap_point(VALUE point)
+unwrap_point(VALUE point)
 {
   point = rb_funcall(point, sel_to_point, 0);
 
@@ -83,11 +82,10 @@ rb_acore_unwrap_point(VALUE point)
 
 #endif
 }
-#define POINT(x) (rb_acore_unwrap_point(x))
 
 static
 VALUE
-rb_acore_wrap_size(CGSize size)
+wrap_size(CGSize size)
 {
   // TODO: Data_Wrap_Struct instead
 #if NOT_MACRUBY
@@ -96,11 +94,10 @@ rb_acore_wrap_size(CGSize size)
   return rb_funcall(rb_cCGSize, sel_new, 2, DBL2NUM(size.width), DBL2NUM(size.height));
 #endif
 }
-#define UNSIZE(x) (rb_acore_wrap_size(x))
 
 /* static */
 /* CGSize */
-/* rb_acore_unwrap_size(VALUE size) */
+/* unwrap_size(VALUE size) */
 /* { */
 /*   size = rb_funcall(size, sel_to_size, 0); */
 
@@ -116,30 +113,31 @@ rb_acore_wrap_size(CGSize size)
 
 /* #endif */
 /* } */
-/* #define SIZE(x) (rb_acore_unwrap_size(x)) */
 
 static
 VALUE
-rb_acore_wrap_rect(CGRect rect)
+wrap_rect(CGRect rect)
 {
-  // TODO: Data_Wrap_Struct instead
+  VALUE point = wrap_point(rect.origin);
+  VALUE  size = wrap_size(rect.size);
+
+  // TODO: Data_Wrap_Struct instead?
 #if NOT_MACRUBY
-  return rb_struct_new(rb_cCGRect, UNPOINT(rect.origin), UNSIZE(rect.size));
+  return rb_struct_new(rb_cCGRect, point, size);
 #else
-  return rb_funcall(rb_cCGRect, sel_new, 2, UNPOINT(rect.origin), UNSIZE(rect.size));
+  return rb_funcall(rb_cCGRect, sel_new, 2, point, size);
 #endif
 }
-#define UNRECT(x) (rb_acore_wrap_rect(x))
 
 /* static */
 /* CGRect */
-/* rb_acore_unwrap_rect(VALUE rect) */
+/* unwrap_rect(VALUE rect) */
 /* { */
 /*   rect = rb_funcall(rect, sel_to_rect, 0); */
 
 /* #if NOT_MACRUBY */
-/*   CGPoint origin = POINT(rb_struct_getmember(rect, sel_origin)); */
-/*   CGSize    size = SIZE(rb_struct_getmember(rect, sel_size)); */
+/*   CGPoint origin = unwrap_point(rb_struct_getmember(rect, sel_origin)); */
+/*   CGSize    size = unwrap_size(rb_struct_getmember(rect, sel_size)); */
 /*   return CGRectMake(origin.x, origin.y, size.width, size.height); */
 
 /* #else */
@@ -149,19 +147,17 @@ rb_acore_wrap_rect(CGRect rect)
 
 /* #endif */
 /* } */
-/* #define RECT(x) (rb_acore_unwrap_rect(x)) */
 
 static inline
 VALUE
-rb_acore_wrap_range(CFRange range)
+convert_cf_range(CFRange range)
 {
   return rb_range_new(range.location, range.length, 0);
 }
-#define UNRANGE(x) (rb_acore_wrap_range(x))
 
 /* static */
 /* CFRange */
-/* rb_acore_unwrap_range(VALUE range) */
+/* convert_rb_range(VALUE range) */
 /* { */
 /*   VALUE b, e; */
 /*   int exclusive; */
@@ -184,48 +180,46 @@ rb_acore_wrap_range(CFRange range)
 /*   int length = exclusive ? end-begin : end-begin + 1; */
 /*   return CFRangeMake(begin, length); */
 /* } */
-/* #define RANGE(x) (rb_acore_unwrap_range(x)) */
-
 
 static inline
 VALUE
-rb_acore_wrap_value_point(AXValueRef value)
+wrap_value_point(AXValueRef value)
 {
   CGPoint point;
   AXValueGetValue(value, kAXValueCGPointType, &point);
-  return UNPOINT(point);
+  return wrap_point(point);
 }
 
 static inline
 VALUE
-rb_acore_wrap_value_size(AXValueRef value)
+wrap_value_size(AXValueRef value)
 {
   CGSize size;
   AXValueGetValue(value, kAXValueCGSizeType, &size);
-  return UNSIZE(size);
+  return wrap_size(size);
 }
 
 static inline
 VALUE
-rb_acore_wrap_value_rect(AXValueRef value)
+wrap_value_rect(AXValueRef value)
 {
   CGRect rect;
   AXValueGetValue(value, kAXValueCGRectType, &rect);
-  return UNRECT(rect);
+  return wrap_rect(rect);
 }
 
 static inline
 VALUE
-rb_acore_wrap_value_range(AXValueRef value)
+wrap_value_range(AXValueRef value)
 {
   CFRange range;
   AXValueGetValue(value, kAXValueCFRangeType, &range);
-  return UNRANGE(range);
+  return convert_cf_range(range);
 }
 
 static inline
 VALUE
-rb_acore_wrap_value_error(AXValueRef value)
+wrap_value_error(AXValueRef value)
 {
   OSStatus code;
   AXValueGetValue(value, kAXValueAXErrorType, &code);
@@ -234,7 +228,7 @@ rb_acore_wrap_value_error(AXValueRef value)
 
 static
 VALUE
-rb_acore_wrap_value(AXValueRef value)
+wrap_value(AXValueRef value)
 {
   switch (AXValueGetType(value))
     {
@@ -242,31 +236,90 @@ rb_acore_wrap_value(AXValueRef value)
       // TODO better error message
       rb_raise(rb_eArgError, "herped when you should have derped");
     case kAXValueCGPointType:
-      return rb_acore_wrap_value_point(value);
+      return wrap_value_point(value);
     case kAXValueCGSizeType:
-      return rb_acore_wrap_value_size(value);
+      return wrap_value_size(value);
     case kAXValueCGRectType:
-      return rb_acore_wrap_value_rect(value);
+      return wrap_value_rect(value);
     case kAXValueCFRangeType:
-      return rb_acore_wrap_value_range(value);
+      return wrap_value_range(value);
     case kAXValueAXErrorType:
-      return rb_acore_wrap_value_error(value);
+      return wrap_value_error(value);
     default:
       rb_bug("You've found a bug in something...not sure who to blame");
     }
 
   return Qnil; // unreachable
 }
-#define UNVALUE(x) (rb_acore_wrap_value(x))
 
-#define IS_SYSTEM_WIDE(x) (CFEqual(AX(x), AXUIElementCreateSystemWide()))
+static inline
+VALUE
+wrap_string(CFStringRef string)
+{
+  // TODO put constant in instead of 0 (encoding)
+
+  // flying by the seat of our pants here, this hasn't failed yet
+  // but probably will one day when I'm not looking
+  const char* name = CFStringGetCStringPtr(string, 0);
+  if (name)
+    return rb_str_new_cstr(name);
+  else
+    // use rb_external_str_new() ?
+    rb_raise(rb_eRuntimeError, "NEED TO IMPLEMNET STRING COPYING");
+
+  return Qnil; // unreachable
+}
+
 
 static
-void
-rb_acore_handle_error(VALUE self, OSStatus code)
+VALUE
+wrap_array_strings(CFArrayRef strings)
+{
+  CFIndex length = CFArrayGetCount(strings);
+  VALUE      ary = rb_ary_new2(length);
+
+  for (CFIndex idx = 0; idx < length; idx++)
+    rb_ary_store(
+		 ary,
+		 idx,
+		 wrap_string((CFStringRef)CFArrayGetValueAtIndex(strings, idx))
+		 );
+  return ary;
+}
+
+static
+VALUE
+to_ruby(CFTypeRef obj)
+{
+  // CFRelease(attr); // LEAK!
+
+  if (CFGetTypeID(obj) == AXValueGetTypeID())
+    return wrap_value(obj);
+
+  // CFString
+  // CFNumber
+  // CFBoolean
+  // CFURL
+  // CFDate
+  // CFArray
+
+  // for debugging, if we don't handle it give output to help log a bug
+  CFShow(obj);
+  return Qtrue;
+}
+
+
+// TODO this creates a memory leak, doesn't it?
+#define IS_SYSTEM_WIDE(x) (CFEqual(unwrap_ref(x), AXUIElementCreateSystemWide()))
+
+
+static
+VALUE
+handle_error(VALUE self, OSStatus code)
 {
   // TODO port the error handler from AXElements
   rb_raise(rb_eRuntimeError, "you done goofed [%d]", code);
+  return Qnil;
 }
 
 /*
@@ -290,10 +343,13 @@ rb_acore_application_for(VALUE self, VALUE pid)
   pid_t the_pid = NUM2PIDT(pid);
 
   if ([NSRunningApplication runningApplicationWithProcessIdentifier:the_pid])
-    return UNAX(AXUIElementCreateApplication(the_pid));
-  else
-    rb_raise(rb_eArgError, "pid `%d' must belong to a running application", the_pid);
+    return wrap_ref(AXUIElementCreateApplication(the_pid));
 
+  rb_raise(
+	   rb_eArgError,
+	   "pid `%d' must belong to a running application",
+	   the_pid
+	   );
   return Qnil; // unreachable
 }
 
@@ -313,7 +369,7 @@ static
 VALUE
 rb_acore_system_wide(VALUE self)
 {
-  return UNAX(AXUIElementCreateSystemWide());
+  return wrap_ref(AXUIElementCreateSystemWide());
 }
 
 
@@ -341,36 +397,18 @@ rb_acore_attributes(VALUE self)
     return cached_attrs;
 
   CFArrayRef attrs = NULL;
-  VALUE        ary = 0;
-  CFIndex   length = 0;
-  const char* name = NULL;
-
-  OSStatus code = AXUIElementCopyAttributeNames(AX(self), &attrs);
+  OSStatus    code = AXUIElementCopyAttributeNames(unwrap_ref(self), &attrs);
   switch (code)
     {
     case kAXErrorSuccess:
-      length = CFArrayGetCount(attrs);
-      ary    = rb_ary_new2(length);
-      for (CFIndex idx = 0; idx < length; idx++) {
-	// flying by the seat of our pants here, this hasn't failed yet
-	// but probably will one day when I'm not looking
-	name = CFStringGetCStringPtr(CFArrayGetValueAtIndex(attrs, idx), 0);
-	if (name)
-	  rb_ary_store(ary, idx, rb_str_new_cstr(name));
-	else
-	  // use rb_external_str_new()
-	  rb_raise(rb_eRuntimeError, "NEED TO IMPLEMNET STRING COPYING");
-      }
-      break;
+      cached_attrs = wrap_array_strings(attrs);
+      rb_ivar_set(self, ivar_ref, cached_attrs);
+      return cached_attrs;
     case kAXErrorInvalidUIElement:
-      ary = rb_ary_new();
-      break;
+      return rb_ary_new();
     default:
-      rb_acore_handle_error(self, code);
+      return handle_error(self, code);
     }
-
-  rb_ivar_set(self, ivar_ref, ary);
-  return ary;
 }
 
 
@@ -408,27 +446,20 @@ rb_acore_attribute(VALUE self, VALUE name)
 							  kCFAllocatorNull
 							  );
   OSStatus code = AXUIElementCopyAttributeValue(
-						AX(self),
+						unwrap_ref(self),
 						attr_name,
 						&attr
 						);
-
   switch (code)
     {
     case kAXErrorSuccess:
-      CFShow(attr);
-      // CFRelease(attr); // LEAK!
-      if (CFGetTypeID(attr) == AXValueGetTypeID())
-	return UNVALUE(attr);
-      return Qtrue;
+      return to_ruby(attr);
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return Qnil;
     default:
-      rb_acore_handle_error(self, code);
+      return handle_error(self, code);
     }
-
-  return Qnil; // unreachable
 }
 
 
@@ -447,20 +478,21 @@ VALUE
 rb_acore_role(VALUE self)
 {
   CFTypeRef value = NULL;
-  OSStatus   code = AXUIElementCopyAttributeValue(AX(self), kAXRoleAttribute, &value);
-
+  OSStatus   code = AXUIElementCopyAttributeValue(
+						  unwrap_ref(self),
+						  kAXRoleAttribute,
+						  &value
+						  );
   switch (code)
     {
     case kAXErrorSuccess:
-      return rb_str_new_cstr(CFStringGetCStringPtr((CFStringRef)value, 0));
+      return wrap_string((CFStringRef)value);
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return Qnil;
     default:
-      rb_acore_handle_error(self, code);
+      return handle_error(self, code);
     }
-
-  return Qnil; // unreachable
 }
 
 /*
@@ -480,20 +512,21 @@ VALUE
 rb_acore_subrole(VALUE self)
 {
   CFTypeRef value = NULL;
-  OSStatus   code = AXUIElementCopyAttributeValue(AX(self), kAXSubroleAttribute, &value);
-
+  OSStatus   code = AXUIElementCopyAttributeValue(
+						  unwrap_ref(self),
+						  kAXSubroleAttribute,
+						  &value
+						  );
   switch (code)
     {
     case kAXErrorSuccess:
-      return rb_str_new_cstr(CFStringGetCStringPtr((CFStringRef)value, 0));
+      return wrap_string((CFStringRef)value);
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return Qnil;
     default:
-      rb_acore_handle_error(self, code);
+      return handle_error(self, code);
     }
-
-  return Qnil; // unreachable
 }
 
 /*
@@ -519,7 +552,7 @@ rb_acore_pid(VALUE self)
     return cached_pid;
 
   pid_t     pid = 0;
-  OSStatus code = AXUIElementGetPid(AX(self), &pid);
+  OSStatus code = AXUIElementGetPid(unwrap_ref(self), &pid);
 
   switch (code)
     {
@@ -531,7 +564,7 @@ rb_acore_pid(VALUE self)
 	break;
       }
     default:
-      rb_acore_handle_error(self, code);
+      handle_error(self, code);
     }
 
   cached_pid = PIDT2NUM(pid);
@@ -584,13 +617,17 @@ VALUE
 rb_acore_element_at(VALUE self, VALUE point)
 {
   AXUIElementRef ref = NULL;
-  CGPoint          p = POINT(point);
-  OSStatus      code = AXUIElementCopyElementAtPosition(AX(self), p.x, p.y, &ref);
-
+  CGPoint          p = unwrap_point(point);
+  OSStatus      code = AXUIElementCopyElementAtPosition(
+							unwrap_ref(self),
+							p.x,
+							p.y,
+							&ref
+							);
   switch (code)
     {
     case kAXErrorSuccess:
-      return UNAX(ref);
+      return wrap_ref(ref);
     case kAXErrorNoValue:
       return Qnil;
     case kAXErrorInvalidUIElement:
@@ -599,10 +636,8 @@ rb_acore_element_at(VALUE self, VALUE point)
       else
 	return Qnil;
     default:
-      rb_acore_handle_error(self, code); // point, nil, nil
+      return handle_error(self, code); // point, nil, nil
     }
-
-  return Qnil; // unreachable
 }
 
 
@@ -624,30 +659,28 @@ VALUE
 rb_acore_set_timeout_to(VALUE self, VALUE seconds)
 {
   float timeout = NUM2DBL(seconds);
-  OSStatus code = AXUIElementSetMessagingTimeout(AX(self), timeout);
+  OSStatus code = AXUIElementSetMessagingTimeout(unwrap_ref(self), timeout);
 
   switch (code)
     {
     case kAXErrorSuccess:
       return seconds;
     default:
-      rb_acore_handle_error(self, code); // seconds
+      return handle_error(self, code); // seconds
     }
-
-  return Qnil; // unreachable
 }
 
 
 void
-Init_caccessibility()
+Init_core()
 {
   if (!AXAPIEnabled())
     rb_raise(
 	     rb_eRuntimeError,
 	     "\n"                                                                         \
 	     "------------------------------------------------------------------------\n" \
-	     "Universal Access is disabled on this machine.\n\n"                          \
-	     "Please enable it in the System Preferences.\n\n"                            \
+	     "Universal Access is disabled on this machine.\n"                          \
+	     "Please enable it in the System Preferences.\n"                            \
 	     "See https://github.com/Marketcircle/AXElements#getting-setup\n"             \
 	     "------------------------------------------------------------------------\n"
 	     );

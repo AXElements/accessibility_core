@@ -1,7 +1,7 @@
 require 'mkmf'
 
 $CFLAGS << ' -std=c99 -Wall -Werror -pedantic -ObjC'
-$LIBS   << ' -framework Foundation -framework ApplicationServices -framework CoreGraphics -framework Cocoa'
+$LIBS   << ' -framework CoreFoundation -framework ApplicationServices -framework CoreGraphics -framework Cocoa'
 
 if RUBY_ENGINE == 'macruby'
   $CFLAGS << ' -fobjc-gc'
@@ -19,4 +19,4 @@ else
   $CFLAGS << ' -DNOT_MACRUBY'
 end
 
-create_makefile 'caccessibility/caccessibility'
+create_makefile 'accessibility/core'
