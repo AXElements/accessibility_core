@@ -7,8 +7,10 @@ static VALUE rb_cElement;
 static VALUE rb_cCGPoint;
 static VALUE rb_cCGSize;
 static VALUE rb_cCGRect;
+static VALUE rb_mURI;
 
 static ID sel_new;
+static ID sel_parse;
 static ID sel_x;
 static ID sel_y;
 static ID sel_width;
@@ -21,6 +23,15 @@ static ID sel_to_rect;
 static ID sel_to_range;
 static ID ivar_ref;
 static ID ivar_pid;
+
+static CFTypeID array_type;
+static CFTypeID ref_type;
+static CFTypeID value_type;
+static CFTypeID string_type;
+static CFTypeID number_type;
+static CFTypeID boolean_type;
+static CFTypeID url_type;
+static CFTypeID date_type;
 
 #ifdef NOT_MACRUBY
 #define RELEASE(x) CFRelease(x)
@@ -252,6 +263,22 @@ wrap_value(AXValueRef value)
   return Qnil; // unreachable
 }
 
+static
+VALUE
+wrap_array_ref(CFArrayRef refs)
+{
+  CFIndex length = CFArrayGetCount(refs);
+  VALUE      ary = rb_ary_new2(length);
+
+  for (CFIndex idx = 0; idx < length; idx++)
+    rb_ary_store(
+		 ary,
+		 idx,
+		 wrap_ref(CFArrayGetValueAtIndex(refs, idx))
+		 );
+  return ary;
+}
+
 static inline
 VALUE
 wrap_string(CFStringRef string)
@@ -282,30 +309,147 @@ wrap_array_strings(CFArrayRef strings)
     rb_ary_store(
 		 ary,
 		 idx,
-		 wrap_string((CFStringRef)CFArrayGetValueAtIndex(strings, idx))
+		 wrap_string(CFArrayGetValueAtIndex(strings, idx))
 		 );
   return ary;
+}
+
+static inline
+VALUE
+wrap_int(CFNumberRef number)
+{
+  int value;
+  if (CFNumberGetValue(number, kCFNumberSInt32Type, &value))
+    return INT2FIX(value);
+  rb_raise(rb_eRuntimeError, "I goofed on wrapping an int!");
+  return Qnil;
+}
+
+static inline
+VALUE
+wrap_long(CFNumberRef number)
+{
+  long value;
+  if (CFNumberGetValue(number, kCFNumberSInt64Type, &value))
+    return LONG2FIX(value);
+  rb_raise(rb_eRuntimeError, "I goofed on wrapping a long!");
+  return Qnil;
+}
+
+static inline
+VALUE
+wrap_long_long(CFNumberRef number)
+{
+  long long value;
+  if (CFNumberGetValue(number, kCFNumberLongLongType, &value))
+    return LL2NUM(value);
+  rb_raise(rb_eRuntimeError, "I goofed on wrapping a long long!");
+  return Qnil;
+}
+
+static inline
+VALUE
+wrap_float(CFNumberRef number)
+{
+  double value;
+  if (CFNumberGetValue(number, kCFNumberFloat64Type, &value))
+    return DBL2NUM(value);
+  rb_raise(rb_eRuntimeError, "I goofed on wrapping a float!");
+  return Qnil;
+}
+
+static
+VALUE
+wrap_number(CFNumberRef number)
+{
+  switch (CFNumberGetType(number))
+    {
+    case kCFNumberSInt8Type:
+    case kCFNumberSInt16Type:
+    case kCFNumberSInt32Type:
+      return wrap_int(number);
+    case kCFNumberSInt64Type:
+      return wrap_long(number);
+    case kCFNumberFloat32Type:
+    case kCFNumberFloat64Type:
+      return wrap_float(number);
+    case kCFNumberCharType:
+    case kCFNumberShortType:
+    case kCFNumberIntType:
+      return wrap_int(number);
+    case kCFNumberLongType:
+      return wrap_long(number);
+    case kCFNumberLongLongType:
+      return wrap_long_long(number);
+    case kCFNumberFloatType:
+    case kCFNumberDoubleType:
+      return wrap_float(number);
+    case kCFNumberCFIndexType:
+      return wrap_int(number);
+    case kCFNumberNSIntegerType:
+      return wrap_long(number);
+    case kCFNumberCGFloatType: // == kCFNumberMaxType
+      return wrap_float(number);
+    default:
+      return INT2NUM(0); // unreachable unless system goofed
+    }
+}
+
+static
+VALUE
+wrap_url(CFURLRef url)
+{
+#ifdef NOT_MACRUBY
+  return rb_funcall(rb_mURI, sel_parse, 1, wrap_string(CFURLGetString(url)));
+#else
+  return (NSURL*)url;
+#endif
+}
+
+static
+VALUE
+wrap_date(CFDateRef date)
+{
+#ifdef NOT_MACRUBY
+  NSTimeInterval time = [(NSDate*)date timeIntervalSince1970];
+  return rb_time_new((time_t)time, 0);
+#else
+    return (VALUE)date;
+#endif
+}
+
+static
+VALUE
+wrap_array(CFArrayRef array)
+{
+  return Qnil;
+}
+
+static inline
+VALUE
+wrap_boolean(CFBooleanRef bool_val)
+{
+  return (CFBooleanGetValue(bool_val) ? Qtrue : Qfalse);
 }
 
 static
 VALUE
 to_ruby(CFTypeRef obj)
 {
-  // CFRelease(attr); // LEAK!
-
-  if (CFGetTypeID(obj) == AXValueGetTypeID())
-    return wrap_value(obj);
-
-  // CFString
-  // CFNumber
-  // CFBoolean
-  // CFURL
-  // CFDate
-  // CFArray
-
-  // for debugging, if we don't handle it give output to help log a bug
-  CFShow(obj);
-  return Qtrue;
+  CFTypeID di = CFGetTypeID(obj);
+  if      (di == array_type)   return wrap_array(obj);
+  else if (di == ref_type)     return wrap_ref(obj);
+  else if (di == value_type)   return wrap_value(obj);
+  else if (di == string_type)  return wrap_string(obj);
+  else if (di == number_type)  return wrap_number(obj);
+  else if (di == boolean_type) return wrap_boolean(obj);
+  else if (di == url_type)     return wrap_url(obj);
+  else if (di == date_type)    return wrap_date(obj);
+  else {
+    // for debugging, if we don't handle it give output to help log a bug
+    CFShow(obj);
+    return Qtrue;
+  }
 }
 
 
@@ -685,6 +829,15 @@ Init_core()
 	     "------------------------------------------------------------------------\n"
 	     );
 
+  array_type   = CFArrayGetTypeID();
+  ref_type     = AXUIElementGetTypeID();
+  value_type   = AXValueGetTypeID();
+  string_type  = CFStringGetTypeID();
+  number_type  = CFNumberGetTypeID();
+  boolean_type = CFBooleanGetTypeID();
+  url_type     = CFURLGetTypeID();
+  date_type    = CFDateGetTypeID();
+
   sel_new      = rb_intern("new");
   sel_x        = rb_intern("x");
   sel_y        = rb_intern("y");
@@ -704,6 +857,7 @@ Init_core()
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
+  rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
 
 
