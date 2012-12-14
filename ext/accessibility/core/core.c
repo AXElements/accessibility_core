@@ -597,6 +597,7 @@ to_ax(VALUE obj)
   if      (type == rb_cElement)            return unwrap_ref(obj);
   else if (type == rb_cString)             return unwrap_string(obj);
   else if (type == rb_cStruct)             return unwrap_value(obj);
+  else if (type == rb_cRange)              return unwrap_value(obj);
   else if (type == rb_cFixnum)             return unwrap_number(obj);
   else if (type == rb_cTime)               return unwrap_date(obj);
   else if (type == rb_cURI)                return unwrap_url(obj);
@@ -839,13 +840,8 @@ rb_acore_parameterized_attributes(VALUE self)
  * If the attribute is not supported by the element then a exception
  * will be raised.
  *
- * @example
- *   window.attribute KAXTitleAttribute    # => "HotCocoa Demo"
- *   window.attribute KAXSizeAttribute     # => #<CGSize width=10.0 height=88>
- *   window.attribute KAXParentAttribute   # => #<AXUIElementRef>
- *   window.attribute KAXNoValueAttribute  # => nil
- *
  * @param name [String]
+ * @param parameter [Object]
  */
 static
 VALUE
