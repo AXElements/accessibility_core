@@ -22,6 +22,7 @@ static ID sel_to_point;
 static ID sel_to_size;
 static ID sel_to_rect;
 static ID sel_to_range;
+static ID sel_to_s;
 
 static ID ivar_attrs;
 static ID ivar_param_attrs;
@@ -496,6 +497,7 @@ static inline
 CFURLRef
 unwrap_url(VALUE url)
 {
+  url = rb_funcall(url, sel_to_s, 0);
   CFStringRef string = CFStringCreateWithCString(
 						 NULL,
 						 StringValuePtr(url),
@@ -1257,6 +1259,7 @@ Init_core()
   sel_to_size  = rb_intern("to_size");
   sel_to_rect  = rb_intern("to_rect");
   sel_to_range = rb_intern("to_range");
+  sel_to_s     = rb_intern("to_s");
 
   ivar_attrs       = rb_intern("@attrs");
   ivar_param_attrs = rb_intern("@param_attrs");
