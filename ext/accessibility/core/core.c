@@ -7,7 +7,8 @@ static VALUE rb_cElement;
 static VALUE rb_cCGPoint;
 static VALUE rb_cCGSize;
 static VALUE rb_cCGRect;
-static VALUE rb_mURI;
+static VALUE rb_mURI; // URI module
+static VALUE rb_cURI; // URI::Generic class
 
 static ID sel_new;
 static ID sel_parse;
@@ -21,7 +22,10 @@ static ID sel_to_point;
 static ID sel_to_size;
 static ID sel_to_rect;
 static ID sel_to_range;
-static ID ivar_ref;
+
+static ID ivar_attrs;
+static ID ivar_param_attrs;
+static ID ivar_actions;
 static ID ivar_pid;
 
 static CFTypeID array_type;
@@ -46,28 +50,24 @@ ref_finalizer(void* obj)
   RELEASE((CFTypeRef)obj);
 }
 
-static
-VALUE
-wrap_ref(AXUIElementRef ref)
-{
-  return Data_Wrap_Struct(rb_cElement, NULL, ref_finalizer, (void*)ref);
-}
+#define WRAP_ARRAY(wrapper) do {				\
+  CFIndex length = CFArrayGetCount(array);			\
+  VALUE      ary = rb_ary_new2(length);				\
+								\
+  for (CFIndex idx = 0; idx < length; idx++)			\
+    rb_ary_store(						\
+		 ary,						\
+		 idx,						\
+		 wrapper(CFArrayGetValueAtIndex(array, idx))	\
+		);	                                        \
+  return ary;							\
+} while (false);
 
-static
-AXUIElementRef
-unwrap_ref(VALUE obj)
-{
-  AXUIElementRef* ref;
-  Data_Get_Struct(obj, AXUIElementRef, ref);
-  // normally, we would return *ref, but that seems to fuck things up
-  return (AXUIElementRef)ref;
-}
 
-static
+static inline
 VALUE
 wrap_point(CGPoint point)
 {
-  // TODO: Data_Wrap_Struct instead
 #if NOT_MACRUBY
   return rb_struct_new(rb_cCGPoint, DBL2NUM(point.x), DBL2NUM(point.y));
 #else
@@ -94,11 +94,10 @@ unwrap_point(VALUE point)
 #endif
 }
 
-static
+static inline
 VALUE
 wrap_size(CGSize size)
 {
-  // TODO: Data_Wrap_Struct instead
 #if NOT_MACRUBY
   return rb_struct_new(rb_cCGSize, DBL2NUM(size.width), DBL2NUM(size.height));
 #else
@@ -106,33 +105,33 @@ wrap_size(CGSize size)
 #endif
 }
 
-/* static */
-/* CGSize */
-/* unwrap_size(VALUE size) */
-/* { */
-/*   size = rb_funcall(size, sel_to_size, 0); */
-
-/* #if NOT_MACRUBY */
-/*   double width  = NUM2DBL(rb_struct_getmember(size, sel_width)); */
-/*   double height = NUM2DBL(rb_struct_getmember(size, sel_height)); */
-/*   return CGSizeMake(width, height); */
-
-/* #else */
-/*   CGSize* ptr; */
-/*   Data_Get_Struct(point, CGSize, ptr); */
-/*   return *ptr; */
-
-/* #endif */
-/* } */
-
 static
+CGSize
+unwrap_size(VALUE size)
+{
+  size = rb_funcall(size, sel_to_size, 0);
+
+#if NOT_MACRUBY
+  double width  = NUM2DBL(rb_struct_getmember(size, sel_width));
+  double height = NUM2DBL(rb_struct_getmember(size, sel_height));
+  return CGSizeMake(width, height);
+
+#else
+  CGSize* ptr;
+  Data_Get_Struct(point, CGSize, ptr);
+  return *ptr;
+
+#endif
+}
+
+
+static inline
 VALUE
 wrap_rect(CGRect rect)
 {
   VALUE point = wrap_point(rect.origin);
   VALUE  size = wrap_size(rect.size);
 
-  // TODO: Data_Wrap_Struct instead?
 #if NOT_MACRUBY
   return rb_struct_new(rb_cCGRect, point, size);
 #else
@@ -140,24 +139,25 @@ wrap_rect(CGRect rect)
 #endif
 }
 
-/* static */
-/* CGRect */
-/* unwrap_rect(VALUE rect) */
-/* { */
-/*   rect = rb_funcall(rect, sel_to_rect, 0); */
+static
+CGRect
+unwrap_rect(VALUE rect)
+{
+  rect = rb_funcall(rect, sel_to_rect, 0);
 
-/* #if NOT_MACRUBY */
-/*   CGPoint origin = unwrap_point(rb_struct_getmember(rect, sel_origin)); */
-/*   CGSize    size = unwrap_size(rb_struct_getmember(rect, sel_size)); */
-/*   return CGRectMake(origin.x, origin.y, size.width, size.height); */
+#if NOT_MACRUBY
+  CGPoint origin = unwrap_point(rb_struct_getmember(rect, sel_origin));
+  CGSize    size = unwrap_size(rb_struct_getmember(rect, sel_size));
+  return CGRectMake(origin.x, origin.y, size.width, size.height);
 
-/* #else */
-/*   CGRect* ptr; */
-/*   Data_Get_Struct(point, CGRect, ptr); */
-/*   return *ptr; */
+#else
+  CGRect* ptr;
+  Data_Get_Struct(point, CGRect, ptr);
+  return *ptr;
 
-/* #endif */
-/* } */
+#endif
+}
+
 
 static inline
 VALUE
@@ -166,33 +166,34 @@ convert_cf_range(CFRange range)
   return rb_range_new(range.location, range.length, 0);
 }
 
-/* static */
-/* CFRange */
-/* convert_rb_range(VALUE range) */
-/* { */
-/*   VALUE b, e; */
-/*   int exclusive; */
+static
+CFRange
+convert_rb_range(VALUE range)
+{
+  VALUE b, e;
+  int exclusive;
 
-/*   range = rb_funcall(range, sel_to_range, 0); */
-/*   rb_range_values(range, &b, &e, &exclusive); */
+  range = rb_funcall(range, sel_to_range, 0);
+  rb_range_values(range, &b, &e, &exclusive);
 
-/*   int begin = NUM2INT(b); */
-/*   int   end = NUM2INT(e); */
+  int begin = NUM2INT(b);
+  int   end = NUM2INT(e);
 
-/*   if (begin < 0 || end < 0) */
-/*     // We don't know what the max length of the range will be, so we */
-/*     // can't count backwards. */
-/*     rb_raise( */
-/* 	     rb_eArgError, */
-/* 	     "negative values are not allowed in ranges " \ */
-/* 	     "that are converted to CFRange structures." */
-/* 	     ); */
+  if (begin < 0 || end < 0)
+    // We don't know what the max length of the range will be, so we
+    // can't count backwards.
+    rb_raise(
+	     rb_eArgError,
+	     "negative values are not allowed in ranges " \
+	     "that are converted to CFRange structures."
+	     );
 
-/*   int length = exclusive ? end-begin : end-begin + 1; */
-/*   return CFRangeMake(begin, length); */
-/* } */
+  int length = exclusive ? end-begin : end-begin + 1;
+  return CFRangeMake(begin, length);
+}
 
-static inline
+
+static
 VALUE
 wrap_value_point(AXValueRef value)
 {
@@ -201,7 +202,7 @@ wrap_value_point(AXValueRef value)
   return wrap_point(point);
 }
 
-static inline
+static
 VALUE
 wrap_value_size(AXValueRef value)
 {
@@ -210,7 +211,7 @@ wrap_value_size(AXValueRef value)
   return wrap_size(size);
 }
 
-static inline
+static
 VALUE
 wrap_value_rect(AXValueRef value)
 {
@@ -219,7 +220,7 @@ wrap_value_rect(AXValueRef value)
   return wrap_rect(rect);
 }
 
-static inline
+static
 VALUE
 wrap_value_range(AXValueRef value)
 {
@@ -228,7 +229,7 @@ wrap_value_range(AXValueRef value)
   return convert_cf_range(range);
 }
 
-static inline
+static
 VALUE
 wrap_value_error(AXValueRef value)
 {
@@ -263,77 +264,126 @@ wrap_value(AXValueRef value)
   return Qnil; // unreachable
 }
 
-static
-VALUE
-wrap_array_ref(CFArrayRef refs)
+static inline
+AXValueRef
+unwrap_value_point(VALUE value)
 {
-  CFIndex length = CFArrayGetCount(refs);
-  VALUE      ary = rb_ary_new2(length);
-
-  for (CFIndex idx = 0; idx < length; idx++)
-    rb_ary_store(
-		 ary,
-		 idx,
-		 wrap_ref(CFArrayGetValueAtIndex(refs, idx))
-		 );
-  return ary;
+  CGPoint point = unwrap_point(value);
+  return AXValueCreate(kAXValueCGPointType, &point);
 }
+
+static inline
+AXValueRef
+unwrap_value_size(VALUE value)
+{
+  CGSize size = unwrap_size(value);
+  return AXValueCreate(kAXValueCGSizeType, &size);
+}
+
+static inline
+AXValueRef
+unwrap_value_rect(VALUE value)
+{
+  CGRect rect = unwrap_rect(value);
+  return AXValueCreate(kAXValueCGRectType, &rect);
+}
+
+static inline
+AXValueRef
+unwrap_value_range(VALUE value)
+{
+  CFRange range = convert_rb_range(value);
+  return AXValueCreate(kAXValueCFRangeType, &range);
+}
+
+static
+AXValueRef
+unwrap_value(VALUE value)
+{
+  VALUE type = CLASS_OF(value);
+  if (type == rb_cCGPoint)
+    return unwrap_value_point(value);
+  else if (type == rb_cCGSize)
+    return unwrap_value_size(value);
+  else if (type == rb_cCGRect)
+    return unwrap_value_rect(value);
+  else if (type == rb_cRange)
+    return unwrap_value_range(value);
+
+  rb_raise(rb_eArgError, "could not wrap %s", rb_class2name(type));
+  return NULL; // unreachable
+}
+
+static VALUE wrap_array_values(CFArrayRef array) { WRAP_ARRAY(wrap_value) }
+
+
+static inline
+VALUE
+wrap_ref(AXUIElementRef ref)
+{
+  return Data_Wrap_Struct(rb_cElement, NULL, ref_finalizer, (void*)ref);
+}
+
+static inline
+AXUIElementRef
+unwrap_ref(VALUE obj)
+{
+  AXUIElementRef* ref;
+  Data_Get_Struct(obj, AXUIElementRef, ref);
+  // normally, we would return *ref, but that seems to fuck things up
+  return (AXUIElementRef)ref;
+}
+
+static VALUE wrap_array_refs(CFArrayRef array) { WRAP_ARRAY(wrap_ref) }
+
 
 static inline
 VALUE
 wrap_string(CFStringRef string)
 {
-  // TODO put constant in instead of 0 (encoding)
-
   // flying by the seat of our pants here, this hasn't failed yet
   // but probably will one day when I'm not looking
-  const char* name = CFStringGetCStringPtr(string, 0);
+  const char* name = CFStringGetCStringPtr(string, kCFStringEncodingMacRoman);
   if (name)
-    return rb_str_new_cstr(name);
+    return rb_str_new(name, CFStringGetLength(string));
   else
-    // use rb_external_str_new() ?
+    // use rb_external_str_new() ? assume always UTF-8?
     rb_raise(rb_eRuntimeError, "NEED TO IMPLEMNET STRING COPYING");
 
   return Qnil; // unreachable
 }
 
-
-static
-VALUE
-wrap_array_strings(CFArrayRef strings)
-{
-  CFIndex length = CFArrayGetCount(strings);
-  VALUE      ary = rb_ary_new2(length);
-
-  for (CFIndex idx = 0; idx < length; idx++)
-    rb_ary_store(
-		 ary,
-		 idx,
-		 wrap_string(CFArrayGetValueAtIndex(strings, idx))
-		 );
-  return ary;
-}
-
 static inline
-VALUE
-wrap_int(CFNumberRef number)
+CFStringRef
+unwrap_string(VALUE string)
 {
-  int value;
-  if (CFNumberGetValue(number, kCFNumberSInt32Type, &value))
-    return INT2FIX(value);
-  rb_raise(rb_eRuntimeError, "I goofed on wrapping an int!");
-  return Qnil;
+  return CFStringCreateWithCString(
+				   NULL,
+				   StringValuePtr(string),
+				   kCFStringEncodingUTF8
+				   );
 }
+
+static VALUE wrap_array_strings(CFArrayRef array) { WRAP_ARRAY(wrap_string) }
+
 
 static inline
 VALUE
 wrap_long(CFNumberRef number)
 {
   long value;
-  if (CFNumberGetValue(number, kCFNumberSInt64Type, &value))
+  if (CFNumberGetValue(number, kCFNumberLongType, &value))
     return LONG2FIX(value);
   rb_raise(rb_eRuntimeError, "I goofed on wrapping a long!");
   return Qnil;
+}
+
+static inline
+CFNumberRef
+unwrap_long(VALUE num)
+{
+  long base = NUM2LONG(num);
+  return CFNumberCreate(NULL, kCFNumberLongType, &base);
 }
 
 static inline
@@ -348,14 +398,30 @@ wrap_long_long(CFNumberRef number)
 }
 
 static inline
+CFNumberRef
+unwrap_long_long(VALUE num)
+{
+  long long base = NUM2LL(num);
+  return CFNumberCreate(NULL, kCFNumberLongLongType, &base);
+}
+
+static inline
 VALUE
 wrap_float(CFNumberRef number)
 {
   double value;
-  if (CFNumberGetValue(number, kCFNumberFloat64Type, &value))
+  if (CFNumberGetValue(number, kCFNumberDoubleType, &value))
     return DBL2NUM(value);
   rb_raise(rb_eRuntimeError, "I goofed on wrapping a float!");
   return Qnil;
+}
+
+static inline
+CFNumberRef
+unwrap_float(VALUE num)
+{
+  int base = NUM2DBL(num);
+  return CFNumberCreate(NULL, kCFNumberDoubleType, &base);
 }
 
 static
@@ -367,7 +433,6 @@ wrap_number(CFNumberRef number)
     case kCFNumberSInt8Type:
     case kCFNumberSInt16Type:
     case kCFNumberSInt32Type:
-      return wrap_int(number);
     case kCFNumberSInt64Type:
       return wrap_long(number);
     case kCFNumberFloat32Type:
@@ -376,7 +441,6 @@ wrap_number(CFNumberRef number)
     case kCFNumberCharType:
     case kCFNumberShortType:
     case kCFNumberIntType:
-      return wrap_int(number);
     case kCFNumberLongType:
       return wrap_long(number);
     case kCFNumberLongLongType:
@@ -385,7 +449,6 @@ wrap_number(CFNumberRef number)
     case kCFNumberDoubleType:
       return wrap_float(number);
     case kCFNumberCFIndexType:
-      return wrap_int(number);
     case kCFNumberNSIntegerType:
       return wrap_long(number);
     case kCFNumberCGFloatType: // == kCFNumberMaxType
@@ -396,6 +459,29 @@ wrap_number(CFNumberRef number)
 }
 
 static
+CFNumberRef
+unwrap_number(VALUE number)
+{
+  switch (TYPE(number))
+    {
+    case T_FIXNUM:
+      return unwrap_long(number);
+    case T_FLOAT:
+      return unwrap_float(number);
+    default:
+      rb_raise(
+	       rb_eRuntimeError,
+	       "wrapping %s is not supported; log a bug?",
+	       rb_string_value_cstr(&number)
+	       );
+      return kCFNumberNegativeInfinity; // unreachable
+    }
+}
+
+static VALUE wrap_array_numbers(CFArrayRef array) { WRAP_ARRAY(wrap_number) }
+
+
+static inline
 VALUE
 wrap_url(CFURLRef url)
 {
@@ -406,6 +492,22 @@ wrap_url(CFURLRef url)
 #endif
 }
 
+static inline
+CFURLRef
+unwrap_url(VALUE url)
+{
+  CFStringRef string = CFStringCreateWithCString(
+						 NULL,
+						 StringValuePtr(url),
+						 kCFStringEncodingUTF8
+						 );
+  CFURLRef url_ref = CFURLCreateWithString(NULL, string, NULL);
+  RELEASE(string);
+  return url_ref;
+}
+
+static VALUE wrap_array_urls(CFArrayRef array) { WRAP_ARRAY(wrap_url) }
+
 static
 VALUE
 wrap_date(CFDateRef date)
@@ -414,22 +516,57 @@ wrap_date(CFDateRef date)
   NSTimeInterval time = [(NSDate*)date timeIntervalSince1970];
   return rb_time_new((time_t)time, 0);
 #else
-    return (VALUE)date;
+  return (VALUE)date;
 #endif
 }
 
 static
-VALUE
-wrap_array(CFArrayRef array)
+CFDateRef
+unwrap_date(VALUE date)
 {
-  return Qnil;
+  struct timeval t = rb_time_timeval(date);
+  NSDate* ns_date = [NSDate dateWithTimeIntervalSince1970:t.tv_sec];
+  return (CFDateRef)ns_date;
 }
+
+static VALUE wrap_array_dates(CFArrayRef array) { WRAP_ARRAY(wrap_date) }
+
 
 static inline
 VALUE
 wrap_boolean(CFBooleanRef bool_val)
 {
   return (CFBooleanGetValue(bool_val) ? Qtrue : Qfalse);
+}
+
+static inline
+CFBooleanRef
+unwrap_boolean(VALUE bool_val)
+{
+  return (bool_val == Qtrue ? kCFBooleanTrue : kCFBooleanFalse);
+}
+
+static VALUE wrap_array_booleans(CFArrayRef array) { WRAP_ARRAY(wrap_boolean) }
+
+
+static
+VALUE
+wrap_array(CFArrayRef array)
+{
+  CFTypeRef obj = CFArrayGetValueAtIndex(array, 0);
+  CFTypeID di   = CFGetTypeID(obj);
+       if (di == ref_type)     return wrap_array_refs(array);
+  else if (di == value_type)   return wrap_array_values(array);
+  else if (di == string_type)  return wrap_array_strings(array);
+  else if (di == number_type)  return wrap_array_numbers(array);
+  else if (di == boolean_type) return wrap_array_booleans(array);
+  else if (di == url_type)     return wrap_array_urls(array);
+  else if (di == date_type)    return wrap_array_dates(array);
+  else {
+    // for debugging, if we don't handle it give output to help log a bug
+    CFShow(obj);
+    return Qnil;
+  }
 }
 
 static
@@ -448,13 +585,32 @@ to_ruby(CFTypeRef obj)
   else {
     // for debugging, if we don't handle it give output to help log a bug
     CFShow(obj);
-    return Qtrue;
+    return Qnil;
   }
 }
 
-
-// TODO this creates a memory leak, doesn't it?
-#define IS_SYSTEM_WIDE(x) (CFEqual(unwrap_ref(x), AXUIElementCreateSystemWide()))
+static
+CFTypeRef
+to_ax(VALUE obj)
+{
+  VALUE type = CLASS_OF(obj);
+  if      (type == rb_cElement)            return unwrap_ref(obj);
+  else if (type == rb_cString)             return unwrap_string(obj);
+  else if (type == rb_cStruct)             return unwrap_value(obj);
+  else if (type == rb_cFixnum)             return unwrap_number(obj);
+  else if (type == rb_cTime)               return unwrap_date(obj);
+  else if (type == rb_cURI)                return unwrap_url(obj);
+  else if (obj  == Qtrue || obj == Qfalse) return unwrap_boolean(obj);
+  else {
+    // for debugging, if we don't handle it give output to help log a bug
+    rb_raise(
+	     rb_eRuntimeError,
+	     "don't know how to convert %s objects :(",
+	     rb_string_value_cstr(&type)
+	     );
+    return NULL;
+  }
+}
 
 
 static
@@ -481,19 +637,26 @@ static
 VALUE
 rb_acore_application_for(VALUE self, VALUE pid)
 {
-  // TODO release memory instead of leaking it (whole function is a leak)
-  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate date]];
+  NSDate* date = [NSDate date];
+  [[NSRunLoop currentRunLoop] runUntilDate:date];
+  RELEASE(date);
 
-  pid_t the_pid = NUM2PIDT(pid);
+  pid_t                     the_pid = NUM2PIDT(pid);
+  NSRunningApplication* running_app =
+    [NSRunningApplication runningApplicationWithProcessIdentifier:the_pid];
 
-  if ([NSRunningApplication runningApplicationWithProcessIdentifier:the_pid])
-    return wrap_ref(AXUIElementCreateApplication(the_pid));
+  if (running_app) {
+    VALUE app = wrap_ref(AXUIElementCreateApplication(the_pid));
+    RELEASE(running_app);
+    return app;
+  }
 
   rb_raise(
 	   rb_eArgError,
 	   "pid `%d' must belong to a running application",
 	   the_pid
 	   );
+
   return Qnil; // unreachable
 }
 
@@ -516,6 +679,17 @@ rb_acore_system_wide(VALUE self)
   return wrap_ref(AXUIElementCreateSystemWide());
 }
 
+static inline
+int
+acore_is_system_wide(VALUE other)
+{
+  AXUIElementRef system = AXUIElementCreateSystemWide();
+  int result = CFEqual(unwrap_ref(other), system);
+  RELEASE(system);
+  return result;
+}
+#define IS_SYSTEM_WIDE(x) (acore_is_system_wide(x))
+
 
 /*
  * @todo Invalid elements do not always raise an error.
@@ -536,7 +710,7 @@ static
 VALUE
 rb_acore_attributes(VALUE self)
 {
-  VALUE cached_attrs = rb_ivar_get(self, ivar_ref);
+  VALUE cached_attrs = rb_ivar_get(self, ivar_attrs);
   if (cached_attrs != Qnil)
     return cached_attrs;
 
@@ -546,11 +720,15 @@ rb_acore_attributes(VALUE self)
     {
     case kAXErrorSuccess:
       cached_attrs = wrap_array_strings(attrs);
-      rb_ivar_set(self, ivar_ref, cached_attrs);
+      rb_ivar_set(self, ivar_attrs, cached_attrs);
+      RELEASE(attrs);
       return cached_attrs;
     case kAXErrorInvalidUIElement:
       return rb_ary_new();
     default:
+      // TODO we should actually allow for a grace period and try again in
+      //      every case where would be deferring to the default error handler,
+      //      and maybe even in every case where we get a non-zero result code
       return handle_error(self, code);
     }
 }
@@ -594,6 +772,7 @@ rb_acore_attribute(VALUE self, VALUE name)
 						attr_name,
 						&attr
 						);
+  RELEASE(attr_name);
   switch (code)
     {
     case kAXErrorSuccess:
@@ -601,6 +780,173 @@ rb_acore_attribute(VALUE self, VALUE name)
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return Qnil;
+    default:
+      return handle_error(self, code);
+    }
+}
+
+/*
+ * Get the list of parameterized attributes for the element
+ *
+ * @example
+ *
+ *   button.parameterized_attributes # => ["AXTextForRange", ...]
+ *
+ * @return [Array<String>]
+ */
+static
+VALUE
+rb_acore_parameterized_attributes(VALUE self)
+{
+  VALUE cached_attrs = rb_ivar_get(self, ivar_param_attrs);
+  if (cached_attrs != Qnil)
+    return cached_attrs;
+
+  CFArrayRef attrs = NULL;
+  OSStatus    code = AXUIElementCopyParameterizedAttributeNames(
+                                                                unwrap_ref(self),
+								&attrs
+								);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      cached_attrs = wrap_array_strings(attrs);
+      rb_ivar_set(self, ivar_param_attrs, cached_attrs);
+      RELEASE(attrs);
+      return cached_attrs;
+    case kAXErrorInvalidUIElement:
+      return rb_ary_new();
+    default:
+      // TODO we should actually allow for a grace period and try again in
+      //      every case where would be deferring to the default error handler,
+      //      and maybe even in every case where we get a non-zero result code
+      return handle_error(self, code);
+    }
+}
+
+
+/*
+ * Fetch the value for the given attribute and parameter
+ *
+ * CoreFoundation wrapped objects will be unwrapped for you, if you expect
+ * to get a {CFRange} you will be given a {Range} instead.
+ *
+ * As a convention, if the backing element is no longer alive then
+ * any attribute value will return `nil`, except for `KAXChildrenAttribute`
+ * which will return an empty array. This is a debatably necessary evil,
+ * inquire for details.
+ *
+ * If the attribute is not supported by the element then a exception
+ * will be raised.
+ *
+ * @example
+ *   window.attribute KAXTitleAttribute    # => "HotCocoa Demo"
+ *   window.attribute KAXSizeAttribute     # => #<CGSize width=10.0 height=88>
+ *   window.attribute KAXParentAttribute   # => #<AXUIElementRef>
+ *   window.attribute KAXNoValueAttribute  # => nil
+ *
+ * @param name [String]
+ */
+static
+VALUE
+rb_acore_parameterized_attribute(VALUE self, VALUE name, VALUE parameter)
+{
+  CFTypeRef       param = to_ax(parameter);
+  CFTypeRef        attr = NULL;
+  CFStringRef attr_name = CFStringCreateWithCStringNoCopy(
+							  NULL,
+							  StringValueCStr(name),
+							  0,
+							  kCFAllocatorNull
+							  );
+  OSStatus code = AXUIElementCopyParameterizedAttributeValue(
+						             unwrap_ref(self),
+							     attr_name,
+							     param,
+							     &attr
+							     );
+  RELEASE(param);
+  RELEASE(attr_name);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return to_ruby(attr);
+    case kAXErrorNoValue:
+    case kAXErrorInvalidUIElement:
+      return Qnil;
+    default:
+      return handle_error(self, code);
+    }
+}
+
+
+/*
+ * Get the list of actions for the element
+ *
+ * As a convention, this method will return an empty array if the
+ * backing element is no longer alive.
+ *
+ * @example
+ *
+ *   button.actions # => ["AXPress", ...]
+ *
+ * @return [Array<String>]
+ */
+static
+VALUE
+rb_acore_actions(VALUE self)
+{
+  VALUE cached_actions = rb_ivar_get(self, ivar_actions);
+  if (cached_actions != Qnil)
+    return cached_actions;
+
+  CFArrayRef actions = NULL;
+  OSStatus      code = AXUIElementCopyActionNames(unwrap_ref(self), &actions);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      cached_actions = wrap_array_strings(actions);
+      rb_ivar_set(self, ivar_actions, cached_actions);
+      RELEASE(actions);
+      return cached_actions;
+    case kAXErrorInvalidUIElement:
+      return rb_ary_new();
+    default:
+      // TODO we should actually allow for a grace period and try again in
+      //      every case where would be deferring to the default error handler,
+      //      and maybe even in every case where we get a non-zero result code
+      return handle_error(self, code);
+    }
+}
+
+
+/*
+ * Tell the receiver to perform the given action
+ *
+ * @example
+ *   button.action "AXPress" # => true
+ *
+ * @param name [String]
+ */
+static
+VALUE
+rb_acore_perform_action(VALUE self, VALUE name)
+{
+  CFStringRef action = CFStringCreateWithCStringNoCopy(
+		         			       NULL,
+						       StringValueCStr(name),
+						       0,
+						       kCFAllocatorNull
+						       );
+  OSStatus code = AXUIElementPerformAction(unwrap_ref(self), action);
+
+  RELEASE(action);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return Qtrue;
+    case kAXErrorInvalidUIElement:
+      return Qfalse;
     default:
       return handle_error(self, code);
     }
@@ -639,6 +985,7 @@ rb_acore_role(VALUE self)
     }
 }
 
+
 /*
  * @note You might get `nil` back as the subrole as AXWebArea
  *       objects are known to do this. You need to check. :(
@@ -672,6 +1019,71 @@ rb_acore_subrole(VALUE self)
       return handle_error(self, code);
     }
 }
+
+
+/*
+ * Shortcut for getting the `kAXParentAttribute`
+ *
+ * @example
+ *   window.parent    # => "AXApplication"
+ *   web_area.parent  # => "AXScrollArea"
+ *
+ * @return [Accessibility::Element,nil]
+ */
+static
+VALUE
+rb_acore_parent(VALUE self)
+{
+  CFTypeRef value = NULL;
+  OSStatus   code = AXUIElementCopyAttributeValue(
+						  unwrap_ref(self),
+						  kAXParentAttribute,
+						  &value
+						  );
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return wrap_ref(value);
+    case kAXErrorNoValue:
+    case kAXErrorInvalidUIElement:
+      return Qnil;
+    default:
+      return handle_error(self, code);
+    }
+}
+
+
+/*
+ * Shortcut for getting the `kAXChildrenAttribute`
+ *
+ * @example
+ *   window.children    # => [AXButton, AXButton, AXScrollArea, AX...]
+ *   button.children    # => []
+ *
+ * @return [Array<Accessibility::Element>]
+ */
+static
+VALUE
+rb_acore_children(VALUE self)
+{
+  CFTypeRef value = NULL;
+  OSStatus   code = AXUIElementCopyAttributeValue(
+						  unwrap_ref(self),
+						  kAXChildrenAttribute,
+						  &value
+						  );
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return wrap_array_refs(value);
+    case kAXErrorNoValue:
+    case kAXErrorInvalidUIElement:
+      return rb_ary_new();
+    default:
+      return handle_error(self, code);
+    }
+}
+
 
 /*
  * Get the process identifier (PID) of the application that the element
@@ -731,6 +1143,36 @@ rb_acore_application(VALUE self)
 
 
 /*
+ * Change the timeout value for the given element
+ *
+ * If you change the timeout on the system wide object, it affets all timeouts.
+ *
+ * Setting the global timeout to `0` seconds will reset the timeout value
+ * to the system default. The system default timeout value is `6 seconds`
+ * as of the writing of this documentation, but Apple has not publicly
+ * documented this (we had to ask in person at WWDC).
+ *
+ * @param seconds [Number]
+ * @return [Number]
+ */
+static
+VALUE
+rb_acore_set_timeout_to(VALUE self, VALUE seconds)
+{
+  float timeout = NUM2DBL(seconds);
+  OSStatus code = AXUIElementSetMessagingTimeout(unwrap_ref(self), timeout);
+
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return seconds;
+    default:
+      return handle_error(self, code); // seconds
+    }
+}
+
+
+/*
  * Find the top most element at the given point on the screen
  *
  * If the receiver is a regular application or element then the return
@@ -785,36 +1227,6 @@ rb_acore_element_at(VALUE self, VALUE point)
 }
 
 
-/*
- * Change the timeout value for the given element
- *
- * If you change the timeout on the system wide object, it affets all timeouts.
- *
- * Setting the global timeout to `0` seconds will reset the timeout value
- * to the system default. The system default timeout value is `6 seconds`
- * as of the writing of this documentation, but Apple has not publicly
- * documented this (we had to ask in person at WWDC).
- *
- * @param seconds [Number]
- * @return [Number]
- */
-static
-VALUE
-rb_acore_set_timeout_to(VALUE self, VALUE seconds)
-{
-  float timeout = NUM2DBL(seconds);
-  OSStatus code = AXUIElementSetMessagingTimeout(unwrap_ref(self), timeout);
-
-  switch (code)
-    {
-    case kAXErrorSuccess:
-      return seconds;
-    default:
-      return handle_error(self, code); // seconds
-    }
-}
-
-
 void
 Init_core()
 {
@@ -823,8 +1235,8 @@ Init_core()
 	     rb_eRuntimeError,
 	     "\n"                                                                         \
 	     "------------------------------------------------------------------------\n" \
-	     "Universal Access is disabled on this machine.\n"                          \
-	     "Please enable it in the System Preferences.\n"                            \
+	     "Universal Access is disabled on this machine.\n"                            \
+	     "Please enable it in the System Preferences.\n"                              \
 	     "See https://github.com/Marketcircle/AXElements#getting-setup\n"             \
 	     "------------------------------------------------------------------------\n"
 	     );
@@ -850,14 +1262,17 @@ Init_core()
   sel_to_rect  = rb_intern("to_rect");
   sel_to_range = rb_intern("to_range");
 
-  ivar_ref = rb_intern("@ref");
-  ivar_pid = rb_intern("@pid");
+  ivar_attrs       = rb_intern("@attrs");
+  ivar_param_attrs = rb_intern("@param_attrs");
+  ivar_actions     = rb_intern("@actions");
+  ivar_pid         = rb_intern("@pid");
 
   // on either supported Ruby, these should be defined by now
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
   rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
+  rb_cURI           = rb_const_get(rb_mURI,    rb_intern("Generic"));
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
 
 
@@ -880,22 +1295,29 @@ Init_core()
    *
    * @example
    *
-   *   element = AXUIElementCreateSystemWide()
-   *   element.attributes                      # => ["AXRole", "AXChildren", ...]
-   *   element.size_of "AXChildren"            # => 12
+   *   element = Accessibility::Element.application_for 277 # pid of Terminal.app
+   *   element.attributes                      # => ["AXRole", "AXMainWindow", ...]
+   *   element.attribute "AXMainWindow"        # => #<Accessibility::Element...>
    */
   rb_cElement = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
-  rb_define_attr(rb_cElement, "ref", 1, 0);
 
-  rb_define_singleton_method(rb_cElement, "application_for", rb_acore_application_for, 1);
-  rb_define_singleton_method(rb_cElement, "system_wide",     rb_acore_system_wide,     0);
+  rb_define_singleton_method(rb_cElement, "application_for", rb_acore_application_for,          1);
+  rb_define_singleton_method(rb_cElement, "system_wide",     rb_acore_system_wide,              0);
 
-  rb_define_method(rb_cElement, "attributes",     rb_acore_attributes,     0);
-  rb_define_method(rb_cElement, "attribute",      rb_acore_attribute,      1);
-  rb_define_method(rb_cElement, "role",           rb_acore_role,           0);
-  rb_define_method(rb_cElement, "subrole",        rb_acore_subrole,        0);
-  rb_define_method(rb_cElement, "pid",            rb_acore_pid,            0);
-  rb_define_method(rb_cElement, "application",    rb_acore_application,    0);
-  rb_define_method(rb_cElement, "element_at",     rb_acore_element_at,     1);
-  rb_define_method(rb_cElement, "set_timeout_to", rb_acore_set_timeout_to, 1);
+  rb_define_method(rb_cElement, "attributes",                rb_acore_attributes,               0);
+  rb_define_method(rb_cElement, "attribute",                 rb_acore_attribute,                1);
+  rb_define_method(rb_cElement, "parameterized_attributes",  rb_acore_parameterized_attributes, 0);
+  rb_define_method(rb_cElement, "parameterized_attribute",   rb_acore_parameterized_attribute,  2);
+  rb_define_method(rb_cElement, "actions",                   rb_acore_actions,                  0);
+  rb_define_method(rb_cElement, "perform_action",            rb_acore_perform_action,           1);
+
+  rb_define_method(rb_cElement, "role",                      rb_acore_role,                     0);
+  rb_define_method(rb_cElement, "subrole",                   rb_acore_subrole,                  0);
+  rb_define_method(rb_cElement, "parent",                    rb_acore_parent,                   0);
+  rb_define_method(rb_cElement, "children",                  rb_acore_children,                 0);
+
+  rb_define_method(rb_cElement, "pid",                       rb_acore_pid,                      0);
+  rb_define_method(rb_cElement, "set_timeout_to",            rb_acore_set_timeout_to,           1);
+  rb_define_method(rb_cElement, "application",               rb_acore_application,              0);
+  rb_define_method(rb_cElement, "element_at",                rb_acore_element_at,               1);
 }
