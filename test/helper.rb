@@ -1,5 +1,8 @@
 require 'minitest/autorun'
+require 'minitest/pride'
+
 require 'accessibility/core'
+
 
 if RUBY_ENGINE == 'ruby'
   def on_mri?
