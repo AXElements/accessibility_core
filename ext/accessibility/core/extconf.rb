@@ -5,6 +5,7 @@ $LIBS   << ' -framework CoreFoundation -framework ApplicationServices -framework
 
 if RUBY_ENGINE == 'macruby'
   $CFLAGS << ' -fobjc-gc'
+  $CFLAGS.gsub! /-Werror/, '' # fuuuu
 else
   unless RbConfig::CONFIG["CC"].match /clang/
     clang = `which clang`.chomp
