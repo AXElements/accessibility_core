@@ -193,8 +193,5 @@ class Array
   end
 end
 
-# TODO
-# NSURL -> URI
-# NSDate -> Time
 
 require 'accessibility/core.bundle'
