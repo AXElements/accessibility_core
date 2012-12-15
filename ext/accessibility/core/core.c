@@ -29,10 +29,6 @@ static ID sel_to_range;
 static ID sel_to_s;
 static ID sel_parse;
 
-
-#define DEF(mod, name, ptr, args) rb_define_method(mod, name, ptr, args);
-#define DEF_SINGLETON(mod, name, ptr, args) rb_define_singleton_method(mod, name, ptr, args);
-
 #define WRAP_ARRAY(wrapper) do {				\
     CFIndex length = CFArrayGetCount(array);			\
     VALUE      ary = rb_ary_new2(length);			\
@@ -1036,35 +1032,37 @@ Init_core()
 
   rb_cElement = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
 
-  DEF_SINGLETON(rb_cElement, "application_for", rb_acore_application_for,          1)
-  DEF_SINGLETON(rb_cElement, "system_wide",     rb_acore_system_wide,              0)
-  //DEF_SINGLETON(rb_cElement, "key_rate",        rb_acore_key_rate,                 0)
-  //DEF_SINGLETON(rb_cElement, "key_rate=",       rb_acore_set_system_wide,          1)
+  rb_define_singleton_method(rb_cElement, "application_for", rb_acore_application_for,          1);
+  rb_define_singleton_method(rb_cElement, "system_wide",     rb_acore_system_wide,              0);
+  rb_define_singleton_method(rb_cElement, "key_rate",        rb_acore_key_rate,                 0);
+  rb_define_singleton_method(rb_cElement, "key_rate=",       rb_acore_set_system_wide,          1);
 
-  DEF(rb_cElement, "attributes",                rb_acore_attributes,               0)
-  DEF(rb_cElement, "attribute",                 rb_acore_attribute,                1)
-  DEF(rb_cElement, "size_of",                   rb_acore_size_of,                  0)
-  DEF(rb_cElement, "writable?",                 rb_acore_is_writable,              1)
-  DEF(rb_cElement, "set",                       rb_acore_set,                      2)
+  rb_define_method(rb_cElement, "attributes",                rb_acore_attributes,               0);
+  rb_define_method(rb_cElement, "attribute",                 rb_acore_attribute,                1);
+  rb_define_method(rb_cElement, "size_of",                   rb_acore_size_of,                  0);
+  rb_define_method(rb_cElement, "writable?",                 rb_acore_is_writable,              1);
+  rb_define_method(rb_cElement, "set",                       rb_acore_set,                      2);
 
-  DEF(rb_cElement, "role",                      rb_acore_role,                     0)
-  DEF(rb_cElement, "subrole",                   rb_acore_subrole,                  0)
-  DEF(rb_cElement, "parent",                    rb_acore_parent,                   0)
-  DEF(rb_cElement, "children",                  rb_acore_children,                 0)
-  DEF(rb_cElement, "value",                     rb_acore_value,                    0)
+  rb_define_method(rb_cElement, "role",                      rb_acore_role,                     0);
+  rb_define_method(rb_cElement, "subrole",                   rb_acore_subrole,                  0);
+  rb_define_method(rb_cElement, "parent",                    rb_acore_parent,                   0);
+  rb_define_method(rb_cElement, "children",                  rb_acore_children,                 0);
+  rb_define_method(rb_cElement, "value",                     rb_acore_value,                    0);
 
-  DEF(rb_cElement, "parameterized_attributes",  rb_acore_parameterized_attributes, 0)
-  DEF(rb_cElement, "parameterized_attribute",   rb_acore_parameterized_attribute,  2)
+  rb_define_method(rb_cElement, "parameterized_attributes",  rb_acore_parameterized_attributes, 0);
+  rb_define_method(rb_cElement, "parameterized_attribute",   rb_acore_parameterized_attribute,  2);
 
-  DEF(rb_cElement, "actions",                   rb_acore_actions,                  0)
-  DEF(rb_cElement, "perform_action",            rb_acore_perform_action,           1)
-  //DEF(rb_cElement, "post",                      rb_acore_post,                     1)
+  rb_define_method(rb_cElement, "actions",                   rb_acore_actions,                  0);
+  rb_define_method(rb_cElement, "perform_action",            rb_acore_perform_action,           1);
+  rb_define_method(rb_cElement, "post",                      rb_acore_post,                     1);
 
-  DEF(rb_cElement, "invalid?",                  rb_acore_is_invalid,               0)
-  DEF(rb_cElement, "pid",                       rb_acore_pid,                      0)
-  DEF(rb_cElement, "set_timeout_to",            rb_acore_set_timeout_to,           1)
-  DEF(rb_cElement, "application",               rb_acore_application,              0)
-  DEF(rb_cElement, "element_at",                rb_acore_element_at,               1)
+  rb_define_method(rb_cElement, "invalid?",                  rb_acore_is_invalid,               0);
+  rb_define_method(rb_cElement, "pid",                       rb_acore_pid,                      0);
+  rb_define_method(rb_cElement, "set_timeout_to",            rb_acore_set_timeout_to,           1);
+  rb_define_method(rb_cElement, "key_rate",                  rb_acore_key_rate,                 0);
+  rb_define_method(rb_cElement, "key_rate=",                 rb_acore_set_system_wide,          1);
+  rb_define_method(rb_cElement, "application",               rb_acore_application,              0);
+  rb_define_method(rb_cElement, "element_at",                rb_acore_element_at,               1);
 
 #endif
 }
