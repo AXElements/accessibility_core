@@ -3,15 +3,11 @@
 
 static VALUE rb_mAccessibility;
 static VALUE rb_cElement;
-
 static VALUE rb_cCGPoint;
 static VALUE rb_cCGSize;
 static VALUE rb_cCGRect;
-static VALUE rb_mURI; // URI module
-static VALUE rb_cURI; // URI::Generic class
 
 static ID sel_new;
-static ID sel_parse;
 static ID sel_x;
 static ID sel_y;
 static ID sel_width;
@@ -29,6 +25,12 @@ static ID ivar_param_attrs;
 static ID ivar_actions;
 static ID ivar_pid;
 
+#ifdef NOT_MACRUBY
+static VALUE rb_mURI; // URI module
+static VALUE rb_cURI; // URI::Generic class
+static ID sel_parse;
+#endif
+
 static CFTypeID array_type;
 static CFTypeID ref_type;
 static CFTypeID value_type;
@@ -38,31 +40,68 @@ static CFTypeID boolean_type;
 static CFTypeID url_type;
 static CFTypeID date_type;
 
+// TODO liberally apply used of METHOD and DEF to abstract between MacRuby/CRuby
 #ifdef NOT_MACRUBY
 #define RELEASE(x) CFRelease(x)
+#define DEF(mod, name, ptr, args) rb_define_method(mod, name, ptr, args);
+#define DEF_SINGLETON(mod, name, ptr, args) rb_define_singleton_method(mod, name, ptr, args);
 #else
 #define RELEASE(x) CFMakeCollectable(x)
+#define DEF(mod, name, ptr, args) rb_objc_define_method(mod, name, ptr, args);
+#define DEF_SINGLETON(mod, name, ptr, args) rb_objc_define_method(*(VALUE*)mod, name, ptr, args);
 #endif
 
-static
-void
-ref_finalizer(void* obj)
-{
-  RELEASE((CFTypeRef)obj);
-}
 
 #define WRAP_ARRAY(wrapper) do {				\
-  CFIndex length = CFArrayGetCount(array);			\
-  VALUE      ary = rb_ary_new2(length);				\
+    CFIndex length = CFArrayGetCount(array);			\
+    VALUE      ary = rb_ary_new2(length);			\
 								\
-  for (CFIndex idx = 0; idx < length; idx++)			\
-    rb_ary_store(						\
-		 ary,						\
-		 idx,						\
-		 wrapper(CFArrayGetValueAtIndex(array, idx))	\
-		);	                                        \
-  return ary;							\
-} while (false);
+    for (CFIndex idx = 0; idx < length; idx++)			\
+      rb_ary_store(						\
+		   ary,						\
+		   idx,						\
+		   wrapper(CFArrayGetValueAtIndex(array, idx))	\
+		   );	                                        \
+    return ary;							\
+  } while (false);
+
+
+static
+VALUE
+wrap_unknown(CFTypeRef obj)
+{
+#ifdef NOT_MACRUBY
+  // TODO: this will leak, can we use something like alloca?
+  CFStringRef description = CFCopyDescription(obj);
+  rb_raise(
+           rb_eRuntimeError,
+	     "accessibility-core doesn't know how to wrap `%s` objects yet",
+	   CFStringGetCStringPtr(description, kCFStringEncodingMacRoman)
+	   );
+  return Qnil; // unreachable
+#else
+  // Leverage MacRuby wonderfullness if we can
+  return (VALUE)obj;
+#endif
+}
+
+static
+CFTypeRef
+unwrap_unknown(VALUE obj)
+{
+#ifdef NOT_MACRUBY
+  obj = rb_funcall(obj, sel_to_s, 0);
+  rb_raise(
+	   rb_eRuntimeError,
+	   "accessibility-core doesn't know how to unwrap `%s'",
+	   StringValuePtr(obj)
+	   );
+  return NULL; // unreachable
+#else
+  // BAM! MacRuby toll-free bridging
+  return (CFTypeRef)obj;
+#endif
+}
 
 
 static inline
@@ -72,7 +111,8 @@ wrap_point(CGPoint point)
 #if NOT_MACRUBY
   return rb_struct_new(rb_cCGPoint, DBL2NUM(point.x), DBL2NUM(point.y));
 #else
-  return rb_funcall(rb_cCGPoint, sel_new, 2, DBL2NUM(point.x), DBL2NUM(point.y));
+  // TODO use Data_Make_Struct?
+  return rb_funcall(rb_cCGPoint, sel_new, DBL2NUM(point.x), DBL2NUM(point.y));
 #endif
 }
 
@@ -119,7 +159,7 @@ unwrap_size(VALUE size)
 
 #else
   CGSize* ptr;
-  Data_Get_Struct(point, CGSize, ptr);
+  Data_Get_Struct(size, CGSize, ptr);
   return *ptr;
 
 #endif
@@ -153,7 +193,7 @@ unwrap_rect(VALUE rect)
 
 #else
   CGRect* ptr;
-  Data_Get_Struct(point, CGRect, ptr);
+  Data_Get_Struct(rect, CGRect, ptr);
   return *ptr;
 
 #endif
@@ -259,7 +299,10 @@ wrap_value(AXValueRef value)
     case kAXValueAXErrorType:
       return wrap_value_error(value);
     default:
-      rb_bug("You've found a bug in something...not sure who to blame");
+      rb_raise(
+	       rb_eRuntimeError,
+	       "You've found a bug in something...not sure who to blame"
+	       );
     }
 
   return Qnil; // unreachable
@@ -318,6 +361,13 @@ unwrap_value(VALUE value)
 static VALUE wrap_array_values(CFArrayRef array) { WRAP_ARRAY(wrap_value) }
 
 
+static
+void
+ref_finalizer(void* obj)
+{
+  RELEASE((CFTypeRef)obj);
+}
+
 static inline
 VALUE
 wrap_ref(AXUIElementRef ref)
@@ -331,7 +381,7 @@ unwrap_ref(VALUE obj)
 {
   AXUIElementRef* ref;
   Data_Get_Struct(obj, AXUIElementRef, ref);
-  // normally, we would return *ref, but that seems to fuck things up
+  // TODO we should return *ref? but that seems to fuck things up...
   return (AXUIElementRef)ref;
 }
 
@@ -342,6 +392,7 @@ static inline
 VALUE
 wrap_string(CFStringRef string)
 {
+#ifdef NOT_MACRUBY
   // flying by the seat of our pants here, this hasn't failed yet
   // but probably will one day when I'm not looking
   const char* name = CFStringGetCStringPtr(string, kCFStringEncodingMacRoman);
@@ -352,17 +403,25 @@ wrap_string(CFStringRef string)
     rb_raise(rb_eRuntimeError, "NEED TO IMPLEMNET STRING COPYING");
 
   return Qnil; // unreachable
+
+#else
+  return (VALUE)string; // huzzah
+#endif
 }
 
 static inline
 CFStringRef
 unwrap_string(VALUE string)
 {
+#ifdef NOT_MACRUBY
   return CFStringCreateWithCString(
 				   NULL,
 				   StringValuePtr(string),
 				   kCFStringEncodingUTF8
 				   );
+#else
+  return (CFStringRef)string;
+#endif
 }
 
 static VALUE wrap_array_strings(CFArrayRef array) { WRAP_ARRAY(wrap_string) }
@@ -429,6 +488,7 @@ static
 VALUE
 wrap_number(CFNumberRef number)
 {
+#ifdef NOT_MACRUBY
   switch (CFNumberGetType(number))
     {
     case kCFNumberSInt8Type:
@@ -457,12 +517,16 @@ wrap_number(CFNumberRef number)
     default:
       return INT2NUM(0); // unreachable unless system goofed
     }
+#else
+  return (VALUE)number;
+#endif
 }
 
 static
 CFNumberRef
 unwrap_number(VALUE number)
 {
+#ifdef NOT_MACRUBY
   switch (TYPE(number))
     {
     case T_FIXNUM:
@@ -477,6 +541,9 @@ unwrap_number(VALUE number)
 	       );
       return kCFNumberNegativeInfinity; // unreachable
     }
+#else
+  return (CFNumberRef)number;
+#endif
 }
 
 static VALUE wrap_array_numbers(CFArrayRef array) { WRAP_ARRAY(wrap_number) }
@@ -489,7 +556,7 @@ wrap_url(CFURLRef url)
 #ifdef NOT_MACRUBY
   return rb_funcall(rb_mURI, sel_parse, 1, wrap_string(CFURLGetString(url)));
 #else
-  return (NSURL*)url;
+  return (VALUE)url;
 #endif
 }
 
@@ -497,6 +564,7 @@ static inline
 CFURLRef
 unwrap_url(VALUE url)
 {
+#ifdef NOT_MACRUBY
   url = rb_funcall(url, sel_to_s, 0);
   CFStringRef string = CFStringCreateWithCString(
 						 NULL,
@@ -506,6 +574,9 @@ unwrap_url(VALUE url)
   CFURLRef url_ref = CFURLCreateWithString(NULL, string, NULL);
   RELEASE(string);
   return url_ref;
+#else
+  return (CFURLRef)url;
+#endif
 }
 
 static VALUE wrap_array_urls(CFArrayRef array) { WRAP_ARRAY(wrap_url) }
@@ -526,9 +597,13 @@ static
 CFDateRef
 unwrap_date(VALUE date)
 {
+#ifdef NOT_MACRUBY
   struct timeval t = rb_time_timeval(date);
   NSDate* ns_date = [NSDate dateWithTimeIntervalSince1970:t.tv_sec];
   return (CFDateRef)ns_date;
+#else
+  return (CFDateRef)date;
+#endif
 }
 
 static VALUE wrap_array_dates(CFArrayRef array) { WRAP_ARRAY(wrap_date) }
@@ -556,19 +631,15 @@ VALUE
 wrap_array(CFArrayRef array)
 {
   CFTypeRef obj = CFArrayGetValueAtIndex(array, 0);
-  CFTypeID di   = CFGetTypeID(obj);
-       if (di == ref_type)     return wrap_array_refs(array);
+  CFTypeID   di = CFGetTypeID(obj);
+  if      (di == ref_type)     return wrap_array_refs(array);
   else if (di == value_type)   return wrap_array_values(array);
   else if (di == string_type)  return wrap_array_strings(array);
   else if (di == number_type)  return wrap_array_numbers(array);
   else if (di == boolean_type) return wrap_array_booleans(array);
   else if (di == url_type)     return wrap_array_urls(array);
   else if (di == date_type)    return wrap_array_dates(array);
-  else {
-    // for debugging, if we don't handle it give output to help log a bug
-    CFShow(obj);
-    return Qnil;
-  }
+  else                         return wrap_unknown(obj);
 }
 
 static
@@ -584,35 +655,27 @@ to_ruby(CFTypeRef obj)
   else if (di == boolean_type) return wrap_boolean(obj);
   else if (di == url_type)     return wrap_url(obj);
   else if (di == date_type)    return wrap_date(obj);
-  else {
-    // for debugging, if we don't handle it give output to help log a bug
-    CFShow(obj);
-    return Qnil;
-  }
+  else                         return wrap_unknown(obj);
 }
 
 static
 CFTypeRef
 to_ax(VALUE obj)
 {
+  // TODO we can better optimize this when running under MacRuby
   VALUE type = CLASS_OF(obj);
   if      (type == rb_cElement)            return unwrap_ref(obj);
   else if (type == rb_cString)             return unwrap_string(obj);
   else if (type == rb_cStruct)             return unwrap_value(obj);
   else if (type == rb_cRange)              return unwrap_value(obj);
   else if (type == rb_cFixnum)             return unwrap_number(obj);
+  else if (type == rb_cFloat)              return unwrap_number(obj);
   else if (type == rb_cTime)               return unwrap_date(obj);
+#ifdef NOT_MACRUBY
   else if (type == rb_cURI)                return unwrap_url(obj);
+#endif
   else if (obj  == Qtrue || obj == Qfalse) return unwrap_boolean(obj);
-  else {
-    // for debugging, if we don't handle it give output to help log a bug
-    rb_raise(
-	     rb_eRuntimeError,
-	     "don't know how to convert %s objects :(",
-	     rb_string_value_cstr(&type)
-	     );
-    return NULL;
-  }
+  else                                     return unwrap_unknown(obj);
 }
 
 
@@ -625,20 +688,9 @@ handle_error(VALUE self, OSStatus code)
   return Qnil;
 }
 
-/*
- * Get the application object object for an application given the
- * process identifier (PID) for that application.
- *
- * @example
- *
- *   app = Core.application_for 54743  # => #<AXUIElementRef>
- *
- * @param pid [Number]
- * @return [AXUIElementRef]
- */
 static
 VALUE
-rb_acore_application_for(VALUE self, VALUE pid)
+application_for_pid(VALUE pid)
 {
   NSDate* date = [NSDate date];
   [[NSRunLoop currentRunLoop] runUntilDate:date];
@@ -663,6 +715,35 @@ rb_acore_application_for(VALUE self, VALUE pid)
   return Qnil; // unreachable
 }
 
+/*
+ * Get the application object object for an application given the
+ * process identifier (PID) for that application.
+ *
+ * @example
+ *
+ *   app = Core.application_for 54743  # => #<AXUIElementRef>
+ *
+ * @param pid [Number]
+ * @return [AXUIElementRef]
+ */
+static
+VALUE
+#ifdef NOT_MACRUBY
+rb_acore_application_for(VALUE self, VALUE pid)
+#else
+rb_acore_application_for(VALUE self, SEL sel, VALUE pid)
+#endif
+{
+  return application_for_pid(pid);
+}
+
+
+static inline
+VALUE
+system_wide()
+{
+  return wrap_ref(AXUIElementCreateSystemWide());
+}
 
 /*
  * Create a new reference to the system wide object. This is very useful when
@@ -677,9 +758,13 @@ rb_acore_application_for(VALUE self, VALUE pid)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_system_wide(VALUE self)
+#else
+rb_acore_system_wide(VALUE self, SEL sel)
+#endif
 {
-  return wrap_ref(AXUIElementCreateSystemWide());
+  return system_wide();
 }
 
 static inline
@@ -711,7 +796,11 @@ acore_is_system_wide(VALUE other)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_attributes(VALUE self)
+#else
+rb_acore_attributes(VALUE self, SEL sel)
+#endif
 {
   VALUE cached_attrs = rb_ivar_get(self, ivar_attrs);
   if (cached_attrs != Qnil)
@@ -761,7 +850,11 @@ rb_acore_attributes(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_attribute(VALUE self, VALUE name)
+#else
+rb_acore_attribute(VALUE self, SEL sel, VALUE name)
+#endif
 {
   CFTypeRef        attr = NULL;
   CFStringRef attr_name = CFStringCreateWithCStringNoCopy(
@@ -799,7 +892,11 @@ rb_acore_attribute(VALUE self, VALUE name)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_parameterized_attributes(VALUE self)
+#else
+rb_acore_parameterized_attributes(VALUE self, SEL sel)
+#endif
 {
   VALUE cached_attrs = rb_ivar_get(self, ivar_param_attrs);
   if (cached_attrs != Qnil)
@@ -847,7 +944,11 @@ rb_acore_parameterized_attributes(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_parameterized_attribute(VALUE self, VALUE name, VALUE parameter)
+#else
+rb_acore_parameterized_attribute(VALUE self, SEL sel, VALUE name, VALUE parameter)
+#endif
 {
   CFTypeRef       param = to_ax(parameter);
   CFTypeRef        attr = NULL;
@@ -892,7 +993,11 @@ rb_acore_parameterized_attribute(VALUE self, VALUE name, VALUE parameter)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_actions(VALUE self)
+#else
+rb_acore_actions(VALUE self, SEL sel)
+#endif
 {
   VALUE cached_actions = rb_ivar_get(self, ivar_actions);
   if (cached_actions != Qnil)
@@ -928,7 +1033,11 @@ rb_acore_actions(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_perform_action(VALUE self, VALUE name)
+#else
+rb_acore_perform_action(VALUE self, SEL sel, VALUE name)
+#endif
 {
   CFStringRef action = CFStringCreateWithCStringNoCopy(
 		         			       NULL,
@@ -963,7 +1072,11 @@ rb_acore_perform_action(VALUE self, VALUE name)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_role(VALUE self)
+#else
+rb_acore_role(VALUE self, SEL sel)
+#endif
 {
   CFTypeRef value = NULL;
   OSStatus   code = AXUIElementCopyAttributeValue(
@@ -998,7 +1111,11 @@ rb_acore_role(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_subrole(VALUE self)
+#else
+rb_acore_subrole(VALUE self, SEL sel)
+#endif
 {
   CFTypeRef value = NULL;
   OSStatus   code = AXUIElementCopyAttributeValue(
@@ -1030,7 +1147,11 @@ rb_acore_subrole(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_parent(VALUE self)
+#else
+rb_acore_parent(VALUE self, SEL sel)
+#endif
 {
   CFTypeRef value = NULL;
   OSStatus   code = AXUIElementCopyAttributeValue(
@@ -1062,7 +1183,11 @@ rb_acore_parent(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_children(VALUE self)
+#else
+rb_acore_children(VALUE self, SEL sel)
+#endif
 {
   CFTypeRef value = NULL;
   OSStatus   code = AXUIElementCopyAttributeValue(
@@ -1083,23 +1208,9 @@ rb_acore_children(VALUE self)
 }
 
 
-/*
- * Get the process identifier (PID) of the application that the element
- * belongs to.
- *
- * This method will return `0` if the element is dead or if the receiver
- * is the the system wide element.
- *
- * @example
- *
- *   window.pid               # => 12345
- *   Element.system_wide.pid  # => 0
- *
- * @return [Fixnum]
- */
 static
 VALUE
-rb_acore_pid(VALUE self)
+pid_for_ref(VALUE self)
 {
   VALUE cached_pid = rb_ivar_get(self, ivar_pid);
   if (cached_pid != Qnil)
@@ -1126,6 +1237,31 @@ rb_acore_pid(VALUE self)
   return cached_pid;
 }
 
+/*
+ * Get the process identifier (PID) of the application that the element
+ * belongs to.
+ *
+ * This method will return `0` if the element is dead or if the receiver
+ * is the the system wide element.
+ *
+ * @example
+ *
+ *   window.pid               # => 12345
+ *   Element.system_wide.pid  # => 0
+ *
+ * @return [Fixnum]
+ */
+static
+VALUE
+#ifdef NOT_MACRUBY
+rb_acore_pid(VALUE self)
+#else
+rb_acore_pid(VALUE self, SEL sel)
+#endif
+{
+  return pid_for_ref(self);
+}
+
 
 /*
  * Get the application object object for the receiver
@@ -1134,9 +1270,13 @@ rb_acore_pid(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_application(VALUE self)
+#else
+rb_acore_application(VALUE self, SEL sel)
+#endif
 {
-  return rb_acore_application_for(rb_cElement, rb_acore_pid(self));
+  return application_for_pid(pid_for_ref(self));
 }
 
 
@@ -1155,7 +1295,11 @@ rb_acore_application(VALUE self)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_set_timeout_to(VALUE self, VALUE seconds)
+#else
+rb_acore_set_timeout_to(VALUE self, SEL sel, VALUE seconds)
+#endif
 {
   float timeout = NUM2DBL(seconds);
   OSStatus code = AXUIElementSetMessagingTimeout(unwrap_ref(self), timeout);
@@ -1198,7 +1342,11 @@ rb_acore_set_timeout_to(VALUE self, VALUE seconds)
  */
 static
 VALUE
+#ifdef NOT_MACRUBY
 rb_acore_element_at(VALUE self, VALUE point)
+#else
+rb_acore_element_at(VALUE self, SEL sel, VALUE point)
+#endif
 {
   AXUIElementRef ref = NULL;
   CGPoint          p = unwrap_point(point);
@@ -1216,7 +1364,11 @@ rb_acore_element_at(VALUE self, VALUE point)
       return Qnil;
     case kAXErrorInvalidUIElement:
       if (!IS_SYSTEM_WIDE(self))
+#ifdef NOT_MACRUBY
 	return rb_acore_element_at(rb_acore_system_wide(rb_cElement), point);
+#else
+        return rb_acore_element_at(system_wide(), sel, point);
+#endif
       else
 	return Qnil;
     default:
@@ -1270,10 +1422,13 @@ Init_core()
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
-  rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
-  rb_cURI           = rb_const_get(rb_mURI,    rb_intern("Generic"));
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
 
+#ifdef NOT_MACRUBY
+  rb_mURI   = rb_const_get(rb_cObject, rb_intern("URI"));
+  rb_cURI   = rb_const_get(rb_mURI,    rb_intern("Generic"));
+  sel_parse = rb_intern("parse");
+#endif
 
   /*
    * Document-module: Accessibility::Element
@@ -1300,23 +1455,33 @@ Init_core()
    */
   rb_cElement = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
 
-  rb_define_singleton_method(rb_cElement, "application_for", rb_acore_application_for,          1);
-  rb_define_singleton_method(rb_cElement, "system_wide",     rb_acore_system_wide,              0);
+  DEF_SINGLETON(rb_cElement, "application_for", rb_acore_application_for,          1);
+  DEF_SINGLETON(rb_cElement, "system_wide",     rb_acore_system_wide,              0);
+  //DEF_SINGLETON(rb_cElement, "key_rate",        rb_acore_key_rate,                 0);
+  //DEF_SINGLETON(rb_cElement, "key_rate=",       rb_acore_set_system_wide,          1);
 
-  rb_define_method(rb_cElement, "attributes",                rb_acore_attributes,               0);
-  rb_define_method(rb_cElement, "attribute",                 rb_acore_attribute,                1);
-  rb_define_method(rb_cElement, "parameterized_attributes",  rb_acore_parameterized_attributes, 0);
-  rb_define_method(rb_cElement, "parameterized_attribute",   rb_acore_parameterized_attribute,  2);
-  rb_define_method(rb_cElement, "actions",                   rb_acore_actions,                  0);
-  rb_define_method(rb_cElement, "perform_action",            rb_acore_perform_action,           1);
+  DEF(rb_cElement, "attributes",                rb_acore_attributes,               0);
+  DEF(rb_cElement, "attribute",                 rb_acore_attribute,                1);
+  //DEF(rb_cElement, "size_of",                   rb_acore_size_of,                  0);
+  //DEF(rb_cElement, "writable?",                 rb_acore_is_writable,              1);
+  //DEF(rb_cElement, "set",                       rb_acore_set,                      2);
 
-  rb_define_method(rb_cElement, "role",                      rb_acore_role,                     0);
-  rb_define_method(rb_cElement, "subrole",                   rb_acore_subrole,                  0);
-  rb_define_method(rb_cElement, "parent",                    rb_acore_parent,                   0);
-  rb_define_method(rb_cElement, "children",                  rb_acore_children,                 0);
+  DEF(rb_cElement, "role",                      rb_acore_role,                     0);
+  DEF(rb_cElement, "subrole",                   rb_acore_subrole,                  0);
+  DEF(rb_cElement, "parent",                    rb_acore_parent,                   0);
+  DEF(rb_cElement, "children",                  rb_acore_children,                 0);
+  //DEF(rb_cElement, "value",                     rb_acore_value,                    0);
 
-  rb_define_method(rb_cElement, "pid",                       rb_acore_pid,                      0);
-  rb_define_method(rb_cElement, "set_timeout_to",            rb_acore_set_timeout_to,           1);
-  rb_define_method(rb_cElement, "application",               rb_acore_application,              0);
-  rb_define_method(rb_cElement, "element_at",                rb_acore_element_at,               1);
+  DEF(rb_cElement, "parameterized_attributes",  rb_acore_parameterized_attributes, 0);
+  DEF(rb_cElement, "parameterized_attribute",   rb_acore_parameterized_attribute,  2);
+
+  DEF(rb_cElement, "actions",                   rb_acore_actions,                  0);
+  DEF(rb_cElement, "perform_action",            rb_acore_perform_action,           1);
+  //DEF(rb_cElement, "post",                      rb_acore_post,                     1);
+
+  //DEF(rb_cElement, "invalid?",                  rb_acore_is_invalid,               0);
+  DEF(rb_cElement, "pid",                       rb_acore_pid,                      0);
+  DEF(rb_cElement, "set_timeout_to",            rb_acore_set_timeout_to,           1);
+  DEF(rb_cElement, "application",               rb_acore_application,              0);
+  DEF(rb_cElement, "element_at",                rb_acore_element_at,               1);
 }
