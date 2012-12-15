@@ -33,7 +33,7 @@ else
 
   ##
   # A structure that contains a point in a two-dimensional coordinate system
-  class CGPoint < Struct.new(:x, :y)
+  CGPoint = Struct.new(:x, :y) do
 
     # @param x [Number]
     # @param y [Number]
@@ -63,7 +63,7 @@ else
 
   ##
   # A structure that contains the size of a rectangle in a 2D co-ordinate system
-  class CGSize < Struct.new(:width, :height)
+  CGSize = Struct.new(:width, :height) do
 
     # @param width [Number]
     # @param height [Number]
@@ -93,7 +93,7 @@ else
 
   ##
   # Complete definition of a rectangle in a 2D coordinate system
-  class CGRect < Struct.new(:origin, :size)
+  CGRect = Struct.new(:origin, :size) do
 
     # @param origin [CGPoint,#to_point]
     # @param size [CGSize,#to_size]
