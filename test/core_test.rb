@@ -58,6 +58,33 @@ class CoreTest < MiniTest::Unit::TestCase
     @@pop_up ||= window_child 'AXPopUpButton'
   end
 
+  def check_box
+    @@check_box ||= window_child 'AXCheckBox'
+  end
+
+  def search_box
+    @@search_box ||= window_child 'AXTextField'
+  end
+
+  def static_text
+    @@static_text ||= window_child('AXStaticText') { |x|
+      x.value.match /My Little Pony/
+    }
+  end
+
+  def web_area
+    @@web_area ||= window_child('AXScrollArea') { |x|
+      x.attribute('AXDescription') == 'Test Web Area'
+    }.children.first
+  end
+
+  def text_area
+    @@text_area ||= window_child('AXScrollArea') { |x|
+      x.attributes.include?('AXIdentifier') &&
+      x.attribute('AXIdentifier') == 'Text Area'
+    }.children.first
+  end
+
 
   # @!group Tests for singleton methods
 
@@ -136,6 +163,43 @@ class CoreTest < MiniTest::Unit::TestCase
   def test_writable_always_false_for_dead_elements
     refute invalid_element.writable?('AXRole'), 'Dead is always false'
   end
+
+
+  # @!group Test setting attribute values
+
+  def test_set_number
+    [25, 75, 50].each do |number|
+      assert_equal number, slider.set('AXValue', number)
+      assert_equal number, slider.value
+    end
+  end
+
+  def test_set_string
+    [Time.now.to_s, ''].each do |string|
+      assert_equal string, search_box.set('AXValue', string)
+      assert_equal string, search_box.value
+    end
+  end
+
+  def test_set_wrapped
+    text_area.set 'AXValue', 'hey-o'
+
+    text_area.set 'AXSelectedTextRange', 0..3
+    assert_equal 0..3, text_area.attribute('AXSelectedTextRange')
+
+    text_area.set 'AXSelectedTextRange', 1...4
+    assert_equal 1..3, text_area.attribute('AXSelectedTextRange')
+  ensure
+    text_area.set 'AXValue', ''
+  end
+
+  def test_set_attr_handles_errors
+    assert_raises(ArgumentError) { app.set 'FAKE', true }
+    assert_raises(ArgumentError) { invalid_element.set 'AXTitle', 'hi' }
+  end
+
+
+  # @!group Tests for instance methods
 
   def test_equality
     assert_equal window, window

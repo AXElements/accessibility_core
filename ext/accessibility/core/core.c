@@ -505,7 +505,16 @@ VALUE
 handle_error(VALUE self, AXError code)
 {
   // TODO port the error handler from AXElements
-  rb_raise(rb_eRuntimeError, "you done goofed [%d]", code);
+  switch (code)
+    {
+    case kAXErrorInvalidUIElement:
+      rb_raise(rb_eArgError, "invalid element (probably dead)");
+    case kAXErrorAttributeUnsupported:
+      rb_raise(rb_eArgError, "attribute unsupported");
+    default:
+      rb_raise(rb_eRuntimeError, "you done goofed [%d]", code);
+    }
+
   return Qnil;
 }
 

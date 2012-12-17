@@ -270,6 +270,38 @@ module Accessibility::Element
   end
 
   ##
+  # Set the given value for the given attribute on the receiver
+  #
+  # You do not need to worry about wrapping objects first, `Range`
+  # objects will also be automatically converted into `CFRange` objects
+  # (unless they have a negative index) and then wrapped.
+  #
+  # This method does not check writability of the attribute you are
+  # setting. If you need to check, use {Accessibility::Element#writable?}
+  # first to check.
+  #
+  # Unlike when reading attributes, writing to a dead element, and
+  # other error conditions, will raise an exception.
+  #
+  # @example
+  #
+  #   set 'AXValue',        "hi"       # => "hi"
+  #   set 'AXSize',         [250,250]  # => [250,250]
+  #   set 'AXVisibleRange', 0..3       # => 0..3
+  #   set 'AXVisibleRange', 1...4      # => 1..3
+  #
+  # @param name [String]
+  # @param value [Object]
+  def set name, value
+    code = AXUIElementSetAttributeValue(self, name, value.to_ax)
+    if code.zero?
+      value
+    else
+      handle_error code, name, value
+    end
+  end
+
+  ##
   # Shortcut for getting the `KAXRoleAttribute`. Remember that
   # dead elements may return `nil` for their role.
   #
@@ -363,35 +395,6 @@ module Accessibility::Element
   def invalid?
     AXUIElementCopyAttributeValue(self, KAXRoleAttribute, Pointer.new(:id)) ==
       KAXErrorInvalidUIElement
-  end
-
-  ##
-  # Set the given value for the given attribute. You do not need to
-  # worry about wrapping objects first, `Range` objects will also
-  # be automatically converted into `CFRange` objects (unless they
-  # have a negative index) and then wrapped.
-  #
-  # This method does not check writability of the attribute you are
-  # setting. If you need to check, use {#writable?} first to check.
-  #
-  # Unlike when reading attributes, writing to a dead element, and
-  # other error conditions, will raise an exception.
-  #
-  # @example
-  #
-  #   set KAXValueAttribute,        "hi"       # => "hi"
-  #   set KAXSizeAttribute,         [250,250]  # => [250,250]
-  #   set KAXVisibleRangeAttribute, 0..3       # => 0..3
-  #   set KAXVisibleRangeAttribute, 1...4      # => 1..3
-  #
-  # @param name [String]
-  def set name, value
-    code = AXUIElementSetAttributeValue(self, name, value.to_ax)
-    if code.zero?
-      value
-    else
-      handle_error code, name, value
-    end
   end
 
 
