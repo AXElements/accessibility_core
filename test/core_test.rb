@@ -101,6 +101,20 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_empty invalid_element.attributes, 'Dead elements should have no attrs'
   end
 
+  def test_attribute
+    assert_equal 'AXElementsTester',  window.attribute('AXTitle')
+    assert_equal false,               window.attribute('AXFocused')
+    assert_equal CGSize.new(555,529), window.attribute('AXSize')
+    assert_equal app,                 window.attribute('AXParent')
+    assert_equal 10..19,              window.attribute('AXPie') # custom attribute!
+
+    assert_nil window.attribute('AXGrowArea'), 'KAXErrorNoValue == nil'
+
+    assert_nil invalid_element.attribute('AXRole'), 'Dead element == nil'
+    assert_nil invalid_element.attribute('AXChildren')
+    assert_nil app.attribute('MADE_UP_ATTR')
+  end
+
   def test_equality
     assert_equal window, window
     assert_equal slider, slider

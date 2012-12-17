@@ -141,10 +141,9 @@ static inline
 VALUE
 convert_cf_range(CFRange range)
 {
-  if (range.length == 0)
-    return rb_range_new(INT2FIX(range.location), INT2FIX(range.location), 0);
-
-  CFIndex end_index = range.location + range.length - 1;
+  CFIndex end_index = range.location + range.length;
+  if (range.length != 0)
+    end_index -= 1;
   return rb_range_new(INT2FIX(range.location), INT2FIX(end_index), 0);
 }
 
@@ -639,8 +638,10 @@ rb_acore_attribute(VALUE self, VALUE name)
     {
     case kAXErrorSuccess:
       return to_ruby(attr);
+    case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
+    case kAXErrorAttributeUnsupported:
       return Qnil;
     default:
       return handle_error(self, code);

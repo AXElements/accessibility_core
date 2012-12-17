@@ -174,23 +174,21 @@ module Accessibility::Element
   end
 
   ##
-  # Fetch the value for an attribute. CoreFoundation wrapped objects
-  # will be unwrapped for you, if you expect to get a {CFRange} you
-  # will be given a {Range} instead.
+  # Fetch the value for the given attribute from the receiver
+  #
+  # CoreFoundation wrapped objects will be unwrapped for you, if you expect
+  # to get a {CFRange} you will be given a {Range} instead.
   #
   # As a convention, if the backing element is no longer alive then
-  # any attribute value will return `nil`, except for `KAXChildrenAttribute`
-  # which will return an empty array. This is a debatably necessary evil,
-  # inquire for details.
-  #
-  # If the attribute is not supported by the element then a exception
-  # will be raised.
+  # any attribute value will return `nil`. If the attribute is not supported
+  # by the element then `nil` will be returned instead. These
+  # conventions are debatably necessary, inquire for details.
   #
   # @example
-  #   window.attribute KAXTitleAttribute    # => "HotCocoa Demo"
-  #   window.attribute KAXSizeAttribute     # => #<CGSize width=10.0 height=88>
-  #   window.attribute KAXParentAttribute   # => #<AXUIElementRef>
-  #   window.attribute KAXNoValueAttribute  # => nil
+  #   window.attribute 'AXTitle'    # => "HotCocoa Demo"
+  #   window.attribute 'AXSize'     # => #<CGSize width=10.0 height=88>
+  #   window.attribute 'AXParent'   # => #<AXUIElementRef>
+  #   window.attribute 'AXHerpDerp' # => nil
   #
   # @param name [String]
   def attribute name
@@ -200,7 +198,8 @@ module Accessibility::Element
     case code
     when 0
       ptr.value.to_ruby
-    when KAXErrorNoValue, KAXErrorInvalidUIElement
+    when KAXErrorFailure, KAXErrorNoValue,
+         KAXErrorInvalidUIElement, KAXErrorAttributeUnsupported
       nil
     else
       handle_error code, name
