@@ -6,4 +6,5 @@ tmp/
 doc/
 pkg/
 Gemfile.lock
+test/fixture
 

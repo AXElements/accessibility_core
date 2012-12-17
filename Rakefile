@@ -13,12 +13,29 @@ task :console => [:compile] do
   sh 'irb -Ilib -raccessibility/core'
 end
 
+desc 'Open the fixture app'
+task :run_fixture => :fixture do
+  sh 'open test/fixture/Release/AXElementsTester.app'
+end
+
+desc 'Build the test fixture'
+task :fixture do
+  sh 'cd test/AXElementsTester && xcodebuild'
+end
+
+desc 'Remove the built fixture app'
+task :clobber_fixture do
+  $stdout.puts 'rm -rf test/fixture'
+  rm_rf 'test/fixture'
+end
+task :clobber => :clobber_fixture
+
 require 'rake/testtask'
 Rake::TestTask.new do |t|
   t.libs << '.'
   t.pattern = 'test/*_test.rb'
 end
-task :test => :compile
+task :test => [:compile, :fixture]
 
 
 # Gem stuff
