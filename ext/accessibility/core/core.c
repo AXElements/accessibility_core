@@ -15,6 +15,7 @@ static ID ivar_attrs;
 static ID ivar_param_attrs;
 static ID ivar_actions;
 static ID ivar_pid;
+static ID ivar_key_rate;
 
 static ID sel_x;
 static ID sel_y;
@@ -27,7 +28,16 @@ static ID sel_to_size;
 static ID sel_to_rect;
 static ID sel_to_range;
 static ID sel_to_s;
+static ID sel_to_f;
 static ID sel_parse;
+
+static ID rate_very_slow;
+static ID rate_slow;
+static ID rate_normal;
+static ID rate_default;
+static ID rate_fast;
+static ID rate_zomg;
+
 
 #define WRAP_ARRAY(wrapper) do {				\
     CFIndex length = CFArrayGetCount(array);			\
@@ -533,6 +543,42 @@ rb_acore_system_wide(VALUE self)
   return wrap_ref(AXUIElementCreateSystemWide());
 }
 
+
+static
+VALUE
+rb_acore_key_rate(VALUE self)
+{
+  return rb_ivar_get(self, ivar_key_rate);
+}
+
+
+static
+VALUE
+rb_acore_set_key_rate(VALUE self, VALUE rate)
+{
+  if (TYPE(rate) == T_SYMBOL) {
+    ID key_rate = SYM2ID(rate);
+    if (key_rate == rate_very_slow)
+      rate = DBL2NUM(0.9);
+    else if (key_rate == rate_slow)
+      rate = DBL2NUM(0.09);
+    else if (key_rate == rate_normal || rate == rate_default)
+      rate = DBL2NUM(0.009);
+    else if (key_rate == rate_fast)
+      rate = DBL2NUM(0.0009);
+    else if (key_rate == rate_zomg)
+      rate = DBL2NUM(0.00009);
+    else
+      rb_raise(rb_eArgError, "Unknown rate `%s'", rb_id2name(key_rate));
+  }
+  else {
+    rate = rb_funcall(rate, sel_to_f, 0);
+  }
+
+  return rb_ivar_set(self, ivar_key_rate, rate);
+}
+
+
 static
 int
 acore_is_system_wide(VALUE other)
@@ -776,6 +822,48 @@ rb_acore_perform_action(VALUE self, VALUE name)
 }
 
 
+
+
+static
+VALUE
+rb_acore_post(VALUE self, VALUE events)
+{
+  events = rb_ary_to_ary(events);
+  long length = RARRAY_LEN(events);
+  useconds_t sleep_time = NUM2DBL(rb_ivar_get(rb_cElement, ivar_key_rate)) * 100000;
+
+  // CGCharCode key_char = 0; // TODO this value seems to not matter?
+  VALUE            pair;
+  CGKeyCode virtual_key;
+  int         key_state;
+  AXError          code;
+
+
+  for (long i = 0; i < length; i++) {
+    pair        = rb_ary_entry(events, i);
+    virtual_key = NUM2INT(rb_ary_entry(pair, 0));
+    key_state   = rb_ary_entry(pair, 1) == Qtrue ? true : false;
+    code        = AXUIElementPostKeyboardEvent(
+					       unwrap_ref(self),
+					       0,
+					       virtual_key,
+					       key_state
+					       );
+    switch (code)
+      {
+      case kAXErrorSuccess:
+	break;
+      default:
+	handle_error(self, code);
+      }
+
+    usleep(sleep_time);
+  }
+
+  return self;
+}
+
+
 static
 VALUE
 rb_acore_role(VALUE self)
@@ -1014,12 +1102,21 @@ Init_core()
   sel_to_rect  = rb_intern("to_rect");
   sel_to_range = rb_intern("to_range");
   sel_to_s     = rb_intern("to_s");
+  sel_to_f     = rb_intern("to_f");
   sel_parse    = rb_intern("parse");
 
   ivar_attrs       = rb_intern("@attrs");
   ivar_param_attrs = rb_intern("@param_attrs");
   ivar_actions     = rb_intern("@actions");
   ivar_pid         = rb_intern("@pid");
+  ivar_key_rate    = rb_intern("@key_rate");
+
+  rate_very_slow = rb_intern("very_slow");
+  rate_slow      = rb_intern("slow");
+  rate_normal    = rb_intern("normal");
+  rate_default   = rb_intern("default");
+  rate_fast      = rb_intern("fast");
+  rate_zomg      = rb_intern("zomg");
 
   // these should be defined by now
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
@@ -1035,7 +1132,8 @@ Init_core()
   rb_define_singleton_method(rb_cElement, "application_for", rb_acore_application_for,          1);
   rb_define_singleton_method(rb_cElement, "system_wide",     rb_acore_system_wide,              0);
   rb_define_singleton_method(rb_cElement, "key_rate",        rb_acore_key_rate,                 0);
-  rb_define_singleton_method(rb_cElement, "key_rate=",       rb_acore_set_system_wide,          1);
+  rb_define_singleton_method(rb_cElement, "key_rate=",       rb_acore_set_key_rate,             1);
+  rb_acore_set_key_rate(rb_cElement, DBL2NUM(0.009)); // initialize the value right now
 
   rb_define_method(rb_cElement, "attributes",                rb_acore_attributes,               0);
   rb_define_method(rb_cElement, "attribute",                 rb_acore_attribute,                1);
@@ -1059,8 +1157,9 @@ Init_core()
   rb_define_method(rb_cElement, "invalid?",                  rb_acore_is_invalid,               0);
   rb_define_method(rb_cElement, "pid",                       rb_acore_pid,                      0);
   rb_define_method(rb_cElement, "set_timeout_to",            rb_acore_set_timeout_to,           1);
+  // TODO make this meaningful, currently has no effect on calling rb_acore_post
   rb_define_method(rb_cElement, "key_rate",                  rb_acore_key_rate,                 0);
-  rb_define_method(rb_cElement, "key_rate=",                 rb_acore_set_system_wide,          1);
+  rb_define_method(rb_cElement, "key_rate=",                 rb_acore_set_key_rate,             1);
   rb_define_method(rb_cElement, "application",               rb_acore_application,              0);
   rb_define_method(rb_cElement, "element_at",                rb_acore_element_at,               1);
 
