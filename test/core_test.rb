@@ -11,6 +11,9 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_raises(ArgumentError) { Accessibility::Element.application_for 0 }
   end
 
+  def test_system_wide # depends on Element#role working... :/
+    assert_equal 'AXSystemWide', Accessibility::Element.system_wide.role
+  end
   def test_equality_when_not_equal
     refute_equal app, 42
     refute_equal app, 3.14

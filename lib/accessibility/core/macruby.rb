@@ -83,6 +83,20 @@ module Accessibility::Element
     end
 
   end
+    ##
+    # Create a new reference to the system wide object
+    #
+    # This is very useful when working with the system wide object as
+    # caching the system wide reference does not seem to work.
+    #
+    # @example
+    #
+    #   system_wide  # => #<Accessibility::Element>
+    #
+    # @return [Accessibility::Element]
+    def system_wide
+      AXUIElementCreateSystemWide()
+    end
 
 
 
@@ -571,20 +585,6 @@ module Accessibility::Element
 
 
   # @!group Misc.
-
-  ##
-  # Create a new reference to the system wide object. This is very useful when
-  # working with the system wide object as caching the system wide reference
-  # does not seem to work often.
-  #
-  # @example
-  #
-  #   system_wide  # => #<AXUIElementRefx00000000>
-  #
-  # @return [AXUIElementRef]
-  def self.system_wide
-    AXUIElementCreateSystemWide()
-  end
 
   ##
   # Returns the application reference for the application that the receiver
