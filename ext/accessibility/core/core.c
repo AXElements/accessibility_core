@@ -804,7 +804,7 @@ rb_acore_actions(VALUE self)
 
 static
 VALUE
-rb_acore_perform_action(VALUE self, VALUE name)
+rb_acore_perform(VALUE self, VALUE name)
 {
   CFStringRef action = unwrap_string(name);
   AXError       code = AXUIElementPerformAction(unwrap_ref(self), action);
@@ -1162,7 +1162,7 @@ Init_core()
   rb_define_method(rb_cElement, "parameterized_attribute",   rb_acore_parameterized_attribute,  2);
 
   rb_define_method(rb_cElement, "actions",                   rb_acore_actions,                  0);
-  rb_define_method(rb_cElement, "perform_action",            rb_acore_perform_action,           1);
+  rb_define_method(rb_cElement, "perform",                   rb_acore_perform,                  1);
   rb_define_method(rb_cElement, "post",                      rb_acore_post,                     1);
 
   rb_define_method(rb_cElement, "invalid?",                  rb_acore_is_invalid,               0);
