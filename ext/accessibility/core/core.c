@@ -141,7 +141,11 @@ static inline
 VALUE
 convert_cf_range(CFRange range)
 {
-  return rb_range_new(range.location, range.length, 0);
+  if (range.length == 0)
+    return rb_range_new(INT2FIX(range.location), INT2FIX(range.location), 0);
+
+  CFIndex end_index = range.location + range.length - 1;
+  return rb_range_new(INT2FIX(range.location), INT2FIX(end_index), 0);
 }
 
 static
