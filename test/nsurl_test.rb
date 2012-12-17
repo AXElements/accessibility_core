@@ -8,5 +8,10 @@ class TestNSURL < MiniTest::Unit::TestCase
     assert_same url, url.to_url
   end
 
+  def test_to_s
+    s = 'http://marketcircle.com'
+    assert_equal s, NSURL.URLWithString(s).to_s
+  end
+
 end
 end

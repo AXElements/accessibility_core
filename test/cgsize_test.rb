@@ -42,4 +42,13 @@ class CGSizeTest < MiniTest::Unit::TestCase
     assert_match /Size width=3.0 height=5.0>/, CGSize.new(3, 5).inspect
   end
 
+  if on_macruby?
+    def test_to_ax
+      value = CGSizeZero.to_ax
+      ptr   = Pointer.new CGSize.type
+      AXValueGetValue(value, 2, ptr)
+      assert_equal CGSizeZero, ptr.value, 'size makes a value'
+    end
+  end
+
 end

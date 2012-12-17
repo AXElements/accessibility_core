@@ -42,4 +42,13 @@ class CGPointTest < MiniTest::Unit::TestCase
     assert_match /Point x=3.0 y=5.0>/, CGPoint.new(3, 5).inspect
   end
 
+  if on_macruby?
+    def test_to_ax
+      value = CGPointZero.to_ax
+      ptr   = Pointer.new CGPoint.type
+      AXValueGetValue(value, 1, ptr)
+      assert_equal CGPointZero, ptr.value, 'point makes a value'
+    end
+  end
+
 end

@@ -1,6 +1,6 @@
 require 'test/helper'
 
-if on_mri?
+unless on_macruby?
 class TestURIExtensions < MiniTest::Unit::TestCase
 
   def test_to_url_returns_self
