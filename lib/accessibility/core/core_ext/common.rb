@@ -1,5 +1,3 @@
-require 'accessibility/core/version'
-
 class CGPoint
   ##
   # Returns the receiver, since the receiver is already a {CGPoint}

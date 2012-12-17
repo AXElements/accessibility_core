@@ -9,7 +9,6 @@ if RUBY_ENGINE == 'macruby'
   end
 
   require 'accessibility/core/macruby'
-
 else
 
   ##
@@ -18,5 +17,6 @@ else
     false
   end
 
-  require 'accessibility/core/mri'
+  require 'accessibility/core/core_ext/mri'
+  require 'accessibility/core/core.bundle'
 end
