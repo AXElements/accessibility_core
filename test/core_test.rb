@@ -1,6 +1,12 @@
 require 'test/helper'
 
+##
+# Some of these tests are unit tests and some of these tests are
+# integration tests. In general I try to make the tests as isolated
+# as possible, but some methods are impossible to meaningfully test
+# without involving other parts of the same class.
 class CoreTest < MiniTest::Unit::TestCase
+
 
   # @!group Helpers
 
@@ -22,6 +28,30 @@ class CoreTest < MiniTest::Unit::TestCase
 
   def slider
     @@slider ||= window_child 'AXSlider'
+  end
+
+  def yes_button
+    @@yes_button ||= window_child('AXButton') { |x|
+      x.attribute('AXTitle') == 'Yes'
+    }
+  end
+
+  def no_button
+    @@no_button ||= window_child('AXButton') { |x|
+      x.attribute('AXTitle') == 'No'
+    }
+  end
+
+  def bye_button
+    @@bye_button ||= window_child('AXButton') { |x|
+      x.attribute('AXTitle') == 'Bye!'
+    }
+  end
+
+  def invalid_element
+    bye_button # guarantee that it is cached
+    @@dead ||= no_button.perform 'AXPress'
+    bye_button
   end
 
 
@@ -54,6 +84,22 @@ class CoreTest < MiniTest::Unit::TestCase
 
 
   # @!group Tests for instance methods
+
+  ##
+  # AFAICT every accessibility object **MUST** have attributes, so
+  # there are no tests to check what happens when they do not exist;
+  # though I am quite sure that AXElements will raise an exception.
+  def test_attributes
+    attrs = app.attributes
+    assert_includes attrs, 'AXRole'
+    assert_includes attrs, 'AXChildren'
+    assert_includes attrs, 'AXTitle'
+    assert_includes attrs, 'AXMenuBar'
+  end
+
+  def test_attributes_of_dead_element
+    assert_empty invalid_element.attributes, 'Dead elements should have no attrs'
+  end
 
   def test_equality
     assert_equal window, window

@@ -147,12 +147,13 @@ module Accessibility::Element
   # @!group Attributes
 
   ##
-  # @todo Invalid elements do not always raise an error.
-  #       This is a bug that should be logged with Apple.
+  # @todo Invalid elements do not always raise an error. This is a bug
+  #       that should be logged with Apple (but I keep procrastinating).
   #
-  # Get the list of attributes for the element. As a convention, this
-  # method will return an empty array if the backing element is no longer
-  # alive.
+  # Get the list of attributes for the element
+  #
+  # As a convention, this method will return an empty array if the
+  # backing element is no longer alive.
   #
   # @example
   #
