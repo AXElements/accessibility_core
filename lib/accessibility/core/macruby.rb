@@ -33,14 +33,19 @@ require 'accessibility/core/core_ext/macruby'
 
 
 ##
-# Core abstraction layer that that interacts with OS X Accessibility
-# APIs (AXAPI). This provides a generic object oriented mixin for
-# the low level APIs. In MacRuby, bridge support turns C structs into
-# "first class" objects. To that end, instead of adding an extra allocation
-# to wrap the object, we will simply add a mixin to add some basic
-# functionality. A more Ruby-ish wrapper is available through {AX::Element}.
-# The complication in making the mixin more fully featured is that the class
-# which we mix into is abstract and shared for a number of different C structs.
+# Core abstraction layer that that adds OO to the OS X Accessibility APIs
+#
+# This provides a generic object oriented mixin/class for the low level APIs.
+# A more Ruby-ish wrapper is available through
+# [AXElements](https://github.com/Marketcircle/AXElements).
+#
+# On MacRuby, bridge support turns C structs into "first class" objects. To
+# that end, instead of adding an extra allocation to wrap the object, we will
+# simply add a mixin to add some basic functionality. On MRI, a C extension
+# encapsulates the structures into a class.
+#
+# For both Ruby platforms the interface should be the same. It is a bug if they
+# are different.
 #
 # This module is responsible for handling pointers and dealing with error
 # codes for functions that make use of them. The methods in this class
@@ -49,11 +54,36 @@ require 'accessibility/core/core_ext/macruby'
 #
 # @example
 #
-#   element = Accessibility::Element.system_wide
+#   element = Accessibility::Element.application_for pid_for_terminal
 #   element.attributes                      # => ["AXRole", "AXChildren", ...]
-#   element.size_of "AXChildren"            # => 12
+#   element.size_of "AXChildren"            # => 2
+#   element.children.first.role             # => "AXWindow"
 #
 module Accessibility::Element
+
+  class << self
+
+    ##
+    # Get the application object object for an application given the
+    # process identifier (PID) for that application.
+    #
+    # @example
+    #
+    #   app = Element.application_for 54743  # => #<Accessibility::Element>
+    #
+    # @param pid [Number]
+    # @return [Accessibility::Element]
+    def self.application_for pid
+      NSRunLoop.currentRunLoop.runUntilDate Time.now
+      if NSRunningApplication.runningApplicationWithProcessIdentifier pid
+        AXUIElementCreateApplication(pid)
+      else
+        raise ArgumentError, 'pid must belong to a running application'
+      end
+    end
+
+  end
+
 
 
   # @!group Attributes
@@ -536,25 +566,6 @@ module Accessibility::Element
       end
     else
       handle_error code, point, nil, nil
-    end
-  end
-
-  ##
-  # Get the application object object for an application given the
-  # process identifier (PID) for that application.
-  #
-  # @example
-  #
-  #   app = Element.application_for 54743  # => #<AXUIElementRef>
-  #
-  # @param pid [Number]
-  # @return [AXUIElementRef]
-  def self.application_for pid
-    NSRunLoop.currentRunLoop.runUntilDate Time.now
-    if NSRunningApplication.runningApplicationWithProcessIdentifier pid
-      AXUIElementCreateApplication(pid)
-    else
-      raise ArgumentError, 'pid must belong to a running application'
     end
   end
 
