@@ -2,9 +2,30 @@ require 'test/helper'
 
 class CoreTest < MiniTest::Unit::TestCase
 
+  # @!group Helpers
+
   def app
     APP
   end
+
+  def window
+    @@window ||= app.attribute('AXWindows').first
+  end
+
+  def window_child name
+    window.children.find { |item|
+      if item.role == name
+        block_given? ? yield(item) : true
+      end
+    }
+  end
+
+  def slider
+    @@slider ||= window_child 'AXSlider'
+  end
+
+
+  # @!group Tests for singleton methods
 
   def test_application_for
     assert_equal app, Accessibility::Element.application_for(PID)
@@ -29,6 +50,14 @@ class CoreTest < MiniTest::Unit::TestCase
     end
   ensure
     Accessibility::Element.key_rate = 0.009
+  end
+
+
+  # @!group Tests for instance methods
+
+  def test_equality
+    assert_equal window, window
+    assert_equal slider, slider
   end
 
   def test_equality_when_not_equal
