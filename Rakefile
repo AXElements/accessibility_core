@@ -37,5 +37,5 @@ end
 require 'rake/extensiontask'
 Rake::ExtensionTask.new('core', SPEC) do |ext|
   ext.ext_dir = 'ext/accessibility/core'
-  ext.lib_dir = 'lib/accessibility'
+  ext.lib_dir = 'lib/accessibility/core'
 end
