@@ -128,6 +128,15 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_equal 0, invalid_element.size_of('AXChildren'), 'Dead == 0'
   end
 
+  def test_writable?
+    refute app.writable?    'AXTitle'
+    assert window.writable? 'AXMain'
+  end
+
+  def test_writable_always_false_for_dead_elements
+    refute invalid_element.writable?('AXRole'), 'Dead is always false'
+  end
+
   def test_equality
     assert_equal window, window
     assert_equal slider, slider

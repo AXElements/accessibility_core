@@ -241,6 +241,35 @@ module Accessibility::Element
   end
 
   ##
+  # Returns whether or not the given attribute is writable on the reciver
+  #
+  # Often, you will want/need to check writability of an attribute before
+  # trying to call {Accessibility::Element#set} for the attribute.
+  #
+  # In case of internal error, or if the element dies, this method will
+  # return `false`.
+  #
+  # @example
+  #
+  #   window.writable? 'AXSize'  # => true
+  #   window.writable? 'AXTitle' # => false
+  #
+  # @param name [String]
+  def writable? name
+    ptr  = Pointer.new :bool
+    code = AXUIElementIsAttributeSettable(self, name, ptr)
+
+    case code
+    when 0
+      ptr.value
+    when KAXErrorFailure, KAXErrorNoValue, KAXErrorInvalidUIElement
+      false
+    else
+      handle_error code, name
+    end
+  end
+
+  ##
   # Shortcut for getting the `KAXRoleAttribute`. Remember that
   # dead elements may return `nil` for their role.
   #
@@ -334,34 +363,6 @@ module Accessibility::Element
   def invalid?
     AXUIElementCopyAttributeValue(self, KAXRoleAttribute, Pointer.new(:id)) ==
       KAXErrorInvalidUIElement
-  end
-
-  ##
-  # Returns whether or not an attribute is writable. Often, you will
-  # want/need to check writability of an attribute before trying call
-  # {#set} for the attribute.
-  #
-  # In case of internal error or if the element dies, this method will
-  # return `false`.
-  #
-  # @example
-  #
-  #   window.writable? KAXSizeAttribute  # => true
-  #   window.writable? KAXTitleAttribute # => false
-  #
-  # @param name [String]
-  def writable? name
-    ptr  = Pointer.new :bool
-    code = AXUIElementIsAttributeSettable(self, name, ptr)
-
-    case code
-    when 0
-      ptr.value
-    when KAXErrorFailure, KAXErrorNoValue, KAXErrorInvalidUIElement
-      false
-    else
-      handle_error code, name
-    end
   end
 
   ##

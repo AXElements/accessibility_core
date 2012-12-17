@@ -665,6 +665,7 @@ rb_acore_size_of(VALUE self, VALUE name)
     {
     case kAXErrorSuccess:
       return INT2FIX(size);
+    case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return INT2FIX(0);
@@ -678,21 +679,22 @@ static
 VALUE
 rb_acore_is_writable(VALUE self, VALUE name)
 {
-  CFTypeRef        attr = NULL;
+  Boolean        result;
   CFStringRef attr_name = unwrap_string(name);
-  AXError          code = AXUIElementCopyAttributeValue(
+  AXError          code = AXUIElementIsAttributeSettable(
 							unwrap_ref(self),
 							attr_name,
-							&attr
+							&result
 							);
   CFRelease(attr_name);
   switch (code)
     {
     case kAXErrorSuccess:
-      return to_ruby(attr);
+      return (result ? Qtrue : Qfalse);
+    case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
-      return Qnil;
+      return Qfalse;
     default:
       return handle_error(self, code);
     }
