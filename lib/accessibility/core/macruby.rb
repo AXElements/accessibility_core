@@ -82,7 +82,6 @@ module Accessibility::Element
       end
     end
 
-  end
     ##
     # Create a new reference to the system wide object
     #
@@ -98,6 +97,51 @@ module Accessibility::Element
       AXUIElementCreateSystemWide()
     end
 
+    ##
+    # The delay between keyboard events used by {Accessibility::Element#post}
+    #
+    # The default value is `0.009` (`:normal`), which should be about 50
+    # characters per second (down and up are separate events).
+    #
+    # This is just a magic number from trial and error. Both the repeat
+    # interval (NXKeyRepeatInterval) and threshold (NXKeyRepeatThreshold)
+    # were tried, but were way too big.
+    #
+    # @return [Number]
+    attr_reader :key_rate
+
+    ##
+    # Set the delay between key events
+    #
+    # This value is used by {Accessibility::Element#post} to slow down the
+    # typing speed so apps do not get overloaded by all the events arriving
+    # at the same time.
+    #
+    # You can pass either an exact value for sleeping (a `Float` or
+    # `Fixnum`), or you can use a preset symbol:
+    #
+    #  - `:very_slow`
+    #  - `:slow`
+    #  - `:normal`/`:default`
+    #  - `:fast`
+    #  - `:zomg`
+    #
+    # The `:zomg` setting will be too fast in almost all cases, but
+    # it is fun to watch.
+    #
+    # @param [Number,Symbol]
+    def self.key_rate= value
+      @key_rate = case value
+                  when :very_slow        then 0.9
+                  when :slow             then 0.09
+                  when :normal, :default then 0.009
+                  when :fast             then 0.0009
+                  when :zomg             then 0.00009
+                  else                        value.to_f
+                  end
+    end
+  end
+  @key_rate = 0.009
 
 
   # @!group Attributes
@@ -493,52 +537,6 @@ module Accessibility::Element
     sleep 0.1 # in many cases, UI is not done updating right away
     self
   end
-
-  class << self
-    ##
-    # The delay between key events
-    #
-    # The default value is `0.009` (`:normal`), which should be about 50
-    # characters per second (down and up are separate events).
-    #
-    # This is just a magic number from trial and error. Both the repeat
-    # interval (NXKeyRepeatInterval) and threshold (NXKeyRepeatThreshold)
-    # were tried, but were way too big.
-    #
-    # @return [Number]
-    attr_reader :key_rate
-
-    ##
-    # Set the delay between key events
-    #
-    # This value is used by {#post} to slow down the typing speed so apps do
-    # not get overloaded by all the events arriving at the same time.
-    #
-    # You can pass either a precise value for sleeping (a `Float` or
-    # `Fixnum`), or you can use a preset symbol:
-    #
-    #  - `:very_slow`
-    #  - `:slow`
-    #  - `:normal`/`:default`
-    #  - `:fast`
-    #  - `:zomg`
-    #
-    # The `:zomg` setting will be too fast in almost all cases, but
-    # it is fun to watch.
-    #
-    # @param [Number,Symbol]
-    def self.key_rate= value
-      @key_rate = case value
-                  when :very_slow        then 0.9
-                  when :slow             then 0.09
-                  when :normal, :default then 0.009
-                  when :fast             then 0.0009
-                  when :zomg             then 0.00009
-                  else                        value.to_f
-                  end
-    end
-  end
-  @key_rate = 0.009
 
 
   # @!group Element Hierarchy Entry Points
