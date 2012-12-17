@@ -34,8 +34,22 @@ task :install => :gem do
   Gem::Installer.new("pkg/#{SPEC.file_name}").install
 end
 
+
+# C extensions!
+
 require 'rake/extensiontask'
+
 Rake::ExtensionTask.new('core', SPEC) do |ext|
   ext.ext_dir = 'ext/accessibility/core'
   ext.lib_dir = 'lib/accessibility/core'
 end
+
+Rake::ExtensionTask.new('highlighter', SPEC) do |ext|
+  ext.ext_dir = 'ext/accessibility/highlighter'
+  ext.lib_dir = 'lib/accessibility/core'
+end
+
+# Rake::ExtensionTask.new('running_application', SPEC) do |ext|
+#   ext.ext_dir = 'ext/accessibility/running_application'
+#   ext.lib_dir = 'lib/accessibility/core'
+# end

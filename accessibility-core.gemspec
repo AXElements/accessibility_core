@@ -17,7 +17,11 @@ Originally extracted from the AXElements project.
   s.licenses    = ['BSD 3-clause']
   s.has_rdoc    = 'yard'
 
-  s.extensions  = ['ext/accessibility/core/extconf.rb']
+  s.extensions  = [
+                   'ext/accessibility/core/extconf.rb',
+                   'ext/accessibility/highlighter/extconf.rb',
+                   #'ext/accessibility/running_application/extconf.rb'
+                  ]
   s.files       = Dir.glob('lib/**/*.rb') +
                   Dir.glob('ext/**/*.{c,h,rb}') +
                   [
