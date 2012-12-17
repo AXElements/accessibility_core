@@ -1,3 +1,5 @@
+require 'accessibility/core/core_ext/common'
+
 ##
 # accessibility-core extensions for `NSURL`
 class NSURL
