@@ -154,7 +154,6 @@ convert_rb_range(VALUE range)
   VALUE b, e;
   int exclusive;
 
-  range = rb_funcall(range, sel_to_range, 0);
   rb_range_values(range, &b, &e, &exclusive);
 
   int begin = NUM2INT(b);
