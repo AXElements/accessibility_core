@@ -653,21 +653,21 @@ static
 VALUE
 rb_acore_size_of(VALUE self, VALUE name)
 {
-  CFTypeRef        attr = NULL;
+  CFIndex          size = 0;
   CFStringRef attr_name = unwrap_string(name);
-  AXError          code = AXUIElementCopyAttributeValue(
-							unwrap_ref(self),
-							attr_name,
-							&attr
-							);
+  AXError          code = AXUIElementGetAttributeValueCount(
+							    unwrap_ref(self),
+							    attr_name,
+							    &size
+							    );
   CFRelease(attr_name);
   switch (code)
     {
     case kAXErrorSuccess:
-      return to_ruby(attr);
+      return INT2FIX(size);
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
-      return Qnil;
+      return INT2FIX(0);
     default:
       return handle_error(self, code);
     }
@@ -1153,7 +1153,7 @@ Init_core()
 
   rb_define_method(rb_cElement, "attributes",                rb_acore_attributes,               0);
   rb_define_method(rb_cElement, "attribute",                 rb_acore_attribute,                1);
-  rb_define_method(rb_cElement, "size_of",                   rb_acore_size_of,                  0);
+  rb_define_method(rb_cElement, "size_of",                   rb_acore_size_of,                  1);
   rb_define_method(rb_cElement, "writable?",                 rb_acore_is_writable,              1);
   rb_define_method(rb_cElement, "set",                       rb_acore_set,                      2);
 
