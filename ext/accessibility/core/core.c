@@ -1073,6 +1073,17 @@ rb_acore_element_at(VALUE self, VALUE point)
       return handle_error(self, code); // point, nil, nil
     }
 }
+
+
+static
+VALUE
+rb_acore_equality(VALUE self, VALUE other)
+{
+  if (CLASS_OF(other) == rb_cElement)
+    if (CFEqual(unwrap_ref(self), unwrap_ref(other)))
+      return Qtrue;
+  return Qfalse;
+}
 #endif
 
 
@@ -1162,6 +1173,7 @@ Init_core()
   rb_define_method(rb_cElement, "key_rate=",                 rb_acore_set_key_rate,             1);
   rb_define_method(rb_cElement, "application",               rb_acore_application,              0);
   rb_define_method(rb_cElement, "element_at",                rb_acore_element_at,               1);
+  rb_define_method(rb_cElement, "==",                        rb_acore_equality,                 1);
 
 #endif
 }
