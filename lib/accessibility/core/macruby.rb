@@ -207,6 +207,40 @@ module Accessibility::Element
   end
 
   ##
+  # @note It has been observed that some elements may lie with this value.
+  #       Bugs should be reported to the app developers in those cases.
+  #       I'm looking at you, Safari!
+  #
+  # Get the size of the array that would be returned by calling {#attribute}
+  #
+  # When performance matters, this is much faster than getting the array
+  # and asking for the size.
+  #
+  # If there is a failure or the backing element is no longer alive, this
+  # method will return `0`.
+  #
+  # @example
+  #
+  #   window.size_of 'AXChildren'  # => 19
+  #   table.size_of  'AXRows'      # => 100
+  #
+  # @param name [String]
+  # @return [Number]
+  def size_of name
+    ptr  = Pointer.new :long_long
+    code = AXUIElementGetAttributeValueCount(self, name, ptr)
+
+    case code
+    when 0
+      ptr.value
+    when KAXErrorFailure, KAXErrorNoValue, KAXErrorInvalidUIElement
+      0
+    else
+      handle_error code, name
+    end
+  end
+
+  ##
   # Shortcut for getting the `KAXRoleAttribute`. Remember that
   # dead elements may return `nil` for their role.
   #
@@ -300,38 +334,6 @@ module Accessibility::Element
   def invalid?
     AXUIElementCopyAttributeValue(self, KAXRoleAttribute, Pointer.new(:id)) ==
       KAXErrorInvalidUIElement
-  end
-
-  ##
-  # @note It has been observed that some elements may lie with this value.
-  #       Bugs should be reported to the app developers in those cases.
-  #
-  # Get the size of the array for attributes that would return an array.
-  # When performance matters, this is much faster than getting the array
-  # and asking for the size.
-  #
-  # If there is a failure or the backing element is no longer alive, this
-  # method will return `0`.
-  #
-  # @example
-  #
-  #   window.size_of KAXChildrenAttribute  # => 19
-  #   table.size_of KAXRowsAttribute       # => 100
-  #
-  # @param name [String]
-  # @return [Number]
-  def size_of name
-    ptr  = Pointer.new :long_long
-    code = AXUIElementGetAttributeValueCount(self, name, ptr)
-
-    case code
-    when 0
-      ptr.value
-    when KAXErrorFailure, KAXErrorNoValue, KAXErrorInvalidUIElement
-      0
-    else
-      handle_error code, name
-    end
   end
 
   ##

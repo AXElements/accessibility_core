@@ -54,6 +54,10 @@ class CoreTest < MiniTest::Unit::TestCase
     bye_button
   end
 
+  def pop_up
+    @@pop_up ||= window_child 'AXPopUpButton'
+  end
+
 
   # @!group Tests for singleton methods
 
@@ -113,6 +117,15 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_nil invalid_element.attribute('AXRole'), 'Dead element == nil'
     assert_nil invalid_element.attribute('AXChildren')
     assert_nil app.attribute('MADE_UP_ATTR')
+  end
+
+  def test_size_of
+    assert_equal app.children.size, app.size_of('AXChildren')
+    assert_equal 0,                 pop_up.size_of('AXChildren')
+  end
+
+  def test_size_of_dead_element_is_zero
+    assert_equal 0, invalid_element.size_of('AXChildren'), 'Dead == 0'
   end
 
   def test_equality
