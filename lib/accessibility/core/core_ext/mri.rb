@@ -116,3 +116,6 @@ class String
     URI.parse self
   end
 end
+
+
+require 'accessibility/core/core_ext/common'
