@@ -1,6 +1,10 @@
 require 'test/helper'
 
 if on_macruby?
+
+##
+# Boxed is the common ancestor of all structs defined by bridge support
+# in MacRuby.
 class BoxedTest < MiniTest::Unit::TestCase
 
   def test_to_ax_raises_for_arbitrary_boxes

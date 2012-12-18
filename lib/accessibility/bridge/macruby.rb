@@ -131,6 +131,51 @@ class << CGPoint
 end
 
 ##
+# Mixin for the special hidden class in MacRuby that represents `AXValueRef`
+#
+# This module adds a `#to_ruby` method that actually unwraps the object from
+# the `AXValueRef` to some sort of {Boxed} object, such as a {CGPoint} or a
+# {Range}.
+module ValueWrapper
+
+
+  ##
+  # Map of type encodings used for unwrapping structs wrapped in an `AXValueRef`
+  #
+  # The list is order sensitive, which is why we unshift nil, but
+  # should probably be more rigorously defined at runtime.
+  #
+  # @return [String,nil]
+  BOX_TYPES = [CGPoint, CGSize, CGRect, CFRange].map!(&:type).unshift(nil)
+
+  ##
+  # Unwrap an `AXValueRef` into the `Boxed` instance that it is supposed
+  # to be. This will only work for the most common boxed types, you will
+  # need to check the AXAPI documentation for an up to date list.
+  #
+  # @example
+  #
+  #   wrapped_point.to_ruby # => #<CGPoint x=44.3 y=99.0>
+  #   wrapped_range.to_ruby # => #<CFRange begin=7 length=100>
+  #   wrapped_thing.to_ruby # => wrapped_thing
+  #
+  # @return [Boxed]
+  def to_ruby
+    type = AXValueGetType(self)
+    return self if type.zero?
+
+    ptr = Pointer.new BOX_TYPES[type]
+    AXValueGetValue(self, type, ptr)
+    ptr.value.to_ruby
+  end
+
+  # hack to find the __NSCFType class and mix things in
+  klass = AXUIElementCreateSystemWide().class
+  klass.send :include, self
+
+end
+
+##
 # `accessibility-core` extensions to `NSArray`
 class NSArray
   # @return [Array]
