@@ -1,4 +1,4 @@
-#include "wrapper.h"
+#include "bridge.h"
 #import <Cocoa/Cocoa.h>
 
 
@@ -433,4 +433,26 @@ to_ax(VALUE obj)
   else if (type == rb_cURI)                return unwrap_url(obj);
   else if (obj  == Qtrue || obj == Qfalse) return unwrap_boolean(obj);
   else                                     return unwrap_unknown(obj);
+}
+
+void
+Init_bridge()
+{
+  sel_x        = rb_intern("x");
+  sel_y        = rb_intern("y");
+  sel_width    = rb_intern("width");
+  sel_height   = rb_intern("height");
+  sel_origin   = rb_intern("origin");
+  sel_size     = rb_intern("size");
+  sel_to_point = rb_intern("to_point");
+  sel_to_size  = rb_intern("to_size");
+  sel_to_rect  = rb_intern("to_rect");
+  sel_to_s     = rb_intern("to_s");
+  sel_parse    = rb_intern("parse");
+
+  rb_cCGPoint = rb_const_get(rb_cObject, rb_intern("CGPoint"));
+  rb_cCGSize  = rb_const_get(rb_cObject, rb_intern("CGSize"));
+  rb_cCGRect  = rb_const_get(rb_cObject, rb_intern("CGRect"));
+  rb_mURI     = rb_const_get(rb_cObject, rb_intern("URI"));
+  rb_cURI     = rb_const_get(rb_mURI,    rb_intern("Generic"));
 }

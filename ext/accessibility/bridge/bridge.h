@@ -2,6 +2,28 @@
 #import <Cocoa/Cocoa.h>
 
 
+VALUE rb_mAccessibility;
+VALUE rb_cElement;
+VALUE rb_cCGPoint;
+VALUE rb_cCGSize;
+VALUE rb_cCGRect;
+VALUE rb_mURI; // URI module
+VALUE rb_cURI; // URI::Generic class
+
+
+ID sel_x;
+ID sel_y;
+ID sel_width;
+ID sel_height;
+ID sel_origin;
+ID sel_size;
+ID sel_to_point;
+ID sel_to_size;
+ID sel_to_rect;
+ID sel_to_s;
+ID sel_parse;
+
+
 VALUE wrap_unknown(CFTypeRef obj);
 CFTypeRef unwrap_unknown(VALUE obj);
 
