@@ -1,12 +1,12 @@
 require './lib/accessibility/core/version'
 
 Gem::Specification.new do |s|
-  s.name     = 'accessibility-core'
+  s.name     = 'accessibility_core'
   s.version  = Accessibility::Core::VERSION
 
   s.summary     = 'A library for building automation tools on OS X'
   s.description = <<-EOS
-accessibility-core is a wrapper around the OS X Accessibility framework.
+accessibility_core is a wrapper around the OS X Accessibility framework.
 
 Originally extracted from the AXElements project.
   EOS
@@ -19,7 +19,7 @@ Originally extracted from the AXElements project.
 
   s.extensions  = [
                    'ext/accessibility/core/extconf.rb',
-                   'ext/accessibility/highlighter/extconf.rb',
+                   #'ext/accessibility/highlighter/extconf.rb',
                    #'ext/accessibility/running_application/extconf.rb'
                   ]
   s.files       = Dir.glob('lib/**/*.rb') +

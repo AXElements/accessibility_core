@@ -41,7 +41,7 @@ task :test => [:compile, :fixture]
 # Gem stuff
 
 require 'rubygems/package_task'
-SPEC = Gem::Specification.load('accessibility-core.gemspec')
+SPEC = Gem::Specification.load('accessibility_core.gemspec')
 
 Gem::PackageTask.new(SPEC) { }
 
