@@ -17,3 +17,6 @@
 *.app
 
 tmp/
+pkg/
+*.bundle
+
