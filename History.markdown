@@ -1,3 +1,7 @@
+# 0.1.2 - Fix some bridging stuff
+
+  * Update bridge dependency to get a fix
+
 # 0.1.1 - Fix the silly things release
 
   * Fix documentation not being generated
