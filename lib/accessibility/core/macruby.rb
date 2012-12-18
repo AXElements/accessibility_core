@@ -541,12 +541,14 @@ module Accessibility::Element
   end
 
   ##
-  # Post the list of given keyboard events to the element. This only
-  # applies if the given element is an application object or the
-  # system wide object. The focused element will receive the events.
+  # Post the list of given keyboard events to the receiver
   #
-  # Events could be generated from a string using output from
-  # {Accessibility::String#keyboard_events_for}.
+  # This only applies if the given element is an application object or
+  # the system wide object. The focused element will receive the events.
+  #
+  # Events could be generated from a string using output from the
+  # `accessibility_keyboard` gem's `Accessibility::String#keyboard_events_for`
+  # method.
   #
   # Events are number/boolean tuples, where the number is a keycode
   # and the boolean is the keypress state (true is keydown, false is

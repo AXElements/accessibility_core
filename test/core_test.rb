@@ -282,6 +282,27 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_raises(ArgumentError) { app.perform '' }
   end
 
+  ##
+  # The keyboard simulation stuff is a bit weird, we need to
+  # hardcode some values because we cannot depend on the class
+  # that translates strings into characters.
+  #
+  # This test also relies on being able to read and set the value
+  # of an element using other methods in the class; thus it is
+  # an integration test.
+  def test_post
+    events = [[0x56,true], [0x56,false], [0x54,true], [0x54,false]]
+    string = '42'
+
+    search_box.set 'AXFocused', true
+    app.post events
+
+    assert_equal string, search_box.value
+
+  ensure # reset for next test
+    search_box.set 'AXValue', ''
+  end
+
 
   # @!group Tests for instance methods
 
