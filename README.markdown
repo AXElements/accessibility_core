@@ -9,6 +9,22 @@ This was extracted from the
 project and is a work-in-progress.
 
 
+## Usage
+
+Currently, integrating the bridge into your project is a bit awkward. You
+will need to add the `accessibility_bridge` gem to your project as a
+dependency and then also `#include "bridge.c"` from the
+`ext/accessibility/bridge` directory (by copying the file or creating a
+git submodule). Finally, you will need to call `Init_bridge()` in the
+init function for your own C extension.
+
+You can see how `accessibility_core` does this by inspecting the code in
+that project.
+
+Any patches from people who know what they're doing that smooth out this
+process are welcome.
+
+
 ## Copyright
 
 Copyright (c)2012, Mark Rada
