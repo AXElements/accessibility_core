@@ -639,6 +639,7 @@ Init_core()
 	     "------------------------------------------------------------------------\n"
 	     );
 
+  Init_bridge();
 
   // these should be defined by now
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
