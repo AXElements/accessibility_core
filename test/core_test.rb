@@ -198,6 +198,90 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_raises(ArgumentError) { invalid_element.set 'AXTitle', 'hi' }
   end
 
+  def test_role
+    assert_equal 'AXApplication', app.role
+    assert_equal 'AXWindow',      window.role
+  end
+
+  def test_subrole
+    assert_equal 'AXStandardWindow', window.subrole
+    assert_nil web_area.subrole
+  end
+
+  def test_parent
+    assert_equal app, window.parent
+    assert_nil app.parent
+  end
+
+  def test_children
+    assert_equal app.attribute('AXChildren'), app.children
+  end
+
+  def test_children_returns_an_array_for_dead_elements
+    assert_kind_of Array, invalid_element.children
+  end
+
+  def test_value
+    assert_equal check_box.attribute('AXValue'), check_box.value
+    assert_equal    slider.attribute('AXValue'), slider.value
+  end
+
+  def test_parameterized_attributes
+    assert_empty app.parameterized_attributes
+
+    attrs = static_text.parameterized_attributes
+    assert_includes attrs, 'AXStringForRange'
+    assert_includes attrs, 'AXLineForIndex'
+    assert_includes attrs, 'AXBoundsForRange'
+
+    assert_empty invalid_element.parameterized_attributes, 'Dead should always be empty'
+  end
+
+  def test_parameterized_attribute
+    expected = 'My Li'
+
+    attr = static_text.parameterized_attribute('AXStringForRange', 0..4)
+    assert_equal expected, attr
+
+    if on_macruby?
+      attr = static_text.parameterized_attribute('AXAttributedStringForRange', 0..4)
+      assert_equal expected, attr.string
+    end
+
+    assert_nil invalid_element.parameterized_attribute('AXStringForRange', 0..0),
+      'dead elements should return nil for any parameterized attribute'
+
+    # Should add a test case to test the no value case, but it will have
+    # to be fabricated in the test app.
+
+    assert_raises(ArgumentError) {
+      app.parameterized_attribute('AXStringForRange', 0..1)
+    }
+  end
+
+  def test_actions
+    assert_empty                   app.actions
+    assert_equal ['AXPress'], yes_button.actions
+  end
+
+  def test_perform
+    2.times do # twice so that it will reset
+      val = check_box.value
+      check_box.perform 'AXPress'
+      refute_equal val, check_box.value
+    end
+
+    val  = slider.value
+    slider.perform 'AXIncrement'
+    assert slider.value > val
+
+    val  = slider.value
+    slider.perform 'AXDecrement'
+    assert slider.value < val
+
+    assert_raises(ArgumentError) { app.perform '' }
+  end
+
 
   # @!group Tests for instance methods
 

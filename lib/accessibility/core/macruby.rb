@@ -302,12 +302,17 @@ module Accessibility::Element
   end
 
   ##
-  # Shortcut for getting the `KAXRoleAttribute`. Remember that
-  # dead elements may return `nil` for their role.
+  # Shortcut for getting the `"AXRole"` attribute
+  #
+  # The role of an element roughly translates to the class of the object;
+  # however this can be thought of as the superclass of the object if the
+  # object also has a `"AXSubrole"` attribute.
+  #
+  # Remember that dead elements may return `nil` for their role.
   #
   # @example
   #
-  #   window.role  # => KAXWindowRole
+  #   window.role  # => "AXWindow"
   #
   # @return [String,nil]
   def role
@@ -315,10 +320,15 @@ module Accessibility::Element
   end
 
   ##
-  # @note You might get `nil` back as the subrole as AXWebArea
-  #       objects are known to do this. You need to check. :(
+  # @note You might get `nil` back as the subrole even if the object claims
+  #       to have a subrole attribute. AXWebArea objects are known to do this.
+  #       You need to check. :(
   #
-  # Shortcut for getting the `KAXSubroleAttribute`.
+  # Shortcut for getting the `"AXSubrole"`
+  #
+  # The subrole of an element roughly translates to the class of the object,
+  # but only if the object has a subrole. If an object does not have a subrole
+  # then the class of the object would be the {#role}.
   #
   # @example
   #   window.subrole    # => "AXDialog"
@@ -330,14 +340,42 @@ module Accessibility::Element
   end
 
   ##
-  # Shortcut for getting the `KAXChildrenAttribute`. An exception will
-  # be raised if the object does not have children.
+  # Shortcut for getting the `"AXParent"`
+  #
+  # The "parent" attribute of an element is the general way in which you would
+  # navigate upwards through the hierarchy of the views in an app.
+  #
+  # An element will be returned if the receiver has a parent, otherwise `nil`
+  # will be returned. Incorrectly implemented elements may also return `nil`.
+  # Usually only something that has a {#role} of `"AXApplication"` will return
+  # `nil` since it does not have a parent.
+  #
+  # @example
+  #
+  #   window.parent # => app
+  #   app.parent # => nil
+  #
+  # @return [Accessibility::Element,nil]
+  def parent
+    ptr  = Pointer.new :id
+    code = AXUIElementCopyAttributeValue(self, KAXParentAttribute, ptr)
+    code.zero? ? ptr.value.to_ruby : nil
+  end
+
+  ##
+  # Shortcut for getting the `"AXChildren"`
+  #
+  # The "children" attribute of an element is the general way in which you would
+  # navigate downwards through the hierarchy of the views in an app.
+  #
+  # An array will always be returned, even if the element is dead or has no
+  # children (but the array will be empty in those cases).
   #
   # @example
   #
   #   app.children # => [MenuBar, Window, ...]
   #
-  # @return [Array<AXUIElementRef>]
+  # @return [Array<Accessibility::Element>]
   def children
     ptr  = Pointer.new :id
     code = AXUIElementCopyAttributeValue(self, KAXChildrenAttribute, ptr)
@@ -345,7 +383,7 @@ module Accessibility::Element
   end
 
   ##
-  # Shortcut for getting the `KAXValueAttribute`.
+  # Shortcut for getting the `"AXValue"`
   #
   # @example
   #
@@ -385,31 +423,17 @@ module Accessibility::Element
       )
   end
 
-  ##
-  # Return whether or not the receiver is "dead".
-  #
-  # A dead element is one that is no longer in the app's view
-  # hierarchy. This is not the same as visibility; an element that is
-  # invalid will not be visible, but an invisible element might still
-  # be valid.
-  def invalid?
-    AXUIElementCopyAttributeValue(self, KAXRoleAttribute, Pointer.new(:id)) ==
-      KAXErrorInvalidUIElement
-  end
-
 
   # @!group Parameterized Attributes
 
   ##
-  # Get the list of parameterized attributes for the element. If the
-  # element does not have parameterized attributes, then an empty
-  # list will be returned.
-  #
-  # Most elements do not have parameterized attributes, but the ones
-  # that do, have many.
+  # Get the list of parameterized attributes for the element
   #
   # Similar to {#attributes}, this method will also return an empty
   # array if the element is dead.
+  #
+  # Most elements do not have parameterized attributes, but the ones
+  # that do, have many.
   #
   # @example
   #
@@ -431,12 +455,13 @@ module Accessibility::Element
   end
 
   ##
-  # Fetch the given pramaeterized attribute value for the given parameter.
-  # Low level objects, such as `AXUIElementRef` and {Boxed} objects, will
-  # be unwrapped for you automatically and {CFRange} objects will be turned
-  # into {Range} objects. Similarly, you do not need to worry about wrapping
-  # the parameter as that will be done for you (except for {Range} objects
-  # that use a negative index).
+  # Fetch the given pramaeterized attribute value for the given parameter
+  #
+  # Low level objects, such as {Accessibility::Element} and {Boxed} objects,
+  # will be unwrapped for you automatically and {CFRange} objects will be
+  # turned into {Range} objects. Similarly, you do not need to worry about
+  # wrapping the parameter as that will be done for you (except for {Range}
+  # objects that use a negative index).
   #
   # As a convention, if the backing element is no longer alive, or the
   # attribute does not exist, or a system failure occurs then you will
@@ -448,6 +473,7 @@ module Accessibility::Element
   #     # => "ello, worl"
   #
   # @param name [String]
+  # @param param [Object]
   def parameterized_attribute name, param
     ptr  = Pointer.new :id
     code = AXUIElementCopyParameterizedAttributeValue(self, name, param.to_ax, ptr)
@@ -466,9 +492,10 @@ module Accessibility::Element
   # @!group Actions
 
   ##
-  # Get the list of actions that the element can perform. If an element
-  # does not have actions, then an empty list will be returned. Dead
-  # elements will also return an empty array.
+  # Get the list of actions that the element can perform
+  #
+  # If an element does not have actions, then an empty list will be
+  # returned. Dead elements will also return an empty array.
   #
   # @example
   #
@@ -489,9 +516,11 @@ module Accessibility::Element
   end
 
   ##
-  # Ask an element to perform the given action. This method will always
-  # return true or raise an exception. Actions should never fail, but
-  # there are some extreme edge cases (e.g. out of memory, etc.).
+  # Ask the receiver to perform the given action
+  #
+  # This method will always return true or raises an exception. Actions
+  # should never fail, but there are some extreme edge cases (e.g. out
+  # of memory, etc.).
   #
   # Unlike when reading attributes, performing an action on a dead element
   # will raise an exception.
@@ -589,6 +618,18 @@ module Accessibility::Element
 
 
   # @!group Misc.
+
+  ##
+  # Return whether or not the receiver is "dead".
+  #
+  # A dead element is one that is no longer in the app's view
+  # hierarchy. This is not the same as visibility; an element that is
+  # invalid will not be visible, but an invisible element might still
+  # be valid.
+  def invalid?
+    AXUIElementCopyAttributeValue(self, KAXRoleAttribute, Pointer.new(:id)) ==
+      KAXErrorInvalidUIElement
+  end
 
   ##
   # Returns the application reference for the application that the receiver
@@ -761,7 +802,7 @@ module Accessibility::Element
   ##
   # @private
   #
-  # `Pointer` type encoding for `CFArrayRef` objects.
+  # `Pointer` type encoding for `CFArrayRef` objects
   #
   # @return [String]
   ARRAY    = '^{__CFArray}'
@@ -769,7 +810,7 @@ module Accessibility::Element
   ##
   # @private
   #
-  # `Pointer` type encoding for `AXUIElementRef` objects.
+  # `Pointer` type encoding for `AXUIElementRef` objects
   #
   # @return [String]
   ELEMENT  = '^{__AXUIElement}'

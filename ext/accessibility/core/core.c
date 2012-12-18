@@ -33,6 +33,10 @@ handle_error(VALUE self, AXError code)
       rb_raise(rb_eArgError, "invalid element (probably dead)");
     case kAXErrorAttributeUnsupported:
       rb_raise(rb_eArgError, "attribute unsupported");
+    case kAXErrorActionUnsupported:
+      rb_raise(rb_eArgError, "action unsupported");
+    case kAXErrorParameterizedAttributeUnsupported:
+      rb_raise(rb_eArgError, "parameterized attribute unsupported");
     default:
       rb_raise(rb_eRuntimeError, "you done goofed [%d]", code);
     }
@@ -147,6 +151,8 @@ rb_acore_attributes(VALUE self)
       // TODO we should actually allow for a grace period and try again in
       //      every case where would be deferring to the default error handler,
       //      and maybe even in every case where we get a non-zero result code
+      //
+      //      WE SHOULD HANDLE THINGS LIKE FAILURE AND CANNOT COMPLETE LIKE THIS
       return handle_error(self, code);
     }
 }
@@ -275,9 +281,6 @@ rb_acore_parameterized_attributes(VALUE self)
     case kAXErrorInvalidUIElement:
       return rb_ary_new();
     default:
-      // TODO we should actually allow for a grace period and try again in
-      //      every case where would be deferring to the default error handler,
-      //      and maybe even in every case where we get a non-zero result code
       return handle_error(self, code);
     }
 }
@@ -331,9 +334,6 @@ rb_acore_actions(VALUE self)
     case kAXErrorInvalidUIElement:
       return rb_ary_new();
     default:
-      // TODO we should actually allow for a grace period and try again in
-      //      every case where would be deferring to the default error handler,
-      //      and maybe even in every case where we get a non-zero result code
       return handle_error(self, code);
     }
 }
@@ -463,8 +463,10 @@ rb_acore_parent(VALUE self)
     {
     case kAXErrorSuccess:
       return wrap_ref(value);
+    case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
+    case kAXErrorAttributeUnsupported:
       return Qnil;
     default:
       return handle_error(self, code);
