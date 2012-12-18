@@ -61,10 +61,10 @@ Rake::ExtensionTask.new('core', SPEC) do |ext|
   ext.lib_dir = 'lib/accessibility/core'
 end
 
-Rake::ExtensionTask.new('highlighter', SPEC) do |ext|
-  ext.ext_dir = 'ext/accessibility/highlighter'
-  ext.lib_dir = 'lib/accessibility/core'
-end
+#Rake::ExtensionTask.new('highlighter', SPEC) do |ext|
+#  ext.ext_dir = 'ext/accessibility/highlighter'
+#  ext.lib_dir = 'lib/accessibility/core'
+#end
 
 # Rake::ExtensionTask.new('running_application', SPEC) do |ext|
 #   ext.ext_dir = 'ext/accessibility/running_application'
