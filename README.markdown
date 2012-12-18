@@ -14,7 +14,7 @@ runtimes.
     app = Accessibility::Element.application_for 276  # PID for some app
     app.attributes
 
-    window = app.main_window
+    window = app.attribute 'AXMainWindow'
     window.attributes
     window.attribute 'AXPosition'
     window.set 'AXPosition', CGPoint.new(100, 100)
