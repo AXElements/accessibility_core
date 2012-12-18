@@ -235,6 +235,11 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_equal 0, Accessibility::Element.system_wide.pid # special case
   end
 
+  def test_application_for_pid_works # integration test
+    assert_equal app, Accessibility::Element.application_for(app.pid)
+    assert_equal app, Accessibility::Element.application_for(window.pid)
+  end
+
   def test_parameterized_attributes
     assert_empty app.parameterized_attributes
 
