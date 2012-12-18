@@ -198,6 +198,9 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_raises(ArgumentError) { invalid_element.set 'AXTitle', 'hi' }
   end
 
+
+  # @!group Tests for instance methods
+
   def test_role
     assert_equal 'AXApplication', app.role
     assert_equal 'AXWindow',      window.role
@@ -224,6 +227,12 @@ class CoreTest < MiniTest::Unit::TestCase
   def test_value
     assert_equal check_box.attribute('AXValue'), check_box.value
     assert_equal    slider.attribute('AXValue'), slider.value
+  end
+
+  def test_pid
+    assert_equal PID, app.pid
+    assert_equal PID, window.pid
+    assert_equal 0, Accessibility::Element.system_wide.pid # special case
   end
 
   def test_parameterized_attributes
@@ -303,8 +312,11 @@ class CoreTest < MiniTest::Unit::TestCase
     search_box.set 'AXValue', ''
   end
 
-
-  # @!group Tests for instance methods
+  def test_invalid?
+    assert_equal false, app.invalid?
+    assert_equal true,  invalid_element.invalid?
+    assert_equal false, window.invalid?
+  end
 
   def test_equality
     assert_equal window, window

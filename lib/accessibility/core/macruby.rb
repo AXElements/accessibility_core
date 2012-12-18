@@ -395,8 +395,7 @@ module Accessibility::Element
   end
 
   ##
-  # Get the process identifier (PID) of the application that the element
-  # belongs to.
+  # Get the process identifier (PID) of the application of the receiver
   #
   # This method will return `0` if the element is dead or if the receiver
   # is the the system wide element.
@@ -579,6 +578,18 @@ module Accessibility::Element
   # @!group Element Hierarchy Entry Points
 
   ##
+  # Return whether or not the receiver is "dead"
+  #
+  # A dead element is one that is no longer in the app's view
+  # hierarchy. This is not the same as visibility; an element that is
+  # invalid will not be visible, but an invisible element might still
+  # be valid (it depends on the clients implementation of the API).
+  def invalid?
+    AXUIElementCopyAttributeValue(self, KAXRoleAttribute, Pointer.new(:id)) ==
+      KAXErrorInvalidUIElement
+  end
+
+  ##
   # Find the top most element at a point on the screen that belongs to the
   # backing application. If the backing element is the system wide object
   # then the return is the top most element regardless of application.
@@ -620,18 +631,6 @@ module Accessibility::Element
 
 
   # @!group Misc.
-
-  ##
-  # Return whether or not the receiver is "dead".
-  #
-  # A dead element is one that is no longer in the app's view
-  # hierarchy. This is not the same as visibility; an element that is
-  # invalid will not be visible, but an invisible element might still
-  # be valid.
-  def invalid?
-    AXUIElementCopyAttributeValue(self, KAXRoleAttribute, Pointer.new(:id)) ==
-      KAXErrorInvalidUIElement
-  end
 
   ##
   # Returns the application reference for the application that the receiver

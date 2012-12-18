@@ -260,149 +260,6 @@ rb_acore_set(VALUE self, VALUE name, VALUE value)
 
 static
 VALUE
-rb_acore_parameterized_attributes(VALUE self)
-{
-  VALUE cached_attrs = rb_ivar_get(self, ivar_param_attrs);
-  if (cached_attrs != Qnil)
-    return cached_attrs;
-
-  CFArrayRef attrs = NULL;
-  AXError     code = AXUIElementCopyParameterizedAttributeNames(
-                                                                unwrap_ref(self),
-								&attrs
-								);
-  switch (code)
-    {
-    case kAXErrorSuccess:
-      cached_attrs = wrap_array_strings(attrs);
-      rb_ivar_set(self, ivar_param_attrs, cached_attrs);
-      CFRelease(attrs);
-      return cached_attrs;
-    case kAXErrorInvalidUIElement:
-      return rb_ary_new();
-    default:
-      return handle_error(self, code);
-    }
-}
-
-
-static
-VALUE
-rb_acore_parameterized_attribute(VALUE self, VALUE name, VALUE parameter)
-{
-  CFTypeRef       param = to_ax(parameter);
-  CFTypeRef        attr = NULL;
-  CFStringRef attr_name = unwrap_string(name);
-  AXError          code = AXUIElementCopyParameterizedAttributeValue(
-								     unwrap_ref(self),
-								     attr_name,
-								     param,
-								     &attr
-								     );
-  CFRelease(param);
-  CFRelease(attr_name);
-  switch (code)
-    {
-    case kAXErrorSuccess:
-      return to_ruby(attr);
-    case kAXErrorNoValue:
-    case kAXErrorInvalidUIElement:
-      return Qnil;
-    default:
-      return handle_error(self, code);
-    }
-}
-
-
-static
-VALUE
-rb_acore_actions(VALUE self)
-{
-  VALUE cached_actions = rb_ivar_get(self, ivar_actions);
-  if (cached_actions != Qnil)
-    return cached_actions;
-
-  CFArrayRef actions = NULL;
-  AXError       code = AXUIElementCopyActionNames(unwrap_ref(self), &actions);
-  switch (code)
-    {
-    case kAXErrorSuccess:
-      cached_actions = wrap_array_strings(actions);
-      rb_ivar_set(self, ivar_actions, cached_actions);
-      CFRelease(actions);
-      return cached_actions;
-    case kAXErrorInvalidUIElement:
-      return rb_ary_new();
-    default:
-      return handle_error(self, code);
-    }
-}
-
-
-static
-VALUE
-rb_acore_perform(VALUE self, VALUE name)
-{
-  CFStringRef action = unwrap_string(name);
-  AXError       code = AXUIElementPerformAction(unwrap_ref(self), action);
-
-  CFRelease(action);
-  switch (code)
-    {
-    case kAXErrorSuccess:
-      return Qtrue;
-    case kAXErrorInvalidUIElement:
-      return Qfalse;
-    default:
-      return handle_error(self, code);
-    }
-}
-
-
-
-
-static
-VALUE
-rb_acore_post(VALUE self, VALUE events)
-{
-  events = rb_ary_to_ary(events);
-  long length = RARRAY_LEN(events);
-  useconds_t sleep_time = NUM2DBL(rb_ivar_get(rb_cElement, ivar_key_rate)) * 100000;
-
-  // CGCharCode key_char = 0; // TODO this value seems to not matter?
-  VALUE            pair;
-  CGKeyCode virtual_key;
-  int         key_state;
-  AXError          code;
-
-
-  for (long i = 0; i < length; i++) {
-    pair        = rb_ary_entry(events, i);
-    virtual_key = NUM2INT(rb_ary_entry(pair, 0));
-    key_state   = rb_ary_entry(pair, 1) == Qtrue ? true : false;
-    code        = AXUIElementPostKeyboardEvent(
-					       unwrap_ref(self),
-					       0,
-					       virtual_key,
-					       key_state
-					       );
-    switch (code)
-      {
-      case kAXErrorSuccess:
-	break;
-      default:
-	handle_error(self, code);
-      }
-
-    usleep(sleep_time);
-  }
-
-  return self;
-}
-
-
-static
-VALUE
 rb_acore_role(VALUE self)
 {
   CFTypeRef value = NULL;
@@ -519,21 +376,6 @@ rb_acore_value(VALUE self)
 
 static
 VALUE
-rb_acore_is_invalid(VALUE self)
-{
-  CFTypeRef value = NULL;
-  AXError    code = AXUIElementCopyAttributeValue(
-						  unwrap_ref(self),
-						  kAXRoleAttribute,
-						  &value
-						  );
-  CFRelease(value);
-  return (code ? Qfalse : Qtrue);
-}
-
-
-static
-VALUE
 rb_acore_pid(VALUE self)
 {
   VALUE cached_pid = rb_ivar_get(self, ivar_pid);
@@ -559,6 +401,163 @@ rb_acore_pid(VALUE self)
   cached_pid = PIDT2NUM(pid);
   rb_ivar_set(self, ivar_pid, cached_pid);
   return cached_pid;
+}
+
+
+static
+VALUE
+rb_acore_parameterized_attributes(VALUE self)
+{
+  VALUE cached_attrs = rb_ivar_get(self, ivar_param_attrs);
+  if (cached_attrs != Qnil)
+    return cached_attrs;
+
+  CFArrayRef attrs = NULL;
+  AXError     code = AXUIElementCopyParameterizedAttributeNames(
+                                                                unwrap_ref(self),
+								&attrs
+								);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      cached_attrs = wrap_array_strings(attrs);
+      rb_ivar_set(self, ivar_param_attrs, cached_attrs);
+      CFRelease(attrs);
+      return cached_attrs;
+    case kAXErrorInvalidUIElement:
+      return rb_ary_new();
+    default:
+      return handle_error(self, code);
+    }
+}
+
+
+static
+VALUE
+rb_acore_parameterized_attribute(VALUE self, VALUE name, VALUE parameter)
+{
+  CFTypeRef       param = to_ax(parameter);
+  CFTypeRef        attr = NULL;
+  CFStringRef attr_name = unwrap_string(name);
+  AXError          code = AXUIElementCopyParameterizedAttributeValue(
+								     unwrap_ref(self),
+								     attr_name,
+								     param,
+								     &attr
+								     );
+  CFRelease(param);
+  CFRelease(attr_name);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return to_ruby(attr);
+    case kAXErrorNoValue:
+    case kAXErrorInvalidUIElement:
+      return Qnil;
+    default:
+      return handle_error(self, code);
+    }
+}
+
+
+static
+VALUE
+rb_acore_actions(VALUE self)
+{
+  VALUE cached_actions = rb_ivar_get(self, ivar_actions);
+  if (cached_actions != Qnil)
+    return cached_actions;
+
+  CFArrayRef actions = NULL;
+  AXError       code = AXUIElementCopyActionNames(unwrap_ref(self), &actions);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      cached_actions = wrap_array_strings(actions);
+      rb_ivar_set(self, ivar_actions, cached_actions);
+      CFRelease(actions);
+      return cached_actions;
+    case kAXErrorInvalidUIElement:
+      return rb_ary_new();
+    default:
+      return handle_error(self, code);
+    }
+}
+
+
+static
+VALUE
+rb_acore_perform(VALUE self, VALUE name)
+{
+  CFStringRef action = unwrap_string(name);
+  AXError       code = AXUIElementPerformAction(unwrap_ref(self), action);
+
+  CFRelease(action);
+  switch (code)
+    {
+    case kAXErrorSuccess:
+      return Qtrue;
+    case kAXErrorInvalidUIElement:
+      return Qfalse;
+    default:
+      return handle_error(self, code);
+    }
+}
+
+
+static
+VALUE
+rb_acore_post(VALUE self, VALUE events)
+{
+  events = rb_ary_to_ary(events);
+  long length = RARRAY_LEN(events);
+  useconds_t sleep_time = NUM2DBL(rb_ivar_get(rb_cElement, ivar_key_rate)) * 100000;
+
+  // CGCharCode key_char = 0; // TODO this value seems to not matter?
+  VALUE            pair;
+  CGKeyCode virtual_key;
+  int         key_state;
+  AXError          code;
+
+
+  for (long i = 0; i < length; i++) {
+    pair        = rb_ary_entry(events, i);
+    virtual_key = NUM2INT(rb_ary_entry(pair, 0));
+    key_state   = rb_ary_entry(pair, 1) == Qtrue ? true : false;
+    code        = AXUIElementPostKeyboardEvent(
+					       unwrap_ref(self),
+					       0,
+					       virtual_key,
+					       key_state
+					       );
+    switch (code)
+      {
+      case kAXErrorSuccess:
+	break;
+      default:
+	handle_error(self, code);
+      }
+
+    usleep(sleep_time);
+  }
+
+  return self;
+}
+
+
+static
+VALUE
+rb_acore_is_invalid(VALUE self)
+{
+  CFTypeRef value = NULL;
+  AXError    code = AXUIElementCopyAttributeValue(
+						  unwrap_ref(self),
+						  kAXRoleAttribute,
+						  &value
+						  );
+  if (value)
+    CFRelease(value);
+  return (code == kAXErrorInvalidUIElement ? Qtrue : Qfalse);
 }
 
 
@@ -680,6 +679,7 @@ Init_core()
   rb_define_method(rb_cElement, "parent",                    rb_acore_parent,                   0);
   rb_define_method(rb_cElement, "children",                  rb_acore_children,                 0);
   rb_define_method(rb_cElement, "value",                     rb_acore_value,                    0);
+  rb_define_method(rb_cElement, "pid",                       rb_acore_pid,                      0);
 
   rb_define_method(rb_cElement, "parameterized_attributes",  rb_acore_parameterized_attributes, 0);
   rb_define_method(rb_cElement, "parameterized_attribute",   rb_acore_parameterized_attribute,  2);
@@ -689,7 +689,6 @@ Init_core()
   rb_define_method(rb_cElement, "post",                      rb_acore_post,                     1);
 
   rb_define_method(rb_cElement, "invalid?",                  rb_acore_is_invalid,               0);
-  rb_define_method(rb_cElement, "pid",                       rb_acore_pid,                      0);
   rb_define_method(rb_cElement, "set_timeout_to",            rb_acore_set_timeout_to,           1);
   // TODO make this meaningful, currently has no effect on calling rb_acore_post
   rb_define_method(rb_cElement, "key_rate",                  rb_acore_key_rate,                 0);
