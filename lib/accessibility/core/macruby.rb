@@ -29,9 +29,6 @@ has access to CoreFoundation.
 end
 
 
-require 'accessibility/core/core_ext/macruby'
-
-
 ##
 # Core abstraction layer that that adds OO to the OS X Accessibility APIs
 #
