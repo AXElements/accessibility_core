@@ -63,6 +63,8 @@ module Accessibility::Element
 
   class << self
 
+    # @!group Element Hierarchy Entry Points
+
     ##
     # Get the application object object for an application given the
     # process identifier (PID) for that application.
@@ -73,7 +75,7 @@ module Accessibility::Element
     #
     # @param pid [Number]
     # @return [Accessibility::Element]
-    def self.application_for pid
+    def application_for pid
       NSRunLoop.currentRunLoop.runUntilDate Time.now
       if NSRunningApplication.runningApplicationWithProcessIdentifier pid
         AXUIElementCreateApplication(pid)
@@ -96,6 +98,37 @@ module Accessibility::Element
     def system_wide
       AXUIElementCreateSystemWide()
     end
+
+    ##
+    # Find the top most element at the given point on the screen
+    #
+    # This is the same as {Accessibility::Element#element_at} except
+    # that the check for the topmost element does not care which app
+    # the element belongs to.
+    #
+    # The coordinates should be specified using the flipped coordinate
+    # system (origin is in the top-left, increasing downward and to the right
+    # as if reading a book in English).
+    #
+    # If more than one element is at the position then the z-order of the
+    # elements will be used to determine which is "on top".
+    #
+    # This method will safely return `nil` if there is no UI element at the
+    # give point.
+    #
+    # @example
+    #
+    #   Element.element_at [453, 200]             # table
+    #   Element.element_at CGPoint.new(453, 200)  # table
+    #
+    # @param point [#to_point]
+    # @return [Accessibility::Element,nil]
+    def element_at point
+      system_wide.element_at point
+    end
+
+    # @!endgroup
+
 
     ##
     # The delay between keyboard events used by {Accessibility::Element#post}
@@ -187,7 +220,7 @@ module Accessibility::Element
   # @example
   #   window.attribute 'AXTitle'    # => "HotCocoa Demo"
   #   window.attribute 'AXSize'     # => #<CGSize width=10.0 height=88>
-  #   window.attribute 'AXParent'   # => #<AXUIElementRef>
+  #   window.attribute 'AXParent'   # => #<Accessibility::Element>
   #   window.attribute 'AXHerpDerp' # => nil
   #
   # @param name [String]
@@ -575,7 +608,7 @@ module Accessibility::Element
   end
 
 
-  # @!group Element Hierarchy Entry Points
+  # @!group Misc.
 
   ##
   # Return whether or not the receiver is "dead"
@@ -590,9 +623,44 @@ module Accessibility::Element
   end
 
   ##
-  # Find the top most element at a point on the screen that belongs to the
-  # backing application. If the backing element is the system wide object
-  # then the return is the top most element regardless of application.
+  # Change the timeout value for the element
+  #
+  # The timeout value is mostly effective for apps that are slow to respond to
+  # accessibility queries, or if you intend to make a large query (such as thousands
+  # of rows in a table).
+  #
+  # If you change the timeout on the system wide object, it affets all timeouts.
+  #
+  # Setting the global timeout to `0` seconds will reset the timeout value
+  # to the system default. The system default timeout value is `6 seconds`
+  # as of the writing of this documentation, but Apple has not publicly
+  # documented this (we had to ask in person at WWDC).
+  #
+  # @param seconds [Number]
+  # @return [Number]
+  def set_timeout_to seconds
+    case code = AXUIElementSetMessagingTimeout(self, seconds)
+    when 0 then seconds
+    else handle_error code, seconds
+    end
+  end
+
+  ##
+  # Returns the application reference (toplevel element) for the receiver
+  #
+  # @return [Accessibility::Element]
+  def application
+    Accessibility::Element.application_for pid
+  end
+
+
+  # @!group Element Hierarchy Entry Points
+
+  ##
+  # Find the topmost element at the given point for the receiver's app
+  #
+  # If the receiver is the system wide object then the return is the
+  # topmost element regardless of application.
   #
   # The coordinates should be specified using the flipped coordinate
   # system (origin is in the top-left, increasing downward and to the right
@@ -610,7 +678,7 @@ module Accessibility::Element
   #   app.element_at CGPoint.new(453, 200)       # table
   #
   # @param point [#to_point]
-  # @return [AXUIElementRef,nil]
+  # @return [Accessibility::Element,nil]
   def element_at point
     ptr  = Pointer.new ELEMENT
     code = AXUIElementCopyElementAtPosition(self, *point.to_point, ptr)
@@ -620,45 +688,12 @@ module Accessibility::Element
       ptr.value.to_ruby
     when KAXErrorNoValue
       nil
-    when KAXErrorInvalidUIElement
+    when KAXErrorInvalidUIElement # @todo uhh, why is this here again?
       unless self == Accessibility::Element.system_wide
-        Accessibility::Element.system_wide.element_at point
+        Accessibility::Element.element_at point
       end
     else
       handle_error code, point, nil, nil
-    end
-  end
-
-
-  # @!group Misc.
-
-  ##
-  # Returns the application reference for the application that the receiver
-  # belongs to.
-  #
-  # @return [AXUIElementRef]
-  def application
-    Accessibility::Element.application_for pid
-  end
-
-
-  # @!group Debug
-
-  ##
-  # Change the timeout value for the element. If you change the timeout
-  # on the system wide object, it affets all timeouts.
-  #
-  # Setting the global timeout to `0` seconds will reset the timeout value
-  # to the system default. The system default timeout value is `6 seconds`
-  # as of the writing of this documentation, but Apple has not publicly
-  # documented this (we had to ask in person at WWDC).
-  #
-  # @param seconds [Number]
-  # @return [Number]
-  def set_timeout_to seconds
-    case code = AXUIElementSetMessagingTimeout(self, seconds)
-    when 0 then seconds
-    else handle_error code, seconds
     end
   end
 
@@ -686,7 +721,7 @@ module Accessibility::Element
       lambda { |*args|
         case args.size
         when 1
-          "#{args[0].inspect} is not an AXUIElementRef"
+          "#{args[0].inspect} is not an Accessibility::Element"
         when 2
           "Either the element #{args[0].inspect} or the attribute/action" +
             "#{args[1].inspect} is not a legal argument"
@@ -695,7 +730,7 @@ module Accessibility::Element
             "for #{args[0].inspect}"
         when 4
           "The point #{args[1].to_point.inspect} is not a valid point, " +
-            "or #{args[0].inspect} is not an AXUIElementRef"
+            "or #{args[0].inspect} is not an Accessibility::Element"
         end
       }
     ],

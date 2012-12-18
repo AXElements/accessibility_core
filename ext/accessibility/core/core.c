@@ -590,6 +590,9 @@ static
 VALUE
 rb_acore_element_at(VALUE self, VALUE point)
 {
+  if (self == rb_cElement)
+    self = rb_acore_system_wide(self);
+
   AXUIElementRef ref = NULL;
   CGPoint          p = unwrap_point(point);
   AXError       code = AXUIElementCopyElementAtPosition(
@@ -656,6 +659,7 @@ Init_core()
 
   rb_define_singleton_method(rb_cElement, "application_for", rb_acore_application_for,          1);
   rb_define_singleton_method(rb_cElement, "system_wide",     rb_acore_system_wide,              0);
+  rb_define_singleton_method(rb_cElement, "element_at",      rb_acore_element_at,               1);
   rb_define_singleton_method(rb_cElement, "key_rate",        rb_acore_key_rate,                 0);
   rb_define_singleton_method(rb_cElement, "key_rate=",       rb_acore_set_key_rate,             1);
 

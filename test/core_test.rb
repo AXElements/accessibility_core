@@ -97,6 +97,25 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_equal 'AXSystemWide', Accessibility::Element.system_wide.role
   end
 
+  def test_element_at_singleton
+    [
+     no_button.attribute('AXPosition'),
+     no_button.attribute('AXPosition').to_a
+    ].each do |point|
+
+      element = Accessibility::Element.element_at point
+      assert_equal no_button, element, "#{no_button.inspect} and #{element.inspect}"
+
+      element = Accessibility::Element.element_at point
+      assert_equal no_button, element, "#{no_button.inspect} and #{element.inspect}"
+
+      assert_kind_of Accessibility::Element, element
+    end
+
+    # skip 'Need to find a way to guarantee an empty spot on the screen to return nil'
+    # test manually for now :(
+  end
+
   def test_key_rate
     assert_equal 0.009, Accessibility::Element.key_rate
     [
@@ -321,6 +340,35 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_equal false, app.invalid?
     assert_equal true,  invalid_element.invalid?
     assert_equal false, window.invalid?
+  end
+
+  def test_set_timeout_to
+    assert_equal 10, app.set_timeout_to(10)
+    assert_equal 0,  app.set_timeout_to(0)
+  end
+
+  def test_application
+    assert_equal app, app.application
+    assert_equal app, window.application
+  end
+
+  def test_element_at
+    [
+     no_button.attribute('AXPosition'),
+     no_button.attribute('AXPosition').to_a
+    ].each do |point|
+
+      element = app.element_at point
+      assert_equal no_button, element, "#{no_button.inspect} and #{element.inspect}"
+
+      element = Accessibility::Element.system_wide.element_at point
+      assert_equal no_button, element, "#{no_button.inspect} and #{element.inspect}"
+
+      assert_kind_of Accessibility::Element, element
+    end
+
+    # skip 'Need to find a way to guarantee an empty spot on the screen to return nil'
+    # test manually for now :(
   end
 
   def test_equality
