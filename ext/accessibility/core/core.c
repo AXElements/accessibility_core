@@ -438,8 +438,10 @@ rb_acore_subrole(VALUE self)
     {
     case kAXErrorSuccess:
       return wrap_string((CFStringRef)value);
+    case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
+    case kAXErrorAttributeUnsupported:
       return Qnil;
     default:
       return handle_error(self, code);
