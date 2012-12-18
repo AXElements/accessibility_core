@@ -3,7 +3,7 @@
 framework 'Cocoa'
 
 # A workaround that guarantees that `CGPoint` is defined
-MOUNTAIN_LION_APPKIT_VERSION = 1187
+MOUNTAIN_LION_APPKIT_VERSION ||= 1187
 if NSAppKitVersionNumber >= MOUNTAIN_LION_APPKIT_VERSION
   framework '/System/Library/Frameworks/CoreGraphics.framework'
 end
@@ -599,27 +599,6 @@ module Accessibility::Element
     Accessibility::Element.application_for pid
   end
 
-  ##
-  # Unwrap an `AXValue` into the `Boxed` instance that it is supposed
-  # to be. This will only work for the most common boxed types, you will
-  # need to check the AXAPI documentation for an up to date list.
-  #
-  # @example
-  #
-  #   wrapped_point.to_ruby # => #<CGPoint x=44.3 y=99.0>
-  #   wrapped_range.to_ruby # => #<CFRange begin=7 length=100>
-  #   wrapped_thing.to_ruby # => wrapped_thing
-  #
-  # @return [Boxed]
-  def to_ruby
-    type = AXValueGetType(self)
-    return self if type.zero?
-
-    ptr = Pointer.new BOX_TYPES[type]
-    AXValueGetValue(self, type, ptr)
-    ptr.value.to_ruby
-  end
-
 
   # @!group Debug
 
@@ -794,16 +773,6 @@ module Accessibility::Element
   #
   # @return [String]
   ELEMENT  = '^{__AXUIElement}'
-
-  ##
-  # Map of type encodings used for wrapping structs when coming from
-  # an `AXValueRef`.
-  #
-  # The list is order sensitive, which is why we unshift nil, but
-  # should probably be more rigorously defined at runtime.
-  #
-  # @return [String,nil]
-  BOX_TYPES = [CGPoint, CGSize, CGRect, CFRange].map!(&:type).unshift(nil)
 
 end
 

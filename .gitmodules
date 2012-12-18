@@ -1,0 +1,3 @@
+[submodule "ext/accessibility/bridge"]
+	path = ext/accessibility/bridge
+	url = https://github.com/AXElements/accessibility_bridge
