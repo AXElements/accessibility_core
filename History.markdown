@@ -1,4 +1,10 @@
-# 0.0.1 - Initial Release
+# 0.1.1 - Fix the silly things release
+
+  * Fix documentation not being generated
+  * Fix C extension not being installed to the proper location
+  * Remove redundant core extensions provided by `accessibility_bridge`
+
+# 0.1.0 - Initial Release
 
   * CRuby and MacRuby compatible
 
