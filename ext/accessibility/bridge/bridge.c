@@ -450,9 +450,11 @@ to_ax(VALUE obj)
   VALUE type = CLASS_OF(obj);
   if      (type == rb_cElement)            return unwrap_ref(obj);
   else if (type == rb_cString)             return unwrap_string(obj);
-  else if (type == rb_cStruct)             return unwrap_value(obj);
-  else if (type == rb_cRange)              return unwrap_value(obj);
   else if (type == rb_cFixnum)             return unwrap_number(obj);
+  else if (type == rb_cCGPoint)            return unwrap_value(obj);
+  else if (type == rb_cCGSize)             return unwrap_value(obj);
+  else if (type == rb_cCGRect)             return unwrap_value(obj);
+  else if (type == rb_cRange)              return unwrap_value(obj);
   else if (type == rb_cFloat)              return unwrap_number(obj);
   else if (type == rb_cTime)               return unwrap_date(obj);
   else if (type == rb_cURI)                return unwrap_url(obj);
