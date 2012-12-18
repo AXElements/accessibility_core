@@ -1,10 +1,11 @@
-# osx-ruby-bridge
+# accessibility\_bridge
 
 Bare minimum bridging for MRI to easily use Cocoa objects. The intended
-use for this code is to be included as a submodule in C extensions that
-require some bridging.
+use for this code is as a support for other gems that require some
+bridging to Cocoa stuff.
 
-This was extracted from the [accessibility-core](https://github.com/ferrous26/accessibility-core)
+This was extracted from the
+[accessibility\_core](https://github.com/AXElements/accessibility_core)
 project and is a work-in-progress.
 
 
