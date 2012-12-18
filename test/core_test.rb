@@ -200,7 +200,20 @@ class CoreTest < MiniTest::Unit::TestCase
     end
   end
 
-  def test_set_wrapped
+  def test_set_point
+    original_point = window.attribute 'AXPosition'
+    [
+     CGPoint.new(100, 100),
+     CGPoint.new(256, 256)
+    ].each do |point|
+      assert_equal point, window.set('AXPosition', point)
+      assert_equal point, window.attribute('AXPosition')
+    end
+  ensure # trololo
+    window.set 'AXPosition', original_point
+  end
+
+  def test_set_range
     text_area.set 'AXValue', 'hey-o'
 
     text_area.set 'AXSelectedTextRange', 0..3
