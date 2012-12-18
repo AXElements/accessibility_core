@@ -1,6 +1,7 @@
 #include "bridge.h"
 #import <Cocoa/Cocoa.h>
 
+#ifdef NOT_MACRUBY
 
 #define WRAP_ARRAY(wrapper) do {				\
     CFIndex length = CFArrayGetCount(array);			\
@@ -435,9 +436,13 @@ to_ax(VALUE obj)
   else                                     return unwrap_unknown(obj);
 }
 
+#endif
+
+
 void
 Init_bridge()
 {
+#ifdef NOT_MACRUBY
   sel_x        = rb_intern("x");
   sel_y        = rb_intern("y");
   sel_width    = rb_intern("width");
@@ -455,4 +460,6 @@ Init_bridge()
   rb_cCGRect  = rb_const_get(rb_cObject, rb_intern("CGRect"));
   rb_mURI     = rb_const_get(rb_cObject, rb_intern("URI"));
   rb_cURI     = rb_const_get(rb_mURI,    rb_intern("Generic"));
+#endif
 }
+

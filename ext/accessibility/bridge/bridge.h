@@ -1,6 +1,7 @@
 #include "ruby.h"
 #import <Cocoa/Cocoa.h>
 
+#ifdef NOT_MACRUBY
 
 VALUE rb_mAccessibility;
 VALUE rb_cElement;
@@ -99,3 +100,5 @@ VALUE wrap_array(CFArrayRef array);
 
 VALUE to_ruby(CFTypeRef obj);
 CFTypeRef to_ax(VALUE obj);
+
+#endif
