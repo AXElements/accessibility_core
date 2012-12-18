@@ -4,12 +4,20 @@ A port of accessibility/core.rb from [AXElements](http://github.com/Marketcircle
 but cleaned up and rewritten in C to be more portable across languages and
 runtimes.
 
-[Documentation](http://rdoc.info/gems/accessibility-core/frames)
+[Documentation](http://rdoc.info/gems/accessibility_core/frames)
 
 
 ## Examples
 
-TODO... :(
+    require 'accessibility/core'
+
+    app = Accessibility::Element.application_for 276  # PID for some app
+    app.attributes
+
+    window = app.main_window
+    window.attributes
+    window.attribute 'AXPosition'
+    window.set 'AXPosition', CGPoint.new(100, 100)
 
 
 ## Note
@@ -22,6 +30,11 @@ probem with MacRuby or just hack the `rake-compiler.gemspec` file
 after you install `rake-compiler` so it does not think it depends on
 rake anymore.
 
+
+## TODO
+
+  * bridging for `NSAttributedString`
+  * more descriptive error handling for the C extension
 
 ## Copyright
 
