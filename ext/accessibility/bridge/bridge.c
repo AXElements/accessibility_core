@@ -388,6 +388,13 @@ wrap_url(CFURLRef url)
   return rb_funcall(rb_mURI, sel_parse, 1, wrap_string(CFURLGetString(url)));
 }
 
+inline
+VALUE
+wrap_nsurl(NSURL* url)
+{
+  return wrap_url((CFURLRef)url);
+}
+
 CFURLRef
 unwrap_url(VALUE url)
 {
@@ -409,6 +416,13 @@ wrap_date(CFDateRef date)
 {
   NSTimeInterval time = [(NSDate*)date timeIntervalSince1970];
   return rb_time_new((time_t)time, 0);
+}
+
+inline
+VALUE
+wrap_nsdate(NSDate* date)
+{
+  return wrap_date((CFDateRef)date);
 }
 
 CFDateRef

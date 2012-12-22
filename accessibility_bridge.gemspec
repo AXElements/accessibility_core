@@ -19,7 +19,8 @@ Originally extracted from the AXElements project.
   s.has_rdoc    = 'yard'
 
   s.extensions  = [
-                   'ext/accessibility/bridge/extconf.rb'
+                   'ext/accessibility/bridge/extconf.rb',
+                   'ext/accessibility/running_application/extconf.rb'
                   ]
   s.files       = Dir.glob('lib/**/*.rb') +
                   Dir.glob('ext/**/*.{c,h,rb}') +

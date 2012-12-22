@@ -49,3 +49,7 @@ Rake::ExtensionTask.new('bridge', SPEC) do |ext|
   ext.lib_dir = 'lib/accessibility'
 end
 
+Rake::ExtensionTask.new('running_application', SPEC) do |ext|
+  ext.ext_dir = 'ext/accessibility/running_application'
+  ext.lib_dir = 'lib/accessibility'
+end
