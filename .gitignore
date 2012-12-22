@@ -20,3 +20,5 @@ tmp/
 pkg/
 *.bundle
 
+Gemfile.lock
+
