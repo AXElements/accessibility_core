@@ -279,6 +279,14 @@ wrap_string(CFStringRef string)
   return ruby_string;
 }
 
+inline
+VALUE
+wrap_nsstring(NSString* string)
+{
+  return wrap_string((CFStringRef)string);
+}
+
+
 CFStringRef
 unwrap_string(VALUE string)
 {
@@ -302,7 +310,12 @@ unwrap_nsstring(VALUE string)
   return (NSString*)unwrap_string(string);
 }
 
-VALUE wrap_array_strings(CFArrayRef array) { WRAP_ARRAY(wrap_string) }
+VALUE wrap_array_strings(CFArrayRef array) { WRAP_ARRAY(wrap_string); }
+VALUE wrap_array_nsstrings(NSArray* ary)
+{
+  CFArrayRef array = (CFArrayRef)ary;
+  WRAP_ARRAY(wrap_string);
+}
 
 
 #define WRAP_NUM(type, cookie, macro) do {		        \
