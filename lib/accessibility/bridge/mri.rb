@@ -119,3 +119,4 @@ end
 
 
 require 'accessibility/bridge/common'
+require 'accessibility/bridge.bundle'
