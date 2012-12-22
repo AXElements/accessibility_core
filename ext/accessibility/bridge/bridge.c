@@ -279,6 +279,13 @@ unwrap_string(VALUE string)
   /* 				   ); */
 }
 
+inline
+NSString*
+unwrap_nsstring(VALUE string)
+{
+  return (NSString*)unwrap_string(string);
+}
+
 VALUE wrap_array_strings(CFArrayRef array) { WRAP_ARRAY(wrap_string) }
 
 
