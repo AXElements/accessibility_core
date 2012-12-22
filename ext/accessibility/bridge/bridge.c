@@ -1,4 +1,5 @@
 #include "ruby.h"
+#include "ruby/encoding.h"
 #import <Cocoa/Cocoa.h>
 
 #ifndef ACCESSIBILITY_BRIDGE
@@ -13,6 +14,7 @@ VALUE rb_cCGSize;
 VALUE rb_cCGRect;
 VALUE rb_mURI; // URI module
 VALUE rb_cURI; // URI::Generic class
+
 
 ID sel_x;
 ID sel_y;
@@ -253,14 +255,28 @@ wrap_string(CFStringRef string)
 {
   // flying by the seat of our pants here, this hasn't failed yet
   // but probably will one day when I'm not looking
-  const char* name = CFStringGetCStringPtr(string, kCFStringEncodingMacRoman);
-  if (name)
-    return rb_str_new(name, CFStringGetLength(string));
-  else
-    // use rb_external_str_new() ? assume always UTF-8?
-    rb_raise(rb_eRuntimeError, "NEED TO IMPLEMNET STRING COPYING");
+  VALUE ruby_string;
+  CFIndex    length = CFStringGetLength(string);
+  char*        name = (char*)CFStringGetCStringPtr(string, kCFStringEncodingMacRoman);
 
-  return Qnil; // unreachable
+  if (name) {
+    ruby_string = rb_str_new(name, length);
+  }
+  else {
+    // currently we will always assume UTF-8
+    // perhaps we could use CFStringGetSystemEncoding in the future?
+    name = malloc(length+1);
+    CFStringGetCString(
+		       string,
+		       name,
+		       length+1,
+		       kCFStringEncodingUTF8
+		       );
+    ruby_string = rb_enc_str_new(name, length, rb_utf8_encoding());
+    free(name);
+  }
+
+  return ruby_string;
 }
 
 CFStringRef
@@ -368,6 +384,7 @@ VALUE wrap_array_numbers(CFArrayRef array) { WRAP_ARRAY(wrap_number) }
 VALUE
 wrap_url(CFURLRef url)
 {
+  // @note CFURLGetString does not need to be CFReleased since it is a Get
   return rb_funcall(rb_mURI, sel_parse, 1, wrap_string(CFURLGetString(url)));
 }
 
