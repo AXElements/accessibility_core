@@ -2,8 +2,6 @@
 #include "ruby/encoding.h"
 #import <Cocoa/Cocoa.h>
 
-#ifndef ACCESSIBILITY_BRIDGE
-#define ACCESSIBILITY_BRIDGE 1
 
 #ifdef NOT_MACRUBY
 
@@ -14,7 +12,6 @@ VALUE rb_cCGSize;
 VALUE rb_cCGRect;
 VALUE rb_mURI; // URI module
 VALUE rb_cURI; // URI::Generic class
-
 
 ID sel_x;
 ID sel_y;
@@ -27,6 +24,18 @@ ID sel_to_size;
 ID sel_to_rect;
 ID sel_to_s;
 ID sel_parse;
+
+void
+cf_finalizer(void* obj)
+{
+  CFRelease((CFTypeRef)obj);
+}
+
+void
+objc_finalizer(void* obj)
+{
+  [(id)obj release];
+}
 
 
 #define WRAP_ARRAY(wrapper) do {				\
@@ -225,17 +234,10 @@ unwrap_value(VALUE value)
 VALUE wrap_array_values(CFArrayRef array) { WRAP_ARRAY(wrap_value) }
 
 
-static
-void
-ref_finalizer(void* obj)
-{
-  CFRelease((CFTypeRef)obj);
-}
-
 VALUE
 wrap_ref(AXUIElementRef ref)
 {
-  return Data_Wrap_Struct(rb_cElement, NULL, ref_finalizer, (void*)ref);
+  return Data_Wrap_Struct(rb_cElement, NULL, cf_finalizer, (void*)ref);
 }
 
 AXUIElementRef
@@ -538,12 +540,12 @@ Init_bridge()
   sel_to_s     = rb_intern("to_s");
   sel_parse    = rb_intern("parse");
 
-  rb_cCGPoint = rb_const_get(rb_cObject, rb_intern("CGPoint"));
-  rb_cCGSize  = rb_const_get(rb_cObject, rb_intern("CGSize"));
-  rb_cCGRect  = rb_const_get(rb_cObject, rb_intern("CGRect"));
-  rb_mURI     = rb_const_get(rb_cObject, rb_intern("URI"));
-  rb_cURI     = rb_const_get(rb_mURI,    rb_intern("Generic"));
+  rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
+  rb_cElement       = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
+  rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
+  rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
+  rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
+  rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
+  rb_cURI           = rb_const_get(rb_mURI,    rb_intern("Generic"));
 #endif
 }
-
-#endif

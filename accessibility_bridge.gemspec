@@ -20,7 +20,8 @@ Originally extracted from the AXElements project.
 
   s.extensions  = [
                    'ext/accessibility/bridge/extconf.rb',
-                   'ext/accessibility/extras/extconf.rb'
+                   'ext/accessibility/extras/extconf.rb',
+                   'ext/accessibility/highlighter/extconf.rb'
                   ]
   s.files       = Dir.glob('lib/**/*.rb') +
                   Dir.glob('ext/**/*.{c,h,rb}') +

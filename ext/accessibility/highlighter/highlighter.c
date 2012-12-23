@@ -1,0 +1,195 @@
+#include "ruby.h"
+#import <Cocoa/Cocoa.h>
+#include "../bridge/bridge.c"
+
+#ifdef NOT_MACRUBY
+
+static VALUE rb_cHighlighter;
+static VALUE rb_cColor;
+
+static VALUE color_key;
+static VALUE colour_key;
+static VALUE timeout_key;
+
+
+static
+VALUE
+wrap_window(NSWindow* window)
+{
+  return Data_Wrap_Struct(rb_cHighlighter, NULL, objc_finalizer, (void*)window);
+}
+
+static
+NSWindow*
+unwrap_window(VALUE window)
+{
+  NSWindow* nswindow;
+  Data_Get_Struct(window, NSWindow, nswindow);
+  return nswindow;
+}
+
+static
+VALUE
+wrap_color(NSColor* color)
+{
+  return Data_Wrap_Struct(rb_cColor, NULL, objc_finalizer, (void*)color);
+}
+
+static
+NSColor*
+unwrap_color(VALUE color)
+{
+  NSColor* nscolor;
+  Data_Get_Struct(color, NSColor, nscolor);
+  return nscolor;
+}
+
+
+static inline
+CGRect
+flip(CGRect rect)
+{
+  double screen_height = NSMaxY([[NSScreen mainScreen] frame]);
+  rect.origin.y        = screen_height - NSMaxY(rect);
+  return rect;
+}
+
+static
+VALUE
+rb_highlighter_new(int argc, VALUE* argv, VALUE self)
+{
+  if (!argc)
+    rb_raise(rb_eArgError, "wrong number of arguments (0 for 1+)");
+
+  CGRect bounds = unwrap_rect(rb_funcall(argv[0], sel_to_rect, 0));
+  bounds = flip(bounds); // we assume the rect is in the other co-ordinate system
+
+  NSWindow* window =
+    [[NSWindow alloc] initWithContentRect:bounds
+                                styleMask:NSBorderlessWindowMask
+		                  backing:NSBackingStoreBuffered
+                                    defer:true];
+
+  NSColor* color = [NSColor magentaColor];
+
+  if (argc > 1) {
+    VALUE rb_color = rb_hash_lookup(argv[1], color_key);
+    if (rb_color == Qnil)
+      rb_hash_lookup(argv[1], colour_key);
+    if (rb_color != Qnil)
+      color = unwrap_color(rb_color);
+  }
+
+  [window setOpaque:false];
+  [window setAlphaValue:0.20];
+  [window setLevel:NSStatusWindowLevel];
+  [window setBackgroundColor:color];
+  [window setIgnoresMouseEvents:true];
+  [window setFrame:bounds display:false];
+  [window makeKeyAndOrderFront:NSApp];
+
+  if (argc > 1) {
+    VALUE rb_timeout = rb_hash_lookup(argv[1], timeout_key);
+    if (rb_timeout != Qnil) {
+      dispatch_time_t timeout = dispatch_time(
+					      DISPATCH_TIME_NOW,
+					      NUM2LL(rb_timeout) * NSEC_PER_SEC
+					      );
+      dispatch_after(
+		     timeout,
+		     dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+		     ^(void) { [window close]; }
+		     );
+    }
+  }
+
+  return wrap_window(window);
+}
+
+static
+VALUE
+rb_highlighter_stop(VALUE self)
+{
+  [unwrap_window(self) close];
+  return self;
+}
+
+
+static VALUE rb_color_black(VALUE self)      { return wrap_color([NSColor blackColor]);     }
+static VALUE rb_color_blue(VALUE self)       { return wrap_color([NSColor blueColor]);      }
+static VALUE rb_color_brown(VALUE self)      { return wrap_color([NSColor brownColor]);     }
+static VALUE rb_color_clear(VALUE self)      { return wrap_color([NSColor clearColor]);     }
+static VALUE rb_color_cyan(VALUE self)       { return wrap_color([NSColor cyanColor]);      }
+static VALUE rb_color_dark_gray(VALUE self)  { return wrap_color([NSColor darkGrayColor]);  }
+static VALUE rb_color_gray(VALUE self)       { return wrap_color([NSColor grayColor]);      }
+static VALUE rb_color_green(VALUE self)      { return wrap_color([NSColor greenColor]);     }
+static VALUE rb_color_light_gray(VALUE self) { return wrap_color([NSColor lightGrayColor]); }
+static VALUE rb_color_magenta(VALUE self)    { return wrap_color([NSColor magentaColor]);   }
+static VALUE rb_color_orange(VALUE self)     { return wrap_color([NSColor orangeColor]);    }
+static VALUE rb_color_purple(VALUE self)     { return wrap_color([NSColor purpleColor]);    }
+static VALUE rb_color_red(VALUE self)        { return wrap_color([NSColor redColor]);       }
+static VALUE rb_color_white(VALUE self)      { return wrap_color([NSColor whiteColor]);     }
+static VALUE rb_color_yellow(VALUE self)     { return wrap_color([NSColor yellowColor]);    }
+
+static
+VALUE
+rb_color_rgb(VALUE self, VALUE red_val, VALUE other_vals)
+{
+  return Qnil;
+}
+
+#endif
+
+
+void
+Init_highlighter()
+{
+#ifdef NOT_MACRUBY
+
+  // force initialization or NSWindow won't work
+  [NSApplication sharedApplication];
+
+  // TODO: look into why these are nil if we don't load them here
+  rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
+  sel_to_rect       = rb_intern("to_rect");
+
+
+  rb_cHighlighter = rb_define_class_under(rb_mAccessibility, "Highlighter", rb_cObject);
+
+  rb_define_singleton_method(rb_cHighlighter, "new",  rb_highlighter_new,  -1);
+  rb_define_method(rb_cHighlighter,           "stop", rb_highlighter_stop,  0);
+
+  color_key   = ID2SYM(rb_intern("color"));
+  colour_key  = ID2SYM(rb_intern("colour")); // fuck yeah, Canada
+  timeout_key = ID2SYM(rb_intern("timeout"));
+
+
+  /*
+   * Document-class: NSColor
+   *
+   * A subset of Cocoa's `NSColor` class.
+   *
+   * See https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/Reference/Reference.html
+   * for documentation on the methods available in this class.
+   */
+  rb_cColor = rb_define_class("NSColor", rb_cObject);
+
+  rb_define_singleton_method(rb_cColor, "blackColor",       rb_color_black,      0);
+  rb_define_singleton_method(rb_cColor, "blueColor",        rb_color_blue,       0);
+  rb_define_singleton_method(rb_cColor, "brownColor",       rb_color_brown,      0);
+  rb_define_singleton_method(rb_cColor, "clearColor",       rb_color_clear,      0);
+  rb_define_singleton_method(rb_cColor, "cyanColor",        rb_color_cyan,       0);
+  rb_define_singleton_method(rb_cColor, "darkGrayColor",    rb_color_dark_gray,  0);
+  rb_define_singleton_method(rb_cColor, "grayColor",        rb_color_gray,       0);
+  rb_define_singleton_method(rb_cColor, "greenColor",       rb_color_green,      0);
+  rb_define_singleton_method(rb_cColor, "lightGrayColor",   rb_color_light_gray, 0);
+  rb_define_singleton_method(rb_cColor, "magentaColor",     rb_color_magenta,    0);
+  rb_define_singleton_method(rb_cColor, "orangeColor",      rb_color_orange,     0);
+  rb_define_singleton_method(rb_cColor, "purpleColor",      rb_color_purple,     0);
+  rb_define_singleton_method(rb_cColor, "redColor",         rb_color_red,        0);
+  rb_define_singleton_method(rb_cColor, "whiteColor",       rb_color_white,      0);
+  rb_define_singleton_method(rb_cColor, "yellowColor",      rb_color_yellow,     0);
+  rb_define_singleton_method(rb_cColor, "colorWithSRGBRed", rb_color_rgb,        2);
+
+#endif
+}

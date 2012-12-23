@@ -32,12 +32,6 @@ static VALUE key_opts;
 //static VALUE key_event_params;
 //static VALUE key_launch_id;
 
-static
-void
-objc_finalizer(void* obj)
-{
-  [(id)obj release];
-}
 
 static
 VALUE

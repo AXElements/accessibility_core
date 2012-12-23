@@ -6,16 +6,13 @@ CLEAN.include '*.plist', '*.gch'
 desc 'Run the Clang static analyzer'
 task :analyze do
   sh "clang --analyze ext/accessibility/bridge/bridge.c"
+  sh "clang --analyze ext/accessibility/extras/extras.c"
+  sh "clang --analyze ext/accessibility/highlighter/highlighter.c"
 end
 
 desc 'Startup an IRb console with accessibility-core loaded'
 task :console => [:compile] do
-  sh 'irb -Ilib -raccessibility/bridge -raccessibility/extras'
-end
-
-desc 'Build the test fixture'
-task :fixture do
-  sh 'cd test/AXElementsTester && xcodebuild'
+  sh 'irb -Ilib -raccessibility/bridge -raccessibility/extras -raccessibility/highlighter'
 end
 
 require 'rake/testtask'
@@ -51,5 +48,10 @@ end
 
 Rake::ExtensionTask.new('extras', SPEC) do |ext|
   ext.ext_dir = 'ext/accessibility/extras'
+  ext.lib_dir = 'lib/accessibility'
+end
+
+Rake::ExtensionTask.new('highlighter', SPEC) do |ext|
+  ext.ext_dir = 'ext/accessibility/highlighter'
   ext.lib_dir = 'lib/accessibility'
 end
