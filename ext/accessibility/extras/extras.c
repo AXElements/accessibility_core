@@ -1,8 +1,22 @@
 #include "ruby.h"
-#import <Cocoa/Cocoa.h>
+
 #include "../bridge/bridge.c"
 
+#import <IOKit/IOKitlib.h>
+#import <IOKit/ps/IOPowerSources.h>
+#import <IOKit/ps/IOPSKeys.h>
+
+static VALUE rb_mBattery;
+
+static VALUE battery_not_installed;
+static VALUE battery_charged;
+static VALUE battery_charging;
+static VALUE battery_discharging;
+
+
 #ifdef NOT_MACRUBY
+
+#import <Cocoa/Cocoa.h>
 
 static VALUE rb_cRunningApp;
 static VALUE rb_cWorkspace;
@@ -336,8 +350,188 @@ rb_host_localized_name(VALUE self)
 #endif
 
 
+// Find and return the dictionary that has the battery info
+static
+CFDictionaryRef
+battery_info()
+{
+  CFTypeRef  psource_info = IOPSCopyPowerSourcesInfo();
+  CFArrayRef     psources = IOPSCopyPowerSourcesList(psource_info);
+
+  // constant global strings (like ruby symbols, or lisp atoms, NXAtom, etc)
+  // so we do not need to release it later (unless you really want to)
+  CFStringRef type_key    = CFSTR(kIOPSTypeKey);
+  CFStringRef battery_key  = CFSTR(kIOPSInternalBatteryType);
+
+  CFIndex length = CFArrayGetCount(psources);
+  for (CFIndex i = 0; i < length; i++) {
+
+    CFTypeRef           psource = CFArrayGetValueAtIndex(psources, i);
+    CFDictionaryRef source_info = IOPSGetPowerSourceDescription(psource_info, psource);
+    CFRetain(source_info);
+
+    if (CFEqual(CFDictionaryGetValue(source_info, type_key), battery_key)) {
+      CFRelease(psources);
+      CFRelease(psource_info);
+      return source_info;
+    }
+    else {
+      CFRelease(source_info);
+    }
+  }
+
+  CFRelease(psources);
+  CFRelease(psource_info);
+  return NULL;
+}
+
+/*
+ * Returns the current battery state
+ *
+ * The state will be one of:
+ *
+ *  - `:not_installed`
+ *  - `:charged`
+ *  - `:charging`
+ *  - `:discharging`
+ *
+ * @return [Symbol]
+ */
+static
+VALUE
+rb_battery_state(VALUE self)
+{
+  // constant global strings (like ruby symbols, or lisp atoms, NXAtom, etc)
+  // so we do not need to release it later (unless you really want to)
+  CFStringRef charged_key  = CFSTR(kIOPSIsChargedKey);
+  CFStringRef charging_key = CFSTR(kIOPSIsChargingKey);
+
+  VALUE              state = battery_not_installed;
+  CFDictionaryRef     info = battery_info();
+
+  if (info) {
+    if (CFDictionaryGetValue(info, charged_key) == kCFBooleanTrue)
+      state = battery_charged;
+    else if (CFDictionaryGetValue(info, charging_key) == kCFBooleanTrue)
+      state = battery_charging;
+    else
+      state = battery_discharging;
+
+    CFRelease(info);
+  }
+
+  return state;
+}
+
+/*
+ * Returns the batteries charge level as a percentage from 0 to 1
+ *
+ * A special value of `-1.0` is returned when there is no battery present.
+ *
+ * @return [Float]
+ */
+static
+VALUE
+rb_battery_level(VALUE self)
+{
+  // constant global strings (like ruby symbols, or lisp atoms, NXAtom, etc)
+  // so we do not need to release it later (unless you really want to)
+  CFStringRef capacity_key     = CFSTR(kIOPSCurrentCapacityKey);
+  CFStringRef max_capacity_key = CFSTR(kIOPSMaxCapacityKey);
+
+  double         level = -1.0;
+  CFDictionaryRef info = battery_info();
+
+  if (info) {
+    CFNumberRef current_cap = CFDictionaryGetValue(info, capacity_key);
+    CFNumberRef     max_cap = CFDictionaryGetValue(info, max_capacity_key);
+
+    if (current_cap && max_cap) {
+      int current = 0;
+      int     max = 0;
+
+      CFNumberGetValue(current_cap, kCFNumberIntType, &current);
+      CFNumberGetValue(max_cap,     kCFNumberIntType, &max);
+
+      level = ((double)current)/((double)max);
+    }
+
+    CFRelease(info);
+  }
+
+  return DBL2NUM(level);
+}
+
+
+/*
+ * Returns the estimated number of minutes until the battery is fully discharged
+ *
+ * A special value of `-1` indicates that the value is currently being
+ * estimated and you should try again later.
+ *
+ * A special value of `nil` indicates that the battery is not discharging,
+ * which usually means that the battery does not exist or is in a
+ * charging/charged state.
+ *
+ * @return [Fixnum,nil]
+ */
+static
+VALUE
+rb_battery_time_to_empty(VALUE self)
+{
+  CFStringRef ttempty_key = CFSTR(kIOPSTimeToEmptyKey);
+  int                time = -1;
+  CFDictionaryRef    info = battery_info();
+
+  if (info) {
+    CFNumberRef current_time = CFDictionaryGetValue(info, ttempty_key);
+    if (current_time)
+      CFNumberGetValue(current_time, kCFNumberIntType, &time);
+
+    CFRelease(info);
+  }
+
+  if (time)
+    return INT2FIX(time);
+  else
+    return Qnil;
+}
+
+
+/*
+ * Returns the estimated number of minutes until the battery is fully charged
+ *
+ * A special value of `-1` indicates that the value is currently being
+ * estimated and you should try again later.
+ *
+ * A special value of `nil` indicates that the battery is not charging,
+ * which usually means that the battery does not exist or is currently being
+ * discharged.
+ *
+ * @return [Fixnum,nil]
+*/
+static
+VALUE
+rb_battery_time_full_charge(VALUE self)
+{
+  CFStringRef ttfull_key = CFSTR(kIOPSTimeToFullChargeKey);
+  int                time = -1;
+  CFDictionaryRef    info = battery_info();
+
+  if (info) {
+    CFNumberRef current_time = CFDictionaryGetValue(info, ttfull_key);
+    if (current_time)
+      CFNumberGetValue(current_time, kCFNumberIntType, &time);
+
+    CFRelease(info);
+  }
+
+  return INT2FIX(time);
+}
+
+
 void
-Init_running_application()
+Init_extras()
 {
 #ifdef NOT_MACRUBY
   /*
@@ -458,4 +652,20 @@ Init_running_application()
   rb_define_singleton_method(rb_cHost, "localizedName", rb_host_localized_name, 0);
 #endif
 
+  rb_mBattery = rb_define_module("Battery");
+  rb_extend_object(rb_mBattery, rb_mBattery);
+
+  battery_not_installed = ID2SYM(rb_intern("not_installed"));
+  battery_charged       = ID2SYM(rb_intern("charged"));
+  battery_charging      = ID2SYM(rb_intern("charging"));
+  battery_discharging   = ID2SYM(rb_intern("discharging"));
+
+  rb_define_method(rb_mBattery, "state",     rb_battery_state, 0);
+  rb_define_method(rb_mBattery, "level",     rb_battery_level, 0);
+  rb_define_method(rb_mBattery, "time_to_discharged", rb_battery_time_to_empty, 0);
+  rb_define_method(rb_mBattery, "time_to_charged", rb_battery_time_full_charge, 0);
+
+  rb_define_alias(rb_mBattery, "charge_level", "level");
+  rb_define_alias(rb_mBattery, "time_to_empty", "time_to_discharged");
+  rb_define_alias(rb_mBattery, "time_to_full_charge", "time_to_charged");
 }

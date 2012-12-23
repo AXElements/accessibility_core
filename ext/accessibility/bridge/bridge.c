@@ -513,6 +513,11 @@ to_ax(VALUE obj)
   else                                     return unwrap_unknown(obj);
 }
 
+void
+spin(double seconds)
+{
+}
+
 #endif
 
 

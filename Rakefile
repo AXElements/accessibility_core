@@ -10,7 +10,7 @@ end
 
 desc 'Startup an IRb console with accessibility-core loaded'
 task :console => [:compile] do
-  sh 'irb -Ilib -raccessibility/bridge'
+  sh 'irb -Ilib -raccessibility/bridge -raccessibility/extras'
 end
 
 desc 'Build the test fixture'
@@ -49,7 +49,7 @@ Rake::ExtensionTask.new('bridge', SPEC) do |ext|
   ext.lib_dir = 'lib/accessibility'
 end
 
-Rake::ExtensionTask.new('running_application', SPEC) do |ext|
-  ext.ext_dir = 'ext/accessibility/running_application'
+Rake::ExtensionTask.new('extras', SPEC) do |ext|
+  ext.ext_dir = 'ext/accessibility/extras'
   ext.lib_dir = 'lib/accessibility'
 end
