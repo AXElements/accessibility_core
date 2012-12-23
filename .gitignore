@@ -21,4 +21,6 @@ pkg/
 *.bundle
 
 Gemfile.lock
+.yardoc/
+
 
