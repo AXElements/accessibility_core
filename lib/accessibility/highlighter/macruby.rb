@@ -23,7 +23,7 @@ class Accessibility::Highlighter < NSWindow
   # @option opts [Number] :timeout
   # @option opts [NSColor] :colour (NSColor.magentaColor)
   def initialize bounds, opts = {}
-    colour = opts[:colour] || opts[:color] || NSColor.magentaColor
+    color = opts[:colour] || opts[:color] || NSColor.magentaColor
 
     bounds = bounds.to_rect
     bounds.flip! # we assume the rect is in the other co-ordinate system
@@ -35,7 +35,7 @@ class Accessibility::Highlighter < NSWindow
     setOpaque false
     setAlphaValue 0.20
     setLevel NSStatusWindowLevel
-    setBackgroundColor colour
+    setBackgroundColor color
     setIgnoresMouseEvents true
     setFrame bounds, display: false
     makeKeyAndOrderFront NSApp

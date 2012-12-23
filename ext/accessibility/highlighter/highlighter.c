@@ -7,6 +7,8 @@
 static VALUE rb_cHighlighter;
 static VALUE rb_cColor;
 
+static ID ivar_color;
+
 static VALUE color_key;
 static VALUE colour_key;
 static VALUE timeout_key;
@@ -75,7 +77,7 @@ rb_highlighter_new(int argc, VALUE* argv, VALUE self)
   if (argc > 1) {
     VALUE rb_color = rb_hash_lookup(argv[1], color_key);
     if (rb_color == Qnil)
-      rb_hash_lookup(argv[1], colour_key);
+      rb_color = rb_hash_lookup(argv[1], colour_key);
     if (rb_color != Qnil)
       color = unwrap_color(rb_color);
   }
@@ -103,7 +105,9 @@ rb_highlighter_new(int argc, VALUE* argv, VALUE self)
     }
   }
 
-  return wrap_window(window);
+  VALUE highlighter = wrap_window(window);
+  rb_ivar_set(highlighter, ivar_color, wrap_color(color));
+  return highlighter;
 }
 
 static
@@ -112,6 +116,27 @@ rb_highlighter_stop(VALUE self)
 {
   [unwrap_window(self) close];
   return self;
+}
+
+static
+VALUE
+rb_highlighter_color(VALUE self)
+{
+  return wrap_color([unwrap_window(self) backgroundColor]);
+}
+
+static
+VALUE
+rb_highlighter_frame(VALUE self)
+{
+  return wrap_rect([unwrap_window(self) frame]);
+}
+
+static
+VALUE
+rb_highlighter_is_visible(VALUE self)
+{
+  return ([unwrap_window(self) isVisible] ? Qtrue : Qfalse);
 }
 
 
@@ -138,6 +163,17 @@ rb_color_rgb(VALUE self, VALUE red_val, VALUE other_vals)
   return Qnil;
 }
 
+static
+VALUE
+rb_color_equality(VALUE self, VALUE other)
+{
+  if (CLASS_OF(other) == rb_cColor)
+    if ([unwrap_color(self) isEqual:unwrap_color(other)])
+      return Qtrue;
+
+  return Qfalse;
+}
+
 #endif
 
 
@@ -152,12 +188,24 @@ Init_highlighter()
   // TODO: look into why these are nil if we don't load them here
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
   sel_to_rect       = rb_intern("to_rect");
+  rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
+  rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
+  rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
+
 
 
   rb_cHighlighter = rb_define_class_under(rb_mAccessibility, "Highlighter", rb_cObject);
 
   rb_define_singleton_method(rb_cHighlighter, "new",  rb_highlighter_new,  -1);
-  rb_define_method(rb_cHighlighter,           "stop", rb_highlighter_stop,  0);
+
+  rb_define_method(rb_cHighlighter, "stop",     rb_highlighter_stop,       0);
+  rb_define_method(rb_cHighlighter, "color",    rb_highlighter_color,      0);
+  rb_define_method(rb_cHighlighter, "frame",    rb_highlighter_frame,      0);
+  rb_define_method(rb_cHighlighter, "visible?", rb_highlighter_is_visible, 0);
+
+  rb_define_alias(rb_cHighlighter, "colour", "color");
+
+  ivar_color  = rb_intern("color");
 
   color_key   = ID2SYM(rb_intern("color"));
   colour_key  = ID2SYM(rb_intern("colour")); // fuck yeah, Canada
@@ -190,6 +238,8 @@ Init_highlighter()
   rb_define_singleton_method(rb_cColor, "whiteColor",       rb_color_white,      0);
   rb_define_singleton_method(rb_cColor, "yellowColor",      rb_color_yellow,     0);
   rb_define_singleton_method(rb_cColor, "colorWithSRGBRed", rb_color_rgb,        2);
+
+  rb_define_method(rb_cColor, "==", rb_color_equality, 1);
 
 #endif
 }
