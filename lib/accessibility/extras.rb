@@ -1,8 +1,4 @@
 require 'accessibility/bridge'
 
-if on_macruby?
-  framework 'Cocoa'
-else
-  require 'accessibility/extras.bundle'
-end
-
+framework 'Cocoa' if on_macruby?
+require 'accessibility/extras.bundle'

@@ -5,6 +5,8 @@
 #import <IOKit/IOKitlib.h>
 #import <IOKit/ps/IOPowerSources.h>
 #import <IOKit/ps/IOPSKeys.h>
+#import <IOKit/pwr_mgt/IOPMLib.h>
+#import <IOKit/hidsystem/IOHIDShared.h>
 
 static VALUE rb_mBattery;
 
@@ -12,6 +14,9 @@ static VALUE battery_not_installed;
 static VALUE battery_charged;
 static VALUE battery_charging;
 static VALUE battery_discharging;
+
+static VALUE rb_cScreen;
+static io_connect_t screen_connection = MACH_PORT_NULL;
 
 
 #ifdef NOT_MACRUBY
@@ -530,6 +535,43 @@ rb_battery_time_full_charge(VALUE self)
 }
 
 
+static
+VALUE
+#ifdef NOT_MACRUBY
+rb_screen_wake(VALUE self)
+#else
+rb_screen_wake(VALUE self, SEL sel)
+#endif
+{
+  // don't bother if we are awake
+  if (!CGDisplayIsAsleep(CGMainDisplayID()))
+    return Qtrue;
+
+  if (screen_connection == MACH_PORT_NULL) {
+    io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(kIOHIDSystemClass));
+    if (service != MACH_PORT_NULL) {
+      IOServiceOpen(service, mach_task_self(), kIOHIDParamConnectType, &screen_connection);
+      IOObjectRelease(service);
+    }
+    else { // give up
+      return Qfalse;
+    }
+  }
+
+  CGPoint      mouse = [NSEvent mouseLocation];
+  IOGPoint     point = { mouse.x, mouse.y };
+  unsigned int flags = (unsigned int)[NSEvent modifierFlags];
+  NXEventData   data;
+
+  IOHIDPostEvent(screen_connection, NX_FLAGSCHANGED, point, &data, kNXEventDataVersion, flags, 0);
+
+  // spin rims while we wait for the screen to fully wake up
+  spin(1);
+
+  return Qtrue;
+}
+
+
 void
 Init_extras()
 {
@@ -674,4 +716,14 @@ Init_extras()
   rb_define_alias(rb_mBattery, "charge_level", "level");
   rb_define_alias(rb_mBattery, "time_to_empty", "time_to_discharged");
   rb_define_alias(rb_mBattery, "time_to_full_charge", "time_to_charged");
+
+
+  // on MacRuby this should just end up fetching the existing class
+  rb_cScreen = rb_define_class("NSScreen", rb_cObject);
+
+#ifdef NOT_MACRUBY
+  rb_define_singleton_method(rb_cScreen, "wakeup", rb_screen_wake, 0);
+#else
+  rb_objc_define_method(*(VALUE*)rb_cScreen, "wakeup", rb_screen_wake, 0);
+#endif
 }
