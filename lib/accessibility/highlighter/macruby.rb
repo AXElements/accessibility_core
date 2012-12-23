@@ -55,27 +55,23 @@ class Accessibility::Highlighter < NSWindow
     close
   end
 
-end
-
-
-##
-# AXElements extensions to `CGRect`
-class CGRect
   ##
-  # Treats the rect as belonging to one co-ordinate system and then
-  # converts it to the other system.
+  # Returns the color for the highlighter
   #
-  # This is useful because accessibility API's expect to work with
-  # the flipped co-ordinate system (origin in top left), but AppKit
-  # prefers to use the cartesian co-ordinate system (origin in bottom
-  # left).
-  #
-  # @return [CGRect]
-  def flip!
-    screen_height = NSMaxY(NSScreen.mainScreen.frame)
-    origin.y      = screen_height - NSMaxY(self)
-    self
+  # @return [NSColor]
+  def color
+    backgroundColor
   end
+  alias_method :colour, :color
+
+  # @!method visible?
+  #   Return whether or not the highlighter is currently drawn on screen
+  #   @return [Boolean]
+
+  # @!method frame
+  #   Return the rectangle on screen which the highlighter is occupying
+  #   @return [CGRect]
+
 end
 
 
