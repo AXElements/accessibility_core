@@ -9,13 +9,15 @@
 #import <IOKit/hidsystem/IOHIDShared.h>
 
 static VALUE rb_mBattery;
+#ifndef NOT_MACRUBY
+static VALUE rb_cScreen;
+#endif
 
 static VALUE battery_not_installed;
 static VALUE battery_charged;
 static VALUE battery_charging;
 static VALUE battery_discharging;
 
-static VALUE rb_cScreen;
 static io_connect_t screen_connection = MACH_PORT_NULL;
 
 

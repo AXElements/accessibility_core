@@ -12,6 +12,7 @@ VALUE rb_cCGSize;
 VALUE rb_cCGRect;
 VALUE rb_mURI; // URI module
 VALUE rb_cURI; // URI::Generic class
+VALUE rb_cScreen;
 
 ID sel_x;
 ID sel_y;
@@ -515,7 +516,47 @@ to_ax(VALUE obj)
   else                                     return unwrap_unknown(obj);
 }
 
+static
+VALUE
+wrap_screen(NSScreen* screen)
+{
+  return Data_Wrap_Struct(rb_cScreen, NULL, NULL, (void*)screen);
+}
+
+static VALUE wrap_array_screens(CFArrayRef array) { WRAP_ARRAY(wrap_screen); }
+
+static
+NSScreen*
+unwrap_screen(VALUE screen)
+{
+  NSScreen* ns_screen;
+  Data_Get_Struct(screen, NSScreen, ns_screen);
+  return ns_screen;
+}
+
+static
+VALUE
+rb_screen_main(VALUE self)
+{
+  return wrap_screen([NSScreen mainScreen]);
+}
+
+static
+VALUE
+rb_screen_screens(VALUE self)
+{
+  return wrap_array_screens((CFArrayRef)[NSScreen screens]);
+}
+
+static
+VALUE
+rb_screen_frame(VALUE self)
+{
+  return wrap_rect([unwrap_screen(self) frame]);
+}
+
 #endif
+
 
 void
 spin(double seconds)
@@ -547,5 +588,13 @@ Init_bridge()
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
   rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
   rb_cURI           = rb_const_get(rb_mURI,    rb_intern("Generic"));
+
+
+  rb_cScreen = rb_define_class("NSScreen", rb_cObject);
+
+  rb_define_singleton_method(rb_cScreen, "mainScreen", rb_screen_main,    0);
+  rb_define_singleton_method(rb_cScreen, "screens",    rb_screen_screens, 0);
+
+  rb_define_method(rb_cScreen, "frame", rb_screen_frame, 0);
 #endif
 }
