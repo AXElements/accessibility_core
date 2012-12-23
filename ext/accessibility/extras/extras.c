@@ -652,6 +652,12 @@ Init_extras()
   rb_define_singleton_method(rb_cHost, "localizedName", rb_host_localized_name, 0);
 #endif
 
+  /*
+   * Document-module: Battery
+   *
+   * Utility methods for getting information about the system battery
+   * (if present).
+   */
   rb_mBattery = rb_define_module("Battery");
   rb_extend_object(rb_mBattery, rb_mBattery);
 
