@@ -513,12 +513,13 @@ to_ax(VALUE obj)
   else                                     return unwrap_unknown(obj);
 }
 
+#endif
+
 void
 spin(double seconds)
 {
+  CFRunLoopRunInMode(kCFRunLoopDefaultMode, seconds, false);
 }
-
-#endif
 
 
 void
