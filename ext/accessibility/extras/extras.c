@@ -608,10 +608,6 @@ Init_extras()
 
 #ifdef NOT_MACRUBY
 
-  rb_mURI   = rb_const_get(rb_cObject, rb_intern("URI"));
-  sel_parse = rb_intern("parse");
-
-
   /*
    * Document-class: NSRunningApplication
    *

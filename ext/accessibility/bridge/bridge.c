@@ -17,7 +17,6 @@ VALUE rb_cElement;
 VALUE rb_cCGPoint;
 VALUE rb_cCGSize;
 VALUE rb_cCGRect;
-VALUE rb_mURI; // URI module
 VALUE rb_cURI; // URI::Generic class
 VALUE rb_cScreen;
 
@@ -31,7 +30,6 @@ ID sel_to_point;
 ID sel_to_size;
 ID sel_to_rect;
 ID sel_to_s;
-ID sel_parse;
 
 void
 cf_finalizer(void* obj)
@@ -405,9 +403,17 @@ unwrap_number(VALUE number)
 VALUE wrap_array_numbers(CFArrayRef array) { WRAP_ARRAY(wrap_number) }
 
 
+static dispatch_once_t mURI_token;
+static VALUE rb_mURI;
+static ID sel_parse;
+
 VALUE
 wrap_url(CFURLRef url)
 {
+  dispatch_once(&mURI_token, ^{
+      sel_parse  = rb_intern("parse"); // dispatch_once?
+      rb_mURI = rb_const_get(rb_cObject, rb_intern("URI"));
+    });
   // @note CFURLGetString does not need to be CFReleased since it is a Get
   return rb_funcall(rb_mURI, sel_parse, 1, wrap_string(CFURLGetString(url)));
 }
@@ -415,6 +421,10 @@ wrap_url(CFURLRef url)
 VALUE
 wrap_nsurl(NSURL* url)
 {
+  dispatch_once(&mURI_token, ^{
+      sel_parse  = rb_intern("parse"); // dispatch_once?
+      rb_mURI = rb_const_get(rb_cObject, rb_intern("URI"));
+    });
   NSString* str = [url absoluteString];
   VALUE  rb_str = wrap_nsstring(str);
   [str release];
@@ -509,20 +519,26 @@ to_ruby(CFTypeRef obj)
 CFTypeRef
 to_ax(VALUE obj)
 {
-  // TODO we can better optimize this when running under MacRuby
+  static dispatch_once_t cURI_token;
+  static VALUE rb_cURI;
+  dispatch_once(&cURI_token, ^{
+      VALUE mURI = rb_const_get(rb_cObject, rb_intern("URI"));
+      rb_cURI    = rb_const_get(mURI, rb_intern("Generic"));
+    });
+
   VALUE type = CLASS_OF(obj);
-  if      (type == rb_cElement)            return unwrap_ref(obj);
-  else if (type == rb_cString)             return unwrap_string(obj);
-  else if (type == rb_cFixnum)             return unwrap_number(obj);
-  else if (type == rb_cCGPoint)            return unwrap_value(obj);
-  else if (type == rb_cCGSize)             return unwrap_value(obj);
-  else if (type == rb_cCGRect)             return unwrap_value(obj);
-  else if (type == rb_cRange)              return unwrap_value(obj);
-  else if (type == rb_cFloat)              return unwrap_number(obj);
-  else if (type == rb_cTime)               return unwrap_date(obj);
-  else if (type == rb_cURI)                return unwrap_url(obj);
-  else if (obj  == Qtrue || obj == Qfalse) return unwrap_boolean(obj);
-  else                                     return unwrap_unknown(obj);
+  if      (type == rb_cElement)             return unwrap_ref(obj);
+  else if (type == rb_cString)              return unwrap_string(obj);
+  else if (type == rb_cFixnum)              return unwrap_number(obj);
+  else if (type == rb_cCGPoint)             return unwrap_value(obj);
+  else if (type == rb_cCGSize)              return unwrap_value(obj);
+  else if (type == rb_cCGRect)              return unwrap_value(obj);
+  else if (type == rb_cRange)               return unwrap_value(obj);
+  else if (type == rb_cFloat)               return unwrap_number(obj);
+  else if (type == rb_cTime)                return unwrap_date(obj);
+  else if (obj  == Qtrue || obj == Qfalse)  return unwrap_boolean(obj);
+  else if (rb_obj_is_kind_of(obj, rb_cURI)) return unwrap_url(obj);
+  else                                      return unwrap_unknown(obj);
 }
 
 VALUE
@@ -587,15 +603,12 @@ Init_bridge()
   sel_to_size  = rb_intern("to_size");
   sel_to_rect  = rb_intern("to_rect");
   sel_to_s     = rb_intern("to_s");
-  sel_parse    = rb_intern("parse");
 
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
   rb_cElement       = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
-  rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
-  rb_cURI           = rb_const_get(rb_mURI,    rb_intern("Generic"));
   rb_cScreen        = rb_define_class("NSScreen", rb_cObject);
 
   rb_define_singleton_method(rb_cScreen, "mainScreen", rb_screen_main,    0);
