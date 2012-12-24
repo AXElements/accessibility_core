@@ -55,9 +55,9 @@ class HighlighterTest < MiniTest::Unit::TestCase
               NSColor.yellowColor,
               NSColor.orangeColor,
               ]
-    range        = NSScreen.mainScreen.frame.size.height + 20
-    @highlighters = Array.new 250 do
-      bounds = Array.new(4) do rand(range) + 20 end
+    range = NSScreen.mainScreen.frame.size.height
+    @highlighters = Array.new 200 do
+      bounds = Array.new(2) { rand(range) } + Array.new(2) { rand(range) + 20 }
       color  = colors.sample
       w      = Accessibility::Highlighter.new bounds, color: color
       assert_equal bounds.to_rect.flip!, w.frame
