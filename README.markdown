@@ -25,6 +25,16 @@ Any patches from people who know what they're doing that smooth out this
 process are welcome.
 
 
+## Tests
+
+Currently, the tests are all run as one task. You can run individual
+test files if needed. This is not ideal, but not a high priority for
+me right now.
+
+To properly run tests, you must run them under CRuby and also under
+MacRuby and get the same results.
+
+
 ## Copyright
 
 Copyright (c)2012, Mark Rada
