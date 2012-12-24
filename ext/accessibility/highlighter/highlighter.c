@@ -156,12 +156,12 @@ static VALUE rb_color_red(VALUE self)        { return wrap_color([NSColor redCol
 static VALUE rb_color_white(VALUE self)      { return wrap_color([NSColor whiteColor]);     }
 static VALUE rb_color_yellow(VALUE self)     { return wrap_color([NSColor yellowColor]);    }
 
-static
-VALUE
-rb_color_rgb(VALUE self, VALUE red_val, VALUE other_vals)
-{
-  return Qnil;
-}
+/* static */
+/* VALUE */
+/* rb_color_rgb(VALUE self, VALUE red_val, VALUE other_vals) */
+/* { */
+/*   return Qnil; */
+/* } */
 
 static
 VALUE
@@ -237,7 +237,7 @@ Init_highlighter()
   rb_define_singleton_method(rb_cColor, "redColor",         rb_color_red,        0);
   rb_define_singleton_method(rb_cColor, "whiteColor",       rb_color_white,      0);
   rb_define_singleton_method(rb_cColor, "yellowColor",      rb_color_yellow,     0);
-  rb_define_singleton_method(rb_cColor, "colorWithSRGBRed", rb_color_rgb,        2);
+  //rb_define_singleton_method(rb_cColor, "colorWithSRGBRed", rb_color_rgb,        2);
 
   rb_define_method(rb_cColor, "==", rb_color_equality, 1);
 
