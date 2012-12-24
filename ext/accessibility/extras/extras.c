@@ -351,7 +351,7 @@ static
 VALUE
 rb_host_self(VALUE self)
 {
-  return self;
+  return self; // hack
 }
 
 static
@@ -506,11 +506,11 @@ rb_battery_level(VALUE self)
  * A special value of `-1` indicates that the value is currently being
  * estimated and you should try again later.
  *
- * A special value of `nil` indicates that the battery is not discharging,
+ * A special value of `0` indicates that the battery is not discharging,
  * which usually means that the battery does not exist or is in a
  * charging/charged state.
  *
- * @return [Fixnum,nil]
+ * @return [Fixnum]
  */
 static
 VALUE
@@ -531,7 +531,7 @@ rb_battery_time_to_empty(VALUE self)
   if (time)
     return INT2FIX(time);
   else
-    return Qnil;
+    return INT2FIX(0);
 }
 
 
@@ -541,11 +541,7 @@ rb_battery_time_to_empty(VALUE self)
  * A special value of `-1` indicates that the value is currently being
  * estimated and you should try again later.
  *
- * A special value of `nil` indicates that the battery is not charging,
- * which usually means that the battery does not exist or is currently being
- * discharged.
- *
- * @return [Fixnum,nil]
+ * @return [Fixnum]
 */
 static
 VALUE

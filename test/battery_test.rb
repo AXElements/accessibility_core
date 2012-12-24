@@ -27,7 +27,7 @@ class BatteryTest < MiniTest::Unit::TestCase
     assert_equal Battery.time_to_charged, Battery.time_to_full_charge
 
     assert Battery.time_to_empty.zero? || Battery.time_to_full_charge.zero?
-    assert Battery.time_to_empty > 0 || Battery.time_to_full_charge > 0
+    #assert Battery.time_to_empty > 0 || Battery.time_to_full_charge > 0
   end
 
 end
