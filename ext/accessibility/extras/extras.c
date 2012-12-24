@@ -139,9 +139,11 @@ VALUE
 rb_running_app_localized_name(VALUE self)
 {
   NSString* string = [unwrap_app(self) localizedName];
+  VALUE        str = Qnil;
   if (string)
-    return wrap_nsstring(string);
-  return Qnil;
+    str = wrap_nsstring(string);
+  [string release];
+  return str;
 }
 
 static
@@ -158,10 +160,12 @@ static
 VALUE
 rb_running_app_bundle_url(VALUE self)
 {
-  NSURL* url = [unwrap_app(self) bundleURL];
+  NSURL* url  = [unwrap_app(self) bundleURL];
+  VALUE rburl = Qnil;
   if (url)
-    return wrap_nsurl(url);
-  return Qnil;
+    rburl = wrap_nsurl(url);
+  [url release];
+  return rburl;
 }
 
 static
