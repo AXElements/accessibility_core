@@ -89,6 +89,7 @@ rb_highlighter_new(int argc, VALUE* argv, VALUE self)
   [window setIgnoresMouseEvents:true];
   [window setFrame:bounds display:false];
   [window makeKeyAndOrderFront:NSApp];
+  [window setReleasedWhenClosed:false];
 
   if (argc > 1) {
     VALUE rb_timeout = rb_hash_lookup(argv[1], timeout_key);
