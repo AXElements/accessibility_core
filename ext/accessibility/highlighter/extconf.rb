@@ -6,6 +6,7 @@ $LIBS   << ' -framework CoreGraphics' unless `sw_vers -productVersion`.to_f == 1
 
 if RUBY_ENGINE == 'macruby'
   $CFLAGS << ' -fobjc-gc'
+  $CFLAGS.sub! /-Werror/, ''
 else
   unless RbConfig::CONFIG["CC"].match /clang/
     clang = `which clang`.chomp
