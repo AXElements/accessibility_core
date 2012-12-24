@@ -282,7 +282,6 @@ wrap_string(CFStringRef string)
   return ruby_string;
 }
 
-inline
 VALUE
 wrap_nsstring(NSString* string)
 {
@@ -306,7 +305,6 @@ unwrap_string(VALUE string)
   /* 				   ); */
 }
 
-inline
 NSString*
 unwrap_nsstring(VALUE string)
 {
@@ -404,7 +402,6 @@ wrap_url(CFURLRef url)
   return rb_funcall(rb_mURI, sel_parse, 1, wrap_string(CFURLGetString(url)));
 }
 
-inline
 VALUE
 wrap_nsurl(NSURL* url)
 {
@@ -434,7 +431,6 @@ wrap_date(CFDateRef date)
   return rb_time_new((time_t)time, 0);
 }
 
-inline
 VALUE
 wrap_nsdate(NSDate* date)
 {

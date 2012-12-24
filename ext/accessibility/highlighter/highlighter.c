@@ -47,7 +47,7 @@ unwrap_color(VALUE color)
 }
 
 
-static inline
+static
 CGRect
 flip(CGRect rect)
 {
