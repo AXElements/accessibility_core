@@ -58,8 +58,11 @@ static
 VALUE
 rb_running_app_with_pid(VALUE self, VALUE pid)
 {
-  return wrap_app([NSRunningApplication
-		   runningApplicationWithProcessIdentifier:NUM2PIDT(pid)]);
+  NSRunningApplication* app = [NSRunningApplication
+			       runningApplicationWithProcessIdentifier:NUM2PIDT(pid)];
+  if (app)
+    return wrap_app(app);
+  return Qnil; // ruby behaviour would be to raise, but we want "drop-in" compat
 }
 
 static
@@ -74,7 +77,10 @@ static
 VALUE
 rb_running_app_current_app(VALUE self)
 {
-  return wrap_app([NSRunningApplication currentApplication]);
+  NSRunningApplication* app = [NSRunningApplication currentApplication];
+  if (app)
+    return wrap_app(app);
+  return Qnil;
 }
 
 static
@@ -116,6 +122,13 @@ rb_running_app_hide(VALUE self)
 
 static
 VALUE
+rb_running_app_unhide(VALUE self)
+{
+  return ([unwrap_app(self) unhide] ? Qtrue : Qfalse);
+}
+
+static
+VALUE
 rb_running_app_is_hidden(VALUE self)
 {
   return (unwrap_app(self).isHidden ? Qtrue : Qfalse);
@@ -125,21 +138,30 @@ static
 VALUE
 rb_running_app_localized_name(VALUE self)
 {
-  return wrap_string((CFStringRef)[unwrap_app(self) localizedName]);
+  NSString* string = [unwrap_app(self) localizedName];
+  if (string)
+    return wrap_nsstring(string);
+  return Qnil;
 }
 
 static
 VALUE
 rb_running_app_bundle_id(VALUE self)
 {
-  return wrap_string((CFStringRef)[unwrap_app(self) bundleIdentifier]);
+  NSString* name = [unwrap_app(self) bundleIdentifier];
+  if (name)
+    return wrap_nsstring(name);
+  return Qnil;
 }
 
 static
 VALUE
 rb_running_app_bundle_url(VALUE self)
 {
-  return wrap_url((CFURLRef)[unwrap_app(self) bundleURL]);
+  NSURL* url = [unwrap_app(self) bundleURL];
+  if (url)
+    return wrap_nsurl(url);
+  return Qnil;
 }
 
 static
@@ -203,6 +225,16 @@ VALUE
 rb_running_app_is_terminated(VALUE self)
 {
   return (unwrap_app(self).isTerminated ? Qtrue : Qfalse);
+}
+
+static
+VALUE
+rb_running_app_equality(VALUE self, VALUE other)
+{
+  if (CLASS_OF(other) == rb_cRunningApp)
+    if ([unwrap_app(self) isEqual:unwrap_app(other)])
+      return Qtrue;
+  return Qfalse;
 }
 
 
@@ -571,7 +603,15 @@ rb_screen_wake(VALUE self, SEL sel)
 void
 Init_extras()
 {
+  // force Ruby to be registered as an app with the system
+  [NSApplication sharedApplication];
+
 #ifdef NOT_MACRUBY
+
+  rb_mURI   = rb_const_get(rb_cObject, rb_intern("URI"));
+  sel_parse = rb_intern("parse");
+
+
   /*
    * Document-class: NSRunningApplication
    *
@@ -592,7 +632,7 @@ Init_extras()
   rb_define_method(rb_cRunningApp, "activateWithOptions",    rb_running_app_activate,          1);
   rb_define_method(rb_cRunningApp, "activationPolicy",       rb_running_app_activation_policy, 0);
   rb_define_method(rb_cRunningApp, "hide",                   rb_running_app_hide,              0);
-  rb_define_method(rb_cRunningApp, "unhide",                 rb_running_app_hide,              0);
+  rb_define_method(rb_cRunningApp, "unhide",                 rb_running_app_unhide,            0);
   rb_define_method(rb_cRunningApp, "hidden?",                rb_running_app_is_hidden,         0);
   rb_define_method(rb_cRunningApp, "localizedName",          rb_running_app_localized_name,    0);
   //rb_define_method(rb_cRunningApp, "icon",                   rb_running_app_icon,              0);
@@ -608,6 +648,7 @@ Init_extras()
   rb_define_method(rb_cRunningApp, "forceTerminate",         rb_running_app_force_terminate,   0);
   rb_define_method(rb_cRunningApp, "terminate",              rb_running_app_terminate,         0);
   rb_define_method(rb_cRunningApp, "terminated?",            rb_running_app_is_terminated,     0);
+  rb_define_method(rb_cRunningApp, "==",                     rb_running_app_equality,          1);
 
   // Technically these are global constants, but in MacRuby you can still access them from any
   // namespace. So, we will try by first adding them to the NSRunningApplication namespae only
