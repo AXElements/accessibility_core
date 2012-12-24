@@ -10,6 +10,7 @@ extern VALUE rb_cCGSize;
 extern VALUE rb_cCGRect;
 extern VALUE rb_mURI; // URI module
 extern VALUE rb_cURI; // URI::Generic class
+extern VALUE rb_cScreen;
 
 extern ID sel_x;
 extern ID sel_y;
@@ -107,6 +108,10 @@ VALUE wrap_array(CFArrayRef array);
 
 VALUE to_ruby(CFTypeRef obj);
 CFTypeRef to_ax(VALUE obj);
+
+VALUE wrap_screen(NSScreen* screen);
+VALUE wrap_array_screens(CFArrayRef array);
+NSScreen* unwrap_screen(VALUE screen);
 
 #endif
 

@@ -512,16 +512,14 @@ to_ax(VALUE obj)
   else                                     return unwrap_unknown(obj);
 }
 
-static
 VALUE
 wrap_screen(NSScreen* screen)
 {
   return Data_Wrap_Struct(rb_cScreen, NULL, NULL, (void*)screen);
 }
 
-static VALUE wrap_array_screens(CFArrayRef array) { WRAP_ARRAY(wrap_screen); }
+VALUE wrap_array_screens(CFArrayRef array) { WRAP_ARRAY(wrap_screen); }
 
-static
 NSScreen*
 unwrap_screen(VALUE screen)
 {
@@ -584,9 +582,7 @@ Init_bridge()
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
   rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
   rb_cURI           = rb_const_get(rb_mURI,    rb_intern("Generic"));
-
-
-  rb_cScreen = rb_define_class("NSScreen", rb_cObject);
+  rb_cScreen        = rb_define_class("NSScreen", rb_cObject);
 
   rb_define_singleton_method(rb_cScreen, "mainScreen", rb_screen_main,    0);
   rb_define_singleton_method(rb_cScreen, "screens",    rb_screen_screens, 0);
