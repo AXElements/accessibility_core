@@ -263,9 +263,11 @@ wrap_string(CFStringRef string)
   char*        name = (char*)CFStringGetCStringPtr(string, kCFStringEncodingMacRoman);
 
   if (name) {
-    ruby_string = rb_str_new(name, length);
+    printf("yup\n");
+    ruby_string = rb_usascii_str_new(name, length);
   }
   else {
+    printf("nope\n");
     // currently we will always assume UTF-8
     // perhaps we could use CFStringGetSystemEncoding in the future?
     name = malloc(length+1);
@@ -285,9 +287,12 @@ wrap_string(CFStringRef string)
 VALUE
 wrap_nsstring(NSString* string)
 {
-  return wrap_string((CFStringRef)string);
+  return rb_enc_str_new(
+			[string UTF8String],
+			[string length],
+			rb_utf8_encoding()
+			);
 }
-
 
 CFStringRef
 unwrap_string(VALUE string)
@@ -405,7 +410,10 @@ wrap_url(CFURLRef url)
 VALUE
 wrap_nsurl(NSURL* url)
 {
-  return wrap_url((CFURLRef)url);
+  NSString* str = [url absoluteString];
+  VALUE  rb_str = wrap_nsstring(str);
+  [str release];
+  return rb_funcall(rb_mURI, sel_parse, 1, rb_str);
 }
 
 CFURLRef
