@@ -263,11 +263,9 @@ wrap_string(CFStringRef string)
   char*        name = (char*)CFStringGetCStringPtr(string, kCFStringEncodingMacRoman);
 
   if (name) {
-    printf("yup\n");
     ruby_string = rb_usascii_str_new(name, length);
   }
   else {
-    printf("nope\n");
     // currently we will always assume UTF-8
     // perhaps we could use CFStringGetSystemEncoding in the future?
     name = malloc(length+1);
