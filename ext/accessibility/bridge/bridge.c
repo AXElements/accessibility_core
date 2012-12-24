@@ -3,6 +3,13 @@
 #import <Cocoa/Cocoa.h>
 
 
+void
+spin(double seconds)
+{
+  CFRunLoopRunInMode(kCFRunLoopDefaultMode, seconds, false);
+}
+
+
 #ifdef NOT_MACRUBY
 
 VALUE rb_mAccessibility;
@@ -555,27 +562,15 @@ rb_screen_frame(VALUE self)
   return wrap_rect([unwrap_screen(self) frame]);
 }
 
-#endif
-
-
-void
-spin(double seconds)
-{
-  CFRunLoopRunInMode(kCFRunLoopDefaultMode, seconds, false);
-}
-
-
 static
 VALUE
-#ifdef NOT_MACRUBY
 rb_spin(VALUE self, VALUE seconds)
-#else
-rb_spin(VALUE self, SEL sel, VALUE seconds)
-#endif
 {
   spin(NUM2DBL(seconds));
   return self;
 }
+
+#endif
 
 
 void
@@ -607,12 +602,7 @@ Init_bridge()
   rb_define_singleton_method(rb_cScreen, "screens",    rb_screen_screens, 0);
 
   rb_define_method(rb_cScreen, "frame", rb_screen_frame, 0);
-#endif
 
-
-#ifdef NOT_MACRUBY
   rb_define_method(rb_cObject, "spin", rb_spin, 1); // semi-private method
-#else
-  rb_objc_define_method(rb_cObject, "spin", rb_spin, 1); // semi-private method
 #endif
 }

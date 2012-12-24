@@ -183,3 +183,20 @@ class NSArray
     map do |obj| obj.to_ruby end
   end
 end
+
+##
+# `accessibility-core` extensions to `Object`
+class Object
+
+  ##
+  # Spin the run loop for the given number of seconds
+  #
+  # The script will effectively be paused while the run loop
+  # is "spinning".
+  #
+  # @param seconds [Number]
+  def spin seconds
+    CFRunLoopRunInMode(KCFRunLoopDefaultMode, seconds, false)
+  end
+
+end
