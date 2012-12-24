@@ -559,6 +559,19 @@ spin(double seconds)
 }
 
 
+static
+VALUE
+#ifdef NOT_MACRUBY
+rb_spin(VALUE self, VALUE seconds)
+#else
+rb_spin(VALUE self, SEL sel, VALUE seconds)
+#endif
+{
+  spin(NUM2DBL(seconds));
+  return self;
+}
+
+
 void
 Init_bridge()
 {
@@ -588,5 +601,12 @@ Init_bridge()
   rb_define_singleton_method(rb_cScreen, "screens",    rb_screen_screens, 0);
 
   rb_define_method(rb_cScreen, "frame", rb_screen_frame, 0);
+#endif
+
+
+#ifdef NOT_MACRUBY
+  rb_define_method(rb_cObject, "spin", rb_spin, 1); // semi-private method
+#else
+  rb_objc_define_method(rb_cObject, "spin", rb_spin, 1); // semi-private method
 #endif
 }
