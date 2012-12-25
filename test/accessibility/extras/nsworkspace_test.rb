@@ -7,6 +7,12 @@ class NSWorkspaceTest < MiniTest::Unit::TestCase
     NSWorkspace.sharedWorkspace
   end
 
+  def test_running_applications
+    apps = shared.runningApplications
+    assert_kind_of Array, apps
+    assert_kind_of NSRunningApplication, apps.first
+  end
+
   def test_frontmost_app
     assert_equal 'com.apple.Terminal', shared.frontmostApplication.bundleIdentifier
   end

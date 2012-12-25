@@ -51,7 +51,11 @@ unwrap_app(VALUE app)
   return running_app;
 }
 
-static VALUE wrap_array_apps(CFArrayRef array) { WRAP_ARRAY(wrap_app); }
+static VALUE wrap_array_apps(NSArray* ary)
+{
+  CFArrayRef array = (CFArrayRef)ary;
+  WRAP_ARRAY(wrap_app);
+}
 
 
 static
@@ -69,8 +73,8 @@ static
 VALUE
 rb_running_app_with_bundle_id(VALUE self, VALUE bundle_id)
 {
-  return wrap_array_apps((CFArrayRef)[NSRunningApplication
-		   runningApplicationsWithBundleIdentifier:unwrap_nsstring(bundle_id)]);
+  return wrap_array_apps([NSRunningApplication
+			  runningApplicationsWithBundleIdentifier:unwrap_nsstring(bundle_id)]);
 }
 
 static
@@ -247,6 +251,20 @@ VALUE
 rb_workspace_shared(VALUE self)
 {
   return self;
+}
+
+
+static
+VALUE
+rb_workspace_running_apps(VALUE self)
+{
+  NSArray* apps = [[NSWorkspace sharedWorkspace] runningApplications];
+  VALUE rb_apps = wrap_array_apps(apps);
+  [apps enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+      [obj retain];
+    }];
+  [apps release];
+  return rb_apps;
 }
 
 static
@@ -714,6 +732,7 @@ Init_extras()
    */
   rb_cWorkspace = rb_define_class("NSWorkspace", rb_cObject);
 
+  rb_define_singleton_method(rb_cWorkspace, "runningApplications",             rb_workspace_running_apps,   0);
   rb_define_singleton_method(rb_cWorkspace, "sharedWorkspace",                 rb_workspace_shared,         0);
   rb_define_singleton_method(rb_cWorkspace, "frontmostApplication",            rb_workspace_frontmost_app,  0);
   rb_define_singleton_method(rb_cWorkspace, "menuBarOwningApplication",        rb_workspace_menu_bar_owner, 0);
