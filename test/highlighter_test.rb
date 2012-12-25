@@ -2,6 +2,7 @@ require 'test/helper'
 require 'accessibility/highlighter'
 
 class HighlighterTest < MiniTest::Unit::TestCase
+  try_to_parallelize!
 
   def teardown
     @w.stop if @w

@@ -2,13 +2,21 @@ require 'test/helper'
 require 'accessibility/extras'
 
 class NSHostTest < MiniTest::Unit::TestCase
+  try_to_parallelize!
 
   def host
     NSHost.currentHost
   end
 
   def test_names
-    assert_equal `hostname`.chomp, host.names.first
+    names = host.names
+    assert_kind_of Array, names
+    assert_kind_of String, names.first
+    refute_empty names.first
+
+    unless on_macruby? # lol?
+      assert_equal `macruby -e 'puts NSHost.currentHost.names.first'`.chomp, host.names.first
+    end
   end
 
   def test_addresses
@@ -19,7 +27,13 @@ class NSHostTest < MiniTest::Unit::TestCase
   end
 
   def test_localized_name
-    assert_equal `hostname -s`.chomp, host.localizedName, 'Do you have a custom bonjour name?'
+    name = host.localizedName
+    assert_kind_of String, name
+    refute_empty name
+
+    unless on_macruby? # lol?
+      assert_equal `macruby -e 'puts NSHost.currentHost.localizedName'`.chomp, host.localizedName
+    end
   end
 
 end
