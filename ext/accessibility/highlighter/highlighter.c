@@ -1,6 +1,8 @@
 #include "ruby.h"
 #import <Cocoa/Cocoa.h>
-#include "../bridge/bridge.c"
+#include "../bridge/bridge.h"
+#include "../extras/extras.h"
+
 
 #ifdef NOT_MACRUBY
 
@@ -229,6 +231,9 @@ rb_color_equality(VALUE self, VALUE other)
 void
 Init_highlighter()
 {
+  Init_bridge();
+  Init_extras();
+
 #ifdef NOT_MACRUBY
 
   // force initialization or NSWindow won't work

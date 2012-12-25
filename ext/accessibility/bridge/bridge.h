@@ -5,6 +5,9 @@
 // these functions are available on MacRuby as well as MRI
 void spin(double seconds);
 
+// initialize all the dynamic data (e.g. class pointers)
+void Init_bridge();
+
 
 #ifdef NOT_MACRUBY
 

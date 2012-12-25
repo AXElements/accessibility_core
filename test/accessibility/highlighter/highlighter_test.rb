@@ -1,5 +1,6 @@
 require 'test/helper'
 require 'accessibility/highlighter'
+require 'accessibility/extras'
 
 class HighlighterTest < MiniTest::Unit::TestCase
   try_to_parallelize!

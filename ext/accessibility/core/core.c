@@ -3,7 +3,7 @@
 #ifdef NOT_MACRUBY /* This entire extension is pointless when running on MacRuby */
 
 #import <Cocoa/Cocoa.h>
-#include "bridge.h"
+#include "../bridge/bridge.h"
 
 
 static ID ivar_attrs;
@@ -633,6 +633,8 @@ rb_acore_equality(VALUE self, VALUE other)
 void
 Init_core()
 {
+  Init_bridge();
+
 #ifdef NOT_MACRUBY
   if (!AXAPIEnabled())
     rb_raise(

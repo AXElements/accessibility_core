@@ -1,6 +1,6 @@
 #include "ruby.h"
 
-#include "../bridge/bridge.c"
+#include "../bridge/bridge.h"
 
 #import <IOKit/IOKitlib.h>
 #import <IOKit/ps/IOPowerSources.h>
@@ -645,6 +645,8 @@ rb_battery_time_full_charge(VALUE self)
 void
 Init_extras()
 {
+  Init_bridge();
+
   // force Ruby to be registered as an app with the system
   [NSApplication sharedApplication];
 
@@ -656,7 +658,7 @@ Init_extras()
    * A 99% drop-in replacement for Cocoa's `NSWorkspace` class on MRI and other
    * non-MacRuby rubies.
    *
-   * See https://developer.apple.com/library/mac/#documentation/AppKit/Reference/NSRunningApplication_Class/Reference/Reference.html
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/AppKit/Reference/NSRunningApplication_Class/Reference/Reference.html)
    * for documentation on the methods in this class.
    */
   rb_cRunningApp = rb_define_class("NSRunningApplication", rb_cObject);
@@ -704,7 +706,7 @@ Init_extras()
    *
    * A subset of Cocoa's `NSWorkspace` class.
    *
-   * See https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/ApplicationKit/Classes/NSWorkspace_Class/Reference/Reference.html
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/ApplicationKit/Classes/NSWorkspace_Class/Reference/Reference.html)
    * for documentation on the methods available in this class.
    */
   rb_cWorkspace = rb_define_class("NSWorkspace", rb_cObject);
@@ -739,7 +741,7 @@ Init_extras()
    * A subset of Cocoa's `NSProcessInfo` class. Methods that might be
    * useful to have been bridged.
    *
-   * See https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/Reference/Reference.html
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/Reference/Reference.html)
    * for documentation on the methods available in this class.
    */
   rb_cProcInfo = rb_define_class("NSProcessInfo", rb_cObject);
@@ -758,7 +760,7 @@ Init_extras()
    * A large subset of Cocoa's `NSHost` class. Methods that might be
    * useful to have have been bridged.
    *
-   * See https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSHost_Class/Reference/Reference.html
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSHost_Class/Reference/Reference.html)
    * for documentation on the methods available in this class.
    */
   rb_cHost = rb_define_class("NSHost", rb_cObject);
@@ -771,7 +773,7 @@ Init_extras()
 
 
   /*
-   * Document-class: NSHost
+   * Document-class: NSScreen
    *
    * A small subset of Cocoa's `NSScreen` class. Methods that might be
    * useful to have have been bridged.
