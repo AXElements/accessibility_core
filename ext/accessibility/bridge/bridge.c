@@ -542,19 +542,32 @@ to_ax(VALUE obj)
       rb_cURI    = rb_const_get(mURI, rb_intern("Generic"));
     });
 
+  switch (TYPE(obj))
+    {
+    case T_STRING:
+      return unwrap_string(obj);
+    case T_FIXNUM:
+      return unwrap_number(obj);
+    case T_STRUCT:
+      return unwrap_value(obj);
+    case T_FLOAT:
+      return unwrap_number(obj);
+    case T_TRUE:
+    case T_FALSE:
+      return unwrap_boolean(obj);
+    }
+
   VALUE type = CLASS_OF(obj);
-  if      (type == rb_cElement)             return unwrap_ref(obj);
-  else if (type == rb_cString)              return unwrap_string(obj);
-  else if (type == rb_cFixnum)              return unwrap_number(obj);
-  else if (type == rb_cCGPoint)             return unwrap_value(obj);
-  else if (type == rb_cCGSize)              return unwrap_value(obj);
-  else if (type == rb_cCGRect)              return unwrap_value(obj);
-  else if (type == rb_cRange)               return unwrap_value(obj);
-  else if (type == rb_cFloat)               return unwrap_number(obj);
-  else if (type == rb_cTime)                return unwrap_date(obj);
-  else if (obj  == Qtrue || obj == Qfalse)  return unwrap_boolean(obj);
-  else if (rb_obj_is_kind_of(obj, rb_cURI)) return unwrap_url(obj);
-  else                                      return unwrap_unknown(obj);
+  if (type == rb_cTime)
+    return unwrap_date(obj);
+  else if (type == rb_cRange)
+    return unwrap_value_range(obj);
+
+  if (rb_obj_is_kind_of(obj, rb_cURI))
+    return unwrap_url(obj);
+
+  // give up if we get this far
+  return unwrap_unknown(obj);
 }
 
 VALUE
