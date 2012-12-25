@@ -240,7 +240,7 @@ Init_highlighter()
   [NSApplication sharedApplication];
 
   // TODO: can we replace this bs with dispatch_once?
-  rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
+  rb_mAccessibility = rb_define_module("Accessibility");
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));

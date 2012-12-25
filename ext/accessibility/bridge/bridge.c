@@ -559,7 +559,7 @@ Init_bridge()
   sel_to_s     = rb_intern("to_s");
   sel_parse    = rb_intern("parse");
 
-  rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
+  rb_mAccessibility = rb_define_module("Accessibility");
   rb_cElement       = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));

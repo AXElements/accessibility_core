@@ -1,4 +1,5 @@
-require 'accessibility/bridge/version'
+require 'accessibility/core/version'
+
 
 if defined? MACRUBY_REVISION
 
@@ -30,4 +31,3 @@ else
   require 'accessibility/bridge/mri'
 
 end
-
