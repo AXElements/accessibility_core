@@ -1,42 +1,30 @@
-task :default => :test
-
-require 'rake/clean'
-CLEAN.include '*.plist', '*.gch'
-
-desc 'Run the Clang static analyzer'
-task :analyze do
-  sh "clang --analyze ext/accessibility/core/core.c"
+if defined? MACRUBY_REVISION
+  def on_macruby?
+    true
+  end
+else
+  def on_macruby?
+    false
+  end
 end
 
+def on_mri?
+  !on_macruby?
+end
+
+task :default => :test
+
+# @todo restore the clang analyze task, don't forget to add rubyhdrdir
+
 desc 'Startup an IRb console with accessibility-core loaded'
-task :console => [:compile] do
+task :console => 'compile:core' do
   sh 'irb -Ilib -raccessibility/core'
 end
 
-desc 'Open the fixture app'
-task :run_fixture => :fixture do
-  sh 'open test/fixture/Release/AXElementsTester.app'
+desc 'Startup an IRb console with everything loaded'
+task :console_complete => :compile do
+  sh 'irb -Ilib -raccessibility/core -raccessibility/bridge -raccessibility/extras -raccessibility/highlighter'
 end
-
-desc 'Build the test fixture'
-task :fixture do
-  sh 'cd test/AXElementsTester && xcodebuild'
-end
-
-desc 'Remove the built fixture app'
-task :clobber_fixture do
-  $stdout.puts 'rm -rf test/fixture'
-  rm_rf 'test/fixture'
-end
-task :clobber => :clobber_fixture
-
-require 'rake/testtask'
-Rake::TestTask.new do |t|
-  t.libs << '.'
-  t.pattern = 'test/*_test.rb'
-end
-task :test => [:compile, :fixture]
-
 
 # Gem stuff
 
@@ -51,22 +39,3 @@ task :install => :gem do
   Gem::Installer.new("pkg/#{SPEC.file_name}").install
 end
 
-
-# C extensions!
-
-require 'rake/extensiontask'
-
-Rake::ExtensionTask.new('core', SPEC) do |ext|
-  ext.ext_dir = 'ext/accessibility/core'
-  ext.lib_dir = 'lib/accessibility'
-end
-
-#Rake::ExtensionTask.new('highlighter', SPEC) do |ext|
-#  ext.ext_dir = 'ext/accessibility/highlighter'
-#  ext.lib_dir = 'lib/accessibility/core'
-#end
-
-# Rake::ExtensionTask.new('running_application', SPEC) do |ext|
-#   ext.ext_dir = 'ext/accessibility/running_application'
-#   ext.lib_dir = 'lib/accessibility/core'
-# end

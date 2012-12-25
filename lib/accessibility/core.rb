@@ -7,6 +7,6 @@ require 'accessibility/core/version'
 if on_macruby?
   require 'accessibility/core/macruby'
 else
-  require 'accessibility/core.bundle'
+  require 'accessibility/core/core.bundle'
 end
 

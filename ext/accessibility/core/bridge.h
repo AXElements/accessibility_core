@@ -1,1 +1,1 @@
-#include "../bridge/ext/accessibility/bridge/bridge.c"
+#include "../bridge/bridge.c"

@@ -1,4 +1,4 @@
-require 'test/helper'
+require 'test/accessibility/core/fixture'
 
 ##
 # Some of these tests are unit tests and some of these tests are

@@ -613,7 +613,7 @@ rb_acore_element_at(VALUE self, VALUE point)
       else
 	return Qnil;
     default:
-      return handle_error(self, code); // point, nil, nil
+      return handle_error(self, code);
     }
 }
 

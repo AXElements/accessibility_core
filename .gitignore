@@ -7,4 +7,5 @@ doc/
 pkg/
 Gemfile.lock
 test/fixture
+Makefile
 
