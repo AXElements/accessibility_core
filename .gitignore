@@ -1,4 +1,5 @@
 *.o
+*.rbo
 *.plist
 *.bundle
 tmp/
