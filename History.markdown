@@ -3,8 +3,8 @@
   * Merge in `accessibility_bridge` v0.2.0
 
     - Add the `Battery` module for collecting information about the battery status
-    - Add the `Accessibility::Highilghter` to highlight rectangles no the screen
-    - Add `NSScreen.wakeup` freedom patch to wake sleeping screens
+    - Add the `Accessibility::Highilghter` module to highlight rectangles on the screen
+    - Add `NSScreen.wakeup` method as a freedom patch to wake sleeping screens
 
     - Add a 99% drop-in replacement for `NSRunningApplication`
     - Add a 20% drop-in replacement for `NSWorkspace` to complement `NSRunningApplication`
