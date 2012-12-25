@@ -1,3 +1,8 @@
+# 0.3.1 - Fix it up
+
+  * Fix C extensions being installed to the wrong location
+  * Fix Accessibility module not always being defined at the appropriate time
+
 # 0.3.0 - Merge accessibility\_bridge
 
   * Merge in `accessibility_bridge` v0.2.0
