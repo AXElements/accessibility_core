@@ -645,7 +645,23 @@ Init_core()
 	     "------------------------------------------------------------------------\n"
 	     );
 
-  Init_bridge();
+  // bs that needs to be initialized from the bridge.c import
+  sel_x        = rb_intern("x");
+  sel_y        = rb_intern("y");
+  sel_width    = rb_intern("width");
+  sel_height   = rb_intern("height");
+  sel_origin   = rb_intern("origin");
+  sel_size     = rb_intern("size");
+  sel_to_point = rb_intern("to_point");
+  sel_to_size  = rb_intern("to_size");
+  sel_to_s     = rb_intern("to_s");
+
+  rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
+  rb_cElement       = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
+  rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
+  rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
+  rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
+
 
   // these should be defined by now
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
