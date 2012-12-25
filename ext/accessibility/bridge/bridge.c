@@ -116,6 +116,7 @@ unwrap_size(VALUE size)
 }
 
 
+
 VALUE
 wrap_rect(CGRect rect)
 {
@@ -124,9 +125,24 @@ wrap_rect(CGRect rect)
   return rb_struct_new(rb_cCGRect, point, size);
 }
 
+
+static dispatch_once_t rect_token;
+
+VALUE
+coerce_to_rect(VALUE obj)
+{
+  dispatch_once(&rect_token, ^(void) {
+      sel_to_rect = rb_intern("to_rect");
+    });
+  return rb_funcall(obj, sel_to_rect, 0);
+}
+
 CGRect
 unwrap_rect(VALUE rect)
 {
+  dispatch_once(&rect_token, ^(void) {
+      sel_to_rect = rb_intern("to_rect");
+    });
   rect = rb_funcall(rect, sel_to_rect, 0);
   CGPoint origin = unwrap_point(rb_struct_getmember(rect, sel_origin));
   CGSize    size = unwrap_size(rb_struct_getmember(rect, sel_size));
@@ -601,7 +617,6 @@ Init_bridge()
   sel_size     = rb_intern("size");
   sel_to_point = rb_intern("to_point");
   sel_to_size  = rb_intern("to_size");
-  sel_to_rect  = rb_intern("to_rect");
   sel_to_s     = rb_intern("to_s");
 
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));

@@ -63,7 +63,7 @@ rb_highlighter_new(int argc, VALUE* argv, VALUE self)
   if (!argc)
     rb_raise(rb_eArgError, "wrong number of arguments (0 for 1+)");
 
-  CGRect bounds = unwrap_rect(rb_funcall(argv[0], sel_to_rect, 0));
+  CGRect bounds = unwrap_rect(coerce_to_rect(argv[0]));
   bounds = flip(bounds); // we assume the rect is in the other co-ordinate system
 
   NSWindow* window =
@@ -186,13 +186,11 @@ Init_highlighter()
   // force initialization or NSWindow won't work
   [NSApplication sharedApplication];
 
-  // TODO: look into why these are nil if we don't load them here
+  // TODO: can we replace this bs with dispatch_once?
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
-  sel_to_rect       = rb_intern("to_rect");
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
-
 
 
   rb_cHighlighter = rb_define_class_under(rb_mAccessibility, "Highlighter", rb_cObject);
