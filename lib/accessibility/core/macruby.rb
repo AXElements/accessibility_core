@@ -159,7 +159,7 @@ module Accessibility::Element
     # The `:zomg` setting will be too fast in almost all cases, but
     # it is fun to watch.
     #
-    # @param [Number,Symbol]
+    # @param value [Number,Symbol]
     def self.key_rate= value
       @key_rate = case value
                   when :very_slow        then 0.9
