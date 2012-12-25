@@ -345,6 +345,7 @@ rb_acore_children(VALUE self)
     {
     case kAXErrorSuccess:
       return wrap_array_refs(value);
+    case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return rb_ary_new();

@@ -397,4 +397,21 @@ class CoreTest < MiniTest::Unit::TestCase
     refute_equal app, CGPoint.new
   end
 
+
+  # @!group Bugs
+
+  # this assumes that radar://10040865 is not fixed;
+  # once it is fixed this case becomes less of an
+  # issue anyways
+  def test_nil_children_returns_empty_array
+    menu = app.attribute('AXMenuBar').children.find { |child|
+      child.attribute('AXTitle') =='Help'
+    }
+    menu.perform 'AXPress'
+
+    assert_empty menu.children.first.children.first.children.first.children
+  ensure
+    menu.perform 'AXCancel' if menu
+  end
+
 end
