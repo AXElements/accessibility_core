@@ -20,17 +20,6 @@ runtimes.
     window.set 'AXPosition', CGPoint.new(100, 100)
 
 
-## Note
-
-At this point, `rake-compiler` does not run on MacRuby
-'out-of-the-box'. Actually, it does, but it declares a dependency on
-rake which causes rake to be installed from rubygems. Rake from
-rubygems does not work with MacRuby. So you need to either fix the
-probem with MacRuby or just hack the `rake-compiler.gemspec` file
-after you install `rake-compiler` so it does not think it depends on
-rake anymore.
-
-
 ## TODO
 
   * bridging for `NSAttributedString`
