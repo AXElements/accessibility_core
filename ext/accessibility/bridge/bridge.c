@@ -287,7 +287,7 @@ wrap_nsstring(NSString* string)
 {
   return rb_enc_str_new(
 			[string UTF8String],
-			[string length],
+			[string lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
 			rb_utf8_encoding()
 			);
 }
