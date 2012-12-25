@@ -1,4 +1,4 @@
-# 0.2.0 - Update accessibility\_bridge
+# 0.3.0 - Merge accessibility\_bridge
 
   * Merge in `accessibility_bridge` v0.2.0
 
@@ -17,6 +17,11 @@
     - Various memory leaks plugged
 
     __NOTE__: Percentages are somewhat arbitrary based on my personal usage.
+
+
+# 0.2.0 - Update accessibility\_bridge
+
+  * Update bridge dependency to v0.2.0
 
 
 # 0.1.2 - Fix some bridging stuff
