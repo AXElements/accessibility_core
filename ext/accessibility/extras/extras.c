@@ -693,13 +693,16 @@ Init_extras()
   // Technically these are global constants, but in MacRuby you can still access them from any
   // namespace. So, we will try by first adding them to the NSRunningApplication namespae only
 #define RUNNING_APP_CONST(str, val) rb_define_const(rb_cRunningApp, str, INT2FIX(val));
-  RUNNING_APP_CONST("NSApplicationActivateAllWindows",        NSApplicationActivateAllWindows);
-  RUNNING_APP_CONST("NSApplicationActivateIgnoringOtherApps", NSApplicationActivateIgnoringOtherApps);
+  if (!rb_const_defined_at(rb_cRunningApp, rb_intern("NSApplicationActivateAllWindows"))) {
+    RUNNING_APP_CONST("NSApplicationActivateAllWindows",        NSApplicationActivateAllWindows);
+    RUNNING_APP_CONST("NSApplicationActivateIgnoringOtherApps", NSApplicationActivateIgnoringOtherApps);
 
-  RUNNING_APP_CONST("NSBundleExecutableArchitectureI386",     NSBundleExecutableArchitectureI386);
-  RUNNING_APP_CONST("NSBundleExecutableArchitecturePPC",      NSBundleExecutableArchitecturePPC);
-  RUNNING_APP_CONST("NSBundleExecutableArchitectureX86_64",   NSBundleExecutableArchitectureX86_64);
-  RUNNING_APP_CONST("NSBundleExecutableArchitecturePPC64",    NSBundleExecutableArchitecturePPC64);
+    RUNNING_APP_CONST("NSBundleExecutableArchitectureI386",     NSBundleExecutableArchitectureI386);
+    RUNNING_APP_CONST("NSBundleExecutableArchitecturePPC",      NSBundleExecutableArchitecturePPC);
+    RUNNING_APP_CONST("NSBundleExecutableArchitectureX86_64",   NSBundleExecutableArchitectureX86_64);
+    RUNNING_APP_CONST("NSBundleExecutableArchitecturePPC64",    NSBundleExecutableArchitecturePPC64);
+  }
+
 
   /*
    * Document-class: NSWorkspace
@@ -722,17 +725,19 @@ Init_extras()
   //  key_launch_id    = ID2SYM(rb_intern("launchIdentifier"));
 
 #define WORKSPACE_CONST(str, val) rb_define_const(rb_cWorkspace, str, INT2FIX(val));
-  WORKSPACE_CONST("NSWorkspaceLaunchAndPrint",                 NSWorkspaceLaunchAndPrint);
-  WORKSPACE_CONST("NSWorkspaceLaunchInhibitingBackgroundOnly", NSWorkspaceLaunchInhibitingBackgroundOnly);
-  WORKSPACE_CONST("NSWorkspaceLaunchWithoutAddingToRecents",   NSWorkspaceLaunchWithoutAddingToRecents);
-  WORKSPACE_CONST("NSWorkspaceLaunchWithoutActivation",        NSWorkspaceLaunchWithoutActivation);
-  WORKSPACE_CONST("NSWorkspaceLaunchAsync",                    NSWorkspaceLaunchAsync);
-  WORKSPACE_CONST("NSWorkspaceLaunchAllowingClassicStartup",   NSWorkspaceLaunchAllowingClassicStartup);
-  WORKSPACE_CONST("NSWorkspaceLaunchPreferringClassic",        NSWorkspaceLaunchPreferringClassic);
-  WORKSPACE_CONST("NSWorkspaceLaunchNewInstance",              NSWorkspaceLaunchNewInstance);
-  WORKSPACE_CONST("NSWorkspaceLaunchAndHide",                  NSWorkspaceLaunchAndHide);
-  WORKSPACE_CONST("NSWorkspaceLaunchAndHideOthers",            NSWorkspaceLaunchAndHideOthers);
-  WORKSPACE_CONST("NSWorkspaceLaunchDefault",                  NSWorkspaceLaunchDefault);
+  if (!rb_const_defined_at(rb_cWorkspace, rb_intern("NSWorkspaceLaunchAndPrint"))) {
+    WORKSPACE_CONST("NSWorkspaceLaunchAndPrint",                 NSWorkspaceLaunchAndPrint);
+    WORKSPACE_CONST("NSWorkspaceLaunchInhibitingBackgroundOnly", NSWorkspaceLaunchInhibitingBackgroundOnly);
+    WORKSPACE_CONST("NSWorkspaceLaunchWithoutAddingToRecents",   NSWorkspaceLaunchWithoutAddingToRecents);
+    WORKSPACE_CONST("NSWorkspaceLaunchWithoutActivation",        NSWorkspaceLaunchWithoutActivation);
+    WORKSPACE_CONST("NSWorkspaceLaunchAsync",                    NSWorkspaceLaunchAsync);
+    WORKSPACE_CONST("NSWorkspaceLaunchAllowingClassicStartup",   NSWorkspaceLaunchAllowingClassicStartup);
+    WORKSPACE_CONST("NSWorkspaceLaunchPreferringClassic",        NSWorkspaceLaunchPreferringClassic);
+    WORKSPACE_CONST("NSWorkspaceLaunchNewInstance",              NSWorkspaceLaunchNewInstance);
+    WORKSPACE_CONST("NSWorkspaceLaunchAndHide",                  NSWorkspaceLaunchAndHide);
+    WORKSPACE_CONST("NSWorkspaceLaunchAndHideOthers",            NSWorkspaceLaunchAndHideOthers);
+    WORKSPACE_CONST("NSWorkspaceLaunchDefault",                  NSWorkspaceLaunchDefault);
+  }
 
 
   /*
