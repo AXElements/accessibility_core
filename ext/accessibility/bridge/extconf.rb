@@ -19,4 +19,4 @@ else
   $CFLAGS << ' -DNOT_MACRUBY'
 end
 
-create_makefile 'accessibility/bridge'
+create_makefile 'accessibility/bridge/bridge'

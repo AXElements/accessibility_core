@@ -19,7 +19,7 @@ else
   $CFLAGS << ' -DNOT_MACRUBY'
 end
 
-create_makefile 'accessibility/extras'
+create_makefile 'accessibility/extras/extras'
 
 # modify the bugger so we can depend on bridge.h properly
 makefile = File.read 'Makefile'
