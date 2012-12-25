@@ -24,5 +24,5 @@ create_makefile 'accessibility/extras/extras'
 # modify the bugger so we can depend on bridge.h properly
 makefile = File.read 'Makefile'
 makefile.gsub! '$(DLLIB): $(OBJS) Makefile', '$(DLLIB): $(OBJS) Makefile ../bridge/bridge.o'
-makefile.gsub! '$(Q) $(LDSHARED) -o $@', '$(Q) $(LDSHARED) -o $@ ../bridge/bridge.o'
+makefile.gsub! '$(LDSHARED) -o $@', ' $(LDSHARED) -o $@ ../bridge/bridge.o'
 File.open('Makefile', 'w') { |f| f.write makefile }
