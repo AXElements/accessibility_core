@@ -23,7 +23,7 @@ end
 
 desc 'Startup an IRb console with everything loaded'
 task :console_complete => :compile do
-  sh 'irb -Ilib -raccessibility/core -raccessibility/bridge -raccessibility/extras -raccessibility/highlighter'
+  sh 'irb -Ilib -raccessibility/bridge -raccessibility/core -raccessibility/extras -raccessibility/highlighter'
 end
 
 # Gem stuff
