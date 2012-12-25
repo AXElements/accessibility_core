@@ -57,8 +57,8 @@ end
 
 
 ExtensionTask.new 'bridge',      'ext/accessibility/bridge'
-ExtensionTask.new 'core',        'ext/accessibility/core',  'bridge'
-ExtensionTask.new 'extras',      'ext/accessibility/extras', 'bridge'
+ExtensionTask.new 'extras',      'ext/accessibility/extras',      'bridge'
+ExtensionTask.new 'core',        'ext/accessibility/core',        'bridge', 'extras'
 ExtensionTask.new 'highlighter', 'ext/accessibility/highlighter', 'bridge', 'extras'
 
 

@@ -17,18 +17,14 @@ end
 
 require 'test/helper'
 require 'accessibility/core'
+require 'accessibility/extras'
 
 
 class MiniTest::Unit::TestCase
 
-  PID = if on_macruby?
-          NSWorkspace.sharedWorkspace.runningApplications.find do |app|
-            app.bundleIdentifier == APP_BUNDLE_IDENTIFIER
-          end.processIdentifier
-        else
-          # a bit fragile, need to find a better solution
-          `ps aux | grep AXElementsTester`.chomp.split("\n").last.split(' ').at(1).to_i
-        end
+  PID = NSWorkspace.sharedWorkspace.runningApplications.find do |app|
+          app.bundleIdentifier == APP_BUNDLE_IDENTIFIER
+        end.processIdentifier
 
   # if this basic API doesn't work we might as well as give up right away
   APP = Accessibility::Element.application_for PID
