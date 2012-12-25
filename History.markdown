@@ -1,7 +1,16 @@
+# 0.3.2 - Adjustments for AXElements
+
+  * Fix `Element#children` raising when AXAPI returns failure error code
+  * Conditionally defined `CGPoint`/`CGSize`/`CGRect` on MRI
+  * Tweak various bits of documentation related to Cocoa mappings
+  * Calculate `NSString` length properly when wrapping in the C extension
+
+
 # 0.3.1 - Fix it up
 
   * Fix C extensions being installed to the wrong location
   * Fix Accessibility module not always being defined at the appropriate time
+
 
 # 0.3.0 - Merge accessibility\_bridge
 
