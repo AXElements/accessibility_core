@@ -1,5 +1,4 @@
 require 'test/helper'
-require 'accessibility/bridge'
 require 'accessibility/extras'
 
 class NSScreenTest < MiniTest::Unit::TestCase

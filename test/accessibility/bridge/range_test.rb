@@ -1,4 +1,5 @@
 require 'test/helper'
+require 'accessibility/bridge'
 
 if on_macruby?
 class RangeTest < MiniTest::Unit::TestCase

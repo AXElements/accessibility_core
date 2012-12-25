@@ -1,4 +1,5 @@
 require 'test/helper'
+require 'accessibility/bridge'
 
 unless on_macruby?
 class TestURIExtensions < MiniTest::Unit::TestCase

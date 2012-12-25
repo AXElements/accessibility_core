@@ -1,4 +1,5 @@
 require 'test/helper'
+require 'accessibility/bridge'
 
 class StringTest < MiniTest::Unit::TestCase
 

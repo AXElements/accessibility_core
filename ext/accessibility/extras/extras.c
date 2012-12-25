@@ -384,7 +384,84 @@ rb_host_localized_name(VALUE self)
   return rb_name;
 }
 
+
+VALUE
+wrap_screen(NSScreen* screen)
+{
+  return Data_Wrap_Struct(rb_cScreen, NULL, NULL, (void*)screen);
+}
+
+VALUE wrap_array_screens(CFArrayRef array) { WRAP_ARRAY(wrap_screen); }
+
+NSScreen*
+unwrap_screen(VALUE screen)
+{
+  NSScreen* ns_screen;
+  Data_Get_Struct(screen, NSScreen, ns_screen);
+  return ns_screen;
+}
+
+static
+VALUE
+rb_screen_main(VALUE self)
+{
+  return wrap_screen([NSScreen mainScreen]);
+}
+
+static
+VALUE
+rb_screen_screens(VALUE self)
+{
+  return wrap_array_screens((CFArrayRef)[NSScreen screens]);
+}
+
+static
+VALUE
+rb_screen_frame(VALUE self)
+{
+  return wrap_rect([unwrap_screen(self) frame]);
+}
+
 #endif
+
+
+static
+VALUE
+#ifdef NOT_MACRUBY
+rb_screen_wake(VALUE self)
+#else
+rb_screen_wake(VALUE self, SEL sel)
+#endif
+{
+  // don't bother if we are awake
+  if (!CGDisplayIsAsleep(CGMainDisplayID()))
+    return Qtrue;
+
+  if (screen_connection == MACH_PORT_NULL) {
+    io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(kIOHIDSystemClass));
+    if (service != MACH_PORT_NULL) {
+      IOServiceOpen(service, mach_task_self(), kIOHIDParamConnectType, &screen_connection);
+      IOObjectRelease(service);
+    }
+    else { // give up
+      return Qfalse;
+    }
+  }
+
+  CGPoint      mouse = [NSEvent mouseLocation];
+  IOGPoint     point = { mouse.x, mouse.y };
+  unsigned int flags = (unsigned int)[NSEvent modifierFlags];
+  NXEventData   data;
+
+  IOHIDPostEvent(screen_connection, NX_FLAGSCHANGED, point, &data, kNXEventDataVersion, flags, 0);
+
+  // spin rims while we wait for the screen to fully wake up
+  spin(1);
+
+  return Qtrue;
+}
+
+
 
 
 // Find and return the dictionary that has the battery info
@@ -563,41 +640,6 @@ rb_battery_time_full_charge(VALUE self)
 }
 
 
-static
-VALUE
-#ifdef NOT_MACRUBY
-rb_screen_wake(VALUE self)
-#else
-rb_screen_wake(VALUE self, SEL sel)
-#endif
-{
-  // don't bother if we are awake
-  if (!CGDisplayIsAsleep(CGMainDisplayID()))
-    return Qtrue;
-
-  if (screen_connection == MACH_PORT_NULL) {
-    io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(kIOHIDSystemClass));
-    if (service != MACH_PORT_NULL) {
-      IOServiceOpen(service, mach_task_self(), kIOHIDParamConnectType, &screen_connection);
-      IOObjectRelease(service);
-    }
-    else { // give up
-      return Qfalse;
-    }
-  }
-
-  CGPoint      mouse = [NSEvent mouseLocation];
-  IOGPoint     point = { mouse.x, mouse.y };
-  unsigned int flags = (unsigned int)[NSEvent modifierFlags];
-  NXEventData   data;
-
-  IOHIDPostEvent(screen_connection, NX_FLAGSCHANGED, point, &data, kNXEventDataVersion, flags, 0);
-
-  // spin rims while we wait for the screen to fully wake up
-  spin(1);
-
-  return Qtrue;
-}
 
 
 void
@@ -714,7 +756,7 @@ Init_extras()
    * Document-class: NSHost
    *
    * A large subset of Cocoa's `NSHost` class. Methods that might be
-   * useful to have been bridged.
+   * useful to have have been bridged.
    *
    * See https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSHost_Class/Reference/Reference.html
    * for documentation on the methods available in this class.
@@ -726,6 +768,28 @@ Init_extras()
   rb_define_singleton_method(rb_cHost, "addresses",     rb_host_addresses,      0);
   rb_define_singleton_method(rb_cHost, "localizedName", rb_host_localized_name, 0);
 #endif
+
+
+  /*
+   * Document-class: NSHost
+   *
+   * A small subset of Cocoa's `NSScreen` class. Methods that might be
+   * useful to have have been bridged.
+   *
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSScreen_Class/Reference/Reference.html)
+   * for documentation on the methods available in this class.
+   */
+  rb_cScreen = rb_define_class("NSScreen", rb_cObject);
+
+#ifdef NOT_MACRUBY
+  rb_define_singleton_method(rb_cScreen, "mainScreen", rb_screen_main,    0);
+  rb_define_singleton_method(rb_cScreen, "screens",    rb_screen_screens, 0);
+  rb_define_singleton_method(rb_cScreen, "wakeup",     rb_screen_wake,    0); // our custom method
+  rb_define_method(          rb_cScreen, "frame",      rb_screen_frame,   0);
+#else
+  rb_objc_define_method(*(VALUE*)rb_cScreen, "wakeup", rb_screen_wake, 0);
+#endif
+
 
   /*
    * Document-module: Battery
@@ -749,14 +813,4 @@ Init_extras()
   rb_define_alias(rb_mBattery, "charge_level", "level");
   rb_define_alias(rb_mBattery, "time_to_empty", "time_to_discharged");
   rb_define_alias(rb_mBattery, "time_to_full_charge", "time_to_charged");
-
-
-  // on MacRuby this should just end up fetching the existing class
-  rb_cScreen = rb_define_class("NSScreen", rb_cObject);
-
-#ifdef NOT_MACRUBY
-  rb_define_singleton_method(rb_cScreen, "wakeup", rb_screen_wake, 0);
-#else
-  rb_objc_define_method(*(VALUE*)rb_cScreen, "wakeup", rb_screen_wake, 0);
-#endif
 }

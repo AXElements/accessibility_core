@@ -1,4 +1,5 @@
 require 'test/helper'
+require 'accessibility/bridge'
 
 class CGPointTest < MiniTest::Unit::TestCase
 
