@@ -1,6 +1,11 @@
 #include "ruby.h"
 #import <Cocoa/Cocoa.h>
 
+
+// these functions are available on MacRuby as well as MRI
+void spin(double seconds);
+
+
 #ifdef NOT_MACRUBY
 
 extern VALUE rb_mAccessibility;
@@ -39,6 +44,9 @@ extern ID sel_parse;
   } while (false);
 
 
+void cf_finalizer(void* obj);
+void objc_finalizer(void* obj);
+
 VALUE wrap_unknown(CFTypeRef obj);
 CFTypeRef unwrap_unknown(VALUE obj);
 
@@ -49,6 +57,7 @@ VALUE wrap_size(CGSize size);
 CGSize unwrap_size(VALUE size);
 
 VALUE wrap_rect(CGRect rect);
+VALUE coerce_to_rect(VALUE obj);
 CGRect unwrap_rect(VALUE rect);
 
 VALUE convert_cf_range(CFRange range);
@@ -60,7 +69,7 @@ VALUE wrap_value_rect(AXValueRef value);
 VALUE wrap_value_range(AXValueRef value);
 VALUE wrap_value_error(AXValueRef value);
 VALUE wrap_value(AXValueRef value);
-VALUE wrap_array_values(CFArrayRef array) { WRAP_ARRAY(wrap_value) }
+VALUE wrap_array_values(CFArrayRef array);
 
 AXValueRef unwrap_value_point(VALUE val);
 AXValueRef unwrap_value_size(VALUE val);
@@ -82,6 +91,8 @@ NSString*   unwrap_nsstring(VALUE string);
 VALUE wrap_long(CFNumberRef num);
 VALUE wrap_long_long(CFNumberRef num);
 VALUE wrap_float(CFNumberRef num);
+// Generic CFNumber wrapper, use it if you do not
+// know the primitive type of number
 VALUE wrap_number(CFNumberRef number);
 VALUE wrap_array_numbers(CFArrayRef array);
 
@@ -104,6 +115,8 @@ VALUE wrap_boolean(CFBooleanRef bool_val);
 VALUE wrap_array_booleans(CFArrayRef array);
 CFBooleanRef unwrap_boolean(VALUE bool_val);
 
+// this function assumes that arrays are homogeneous;
+// which is usually the case coming from the CF world
 VALUE wrap_array(CFArrayRef array);
 
 VALUE to_ruby(CFTypeRef obj);
@@ -114,7 +127,3 @@ VALUE wrap_array_screens(CFArrayRef array);
 NSScreen* unwrap_screen(VALUE screen);
 
 #endif
-
-
-// these functions are available on MacRuby as well as MRI
-void spin(double seconds);

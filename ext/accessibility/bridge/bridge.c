@@ -1,6 +1,5 @@
-#include "ruby.h"
+#include "bridge.h"
 #include "ruby/encoding.h"
-#import <Cocoa/Cocoa.h>
 
 
 void
@@ -17,6 +16,7 @@ VALUE rb_cElement;
 VALUE rb_cCGPoint;
 VALUE rb_cCGSize;
 VALUE rb_cCGRect;
+VALUE rb_mURI; // URI module
 VALUE rb_cURI; // URI::Generic class
 VALUE rb_cScreen;
 
@@ -30,6 +30,8 @@ ID sel_to_point;
 ID sel_to_size;
 ID sel_to_rect;
 ID sel_to_s;
+ID sel_parse;
+
 
 void
 cf_finalizer(void* obj)
@@ -44,24 +46,10 @@ objc_finalizer(void* obj)
 }
 
 
-#define WRAP_ARRAY(wrapper) do {				\
-    CFIndex length = CFArrayGetCount(array);			\
-    VALUE      ary = rb_ary_new2(length);			\
-								\
-    for (CFIndex idx = 0; idx < length; idx++)			\
-      rb_ary_store(						\
-		   ary,						\
-		   idx,						\
-		   wrapper(CFArrayGetValueAtIndex(array, idx))	\
-		   );	                                        \
-    return ary;							\
-  } while (false);
-
-
 VALUE
 wrap_unknown(CFTypeRef obj)
 {
-  // TODO: this will leak, can we use something like alloca?
+  // TODO: this will leak...
   CFStringRef description = CFCopyDescription(obj);
   rb_raise(
            rb_eRuntimeError,
@@ -126,23 +114,15 @@ wrap_rect(CGRect rect)
 }
 
 
-static dispatch_once_t rect_token;
-
 VALUE
 coerce_to_rect(VALUE obj)
 {
-  dispatch_once(&rect_token, ^(void) {
-      sel_to_rect = rb_intern("to_rect");
-    });
   return rb_funcall(obj, sel_to_rect, 0);
 }
 
 CGRect
 unwrap_rect(VALUE rect)
 {
-  dispatch_once(&rect_token, ^(void) {
-      sel_to_rect = rb_intern("to_rect");
-    });
   rect = rb_funcall(rect, sel_to_rect, 0);
   CGPoint origin = unwrap_point(rb_struct_getmember(rect, sel_origin));
   CGSize    size = unwrap_size(rb_struct_getmember(rect, sel_size));
@@ -213,8 +193,7 @@ wrap_value(AXValueRef value)
   switch (AXValueGetType(value))
     {
     case kAXValueIllegalType:
-      // TODO better error message
-      rb_raise(rb_eArgError, "herped when you should have derped");
+      rb_raise(rb_eArgError, "cannot wrap %s objects", rb_class2name(CLASS_OF(value)));
     case kAXValueCGPointType:
       return wrap_value_point(value);
     case kAXValueCGSizeType:
@@ -229,7 +208,7 @@ wrap_value(AXValueRef value)
       // TODO better error message
       rb_raise(
 	       rb_eRuntimeError,
-	       "Could not wrap You've found a bug in something...not sure who to blame"
+	       "Either accessibility_core is out of date or your system has had a serious error"
 	       );
     }
 
@@ -419,17 +398,10 @@ unwrap_number(VALUE number)
 VALUE wrap_array_numbers(CFArrayRef array) { WRAP_ARRAY(wrap_number) }
 
 
-static dispatch_once_t mURI_token;
-static VALUE rb_mURI;
-static ID sel_parse;
 
 VALUE
 wrap_url(CFURLRef url)
 {
-  dispatch_once(&mURI_token, ^{
-      sel_parse  = rb_intern("parse"); // dispatch_once?
-      rb_mURI = rb_const_get(rb_cObject, rb_intern("URI"));
-    });
   // @note CFURLGetString does not need to be CFReleased since it is a Get
   return rb_funcall(rb_mURI, sel_parse, 1, wrap_string(CFURLGetString(url)));
 }
@@ -437,10 +409,6 @@ wrap_url(CFURLRef url)
 VALUE
 wrap_nsurl(NSURL* url)
 {
-  dispatch_once(&mURI_token, ^{
-      sel_parse  = rb_intern("parse"); // dispatch_once?
-      rb_mURI = rb_const_get(rb_cObject, rb_intern("URI"));
-    });
   NSString* str = [url absoluteString];
   VALUE  rb_str = wrap_nsstring(str);
   [str release];
@@ -535,13 +503,6 @@ to_ruby(CFTypeRef obj)
 CFTypeRef
 to_ax(VALUE obj)
 {
-  static dispatch_once_t cURI_token;
-  static VALUE rb_cURI;
-  dispatch_once(&cURI_token, ^{
-      VALUE mURI = rb_const_get(rb_cObject, rb_intern("URI"));
-      rb_cURI    = rb_const_get(mURI, rb_intern("Generic"));
-    });
-
   switch (TYPE(obj))
     {
     case T_STRING:
@@ -630,18 +591,21 @@ Init_bridge()
   sel_size     = rb_intern("size");
   sel_to_point = rb_intern("to_point");
   sel_to_size  = rb_intern("to_size");
+  sel_to_rect  = rb_intern("to_rect");
   sel_to_s     = rb_intern("to_s");
+  sel_parse    = rb_intern("parse");
 
   rb_mAccessibility = rb_const_get(rb_cObject, rb_intern("Accessibility"));
   rb_cElement       = rb_define_class_under(rb_mAccessibility, "Element", rb_cObject);
   rb_cCGPoint       = rb_const_get(rb_cObject, rb_intern("CGPoint"));
   rb_cCGSize        = rb_const_get(rb_cObject, rb_intern("CGSize"));
   rb_cCGRect        = rb_const_get(rb_cObject, rb_intern("CGRect"));
-  rb_cScreen        = rb_define_class("NSScreen", rb_cObject);
+  rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
+  rb_cURI           = rb_const_get(rb_mURI, rb_intern("Generic"));
 
+  rb_cScreen        = rb_define_class("NSScreen", rb_cObject);
   rb_define_singleton_method(rb_cScreen, "mainScreen", rb_screen_main,    0);
   rb_define_singleton_method(rb_cScreen, "screens",    rb_screen_screens, 0);
-
   rb_define_method(rb_cScreen, "frame", rb_screen_frame, 0);
 
   rb_define_method(rb_cObject, "spin", rb_spin, 1); // semi-private method
