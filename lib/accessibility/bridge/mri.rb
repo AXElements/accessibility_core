@@ -127,6 +127,16 @@ class Object
   def to_ruby
     self
   end
+
+  ##
+  # Whether or not the `outer` rect completely encloses the `inner` rect
+  #
+  # @param outer [CGRect,#to_rect]
+  # @param inner [CGRect,#to_rect]
+  # @return [Boolean]
+  def NSContainsRect outer, inner
+    outer.to_rect.contains? inner
+  end
 end
 
 ##

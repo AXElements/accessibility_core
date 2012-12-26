@@ -26,6 +26,28 @@ class CGRect
   def to_rect
     self
   end
+
+  ##
+  # Whether or not the receiver completely encloses the `inner` rect
+  #
+  # On MacRuby this is equivalent to calling `NSContainsRect()`.
+  #
+  # @param inner [CGRect,#to_rect]
+  # @return [Boolean]
+  def contains? inner
+    ox = origin.x; oy = origin.y; ow = size.width; oh = size.height
+
+    inner = inner.to_rect
+    ix    = inner.origin.x;   iy = inner.origin.y
+    iw    = inner.size.width; ih = inner.size.height
+
+    if iw.zero? || ih.zero?
+      false
+    else
+      (ox <= ix)               && (oy <= iy)               &&
+      ((ox + ow) >= (ix + iw)) && ((oy + oh) >= (iy + ih))
+    end
+  end
 end
 
 ##

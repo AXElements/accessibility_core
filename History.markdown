@@ -1,3 +1,8 @@
+# 0.3.4 - More adjustments for AXElements
+
+  * Add `NSContainsRect()` for MRI
+  * Add `CGRect#contains?` as equivalent of `NSContainsRect()`
+
 # 0.3.3 - The real 0.3.2 release
 
   * Release the real 0.3.2 gem, none of this non-regenerating gem bull
