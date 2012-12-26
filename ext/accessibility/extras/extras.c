@@ -29,6 +29,7 @@ static VALUE rb_cRunningApp;
 static VALUE rb_cWorkspace;
 static VALUE rb_cProcInfo;
 static VALUE rb_cHost;
+static VALUE rb_cBundle;
 
 static VALUE key_opts;
 //static VALUE key_event_params;
@@ -403,21 +404,38 @@ rb_host_localized_name(VALUE self)
 }
 
 
+VALUE wrap_bundle(NSBundle* obj) { WRAP_OBJC(rb_cBundle, objc_finalizer); }
+NSBundle* unwrap_bundle(VALUE obj) { UNWRAP_OBJC(NSBundle); }
+
+static
 VALUE
-wrap_screen(NSScreen* screen)
+rb_bundle_with_url(VALUE self, VALUE url)
 {
-  return Data_Wrap_Struct(rb_cScreen, NULL, NULL, (void*)screen);
+  NSURL*     nsurl = unwrap_nsurl(url);
+  NSBundle* bundle = [NSBundle bundleWithURL:nsurl];
+  VALUE  rb_bundle = Qnil;
+
+  if (bundle)
+    rb_bundle = wrap_bundle(bundle);
+
+  return rb_bundle;
 }
 
+static
+VALUE
+rb_bundle_info_dict(VALUE self)
+{
+  NSDictionary* dict = [unwrap_bundle(self) infoDictionary];
+  VALUE         hash = Qnil;
+  if (dict)
+    hash = wrap_dictionary(dict);
+  return hash;
+}
+
+
+VALUE wrap_screen(NSScreen* obj) { WRAP_OBJC(rb_cScreen, NULL); }
 VALUE wrap_array_screens(CFArrayRef array) { WRAP_ARRAY(wrap_screen); }
-
-NSScreen*
-unwrap_screen(VALUE screen)
-{
-  NSScreen* ns_screen;
-  Data_Get_Struct(screen, NSScreen, ns_screen);
-  return ns_screen;
-}
+NSScreen* unwrap_screen(VALUE obj) { UNWRAP_OBJC(NSScreen); }
 
 static
 VALUE
@@ -793,6 +811,20 @@ Init_extras()
   rb_define_singleton_method(rb_cHost, "names",         rb_host_names,          0);
   rb_define_singleton_method(rb_cHost, "addresses",     rb_host_addresses,      0);
   rb_define_singleton_method(rb_cHost, "localizedName", rb_host_localized_name, 0);
+
+
+  /*
+   * Document-class: NSBundle
+   *
+   * A tiny subset of Cocoa's `NSBundle` class. Methods that might be
+   * useful to have have been bridged.
+   *
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSBundle_Class/Reference/Reference.html)
+   * for documentation on the methods available in this class.
+   */
+  rb_cBundle = rb_define_class("NSBundle", rb_cObject);
+  rb_define_singleton_method(rb_cBundle, "bundleWithURL", rb_bundle_with_url, 1);
+  rb_define_method(rb_cBundle, "infoDictionary", rb_bundle_info_dict, 0);
 #endif
 
 
