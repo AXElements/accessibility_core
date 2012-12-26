@@ -1,3 +1,7 @@
+# 0.3.3 - The real 0.3.2 release
+
+  * Release the real 0.3.2 gem, none of this non-regenerating gem bull
+
 # 0.3.2 - Adjustments for AXElements
 
   * Fix `Element#children` raising when AXAPI returns failure error code
