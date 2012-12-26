@@ -33,6 +33,16 @@ extern ID sel_to_s;
 extern ID sel_parse;
 
 
+#define WRAP_OBJC(klass, finalizer) do {				\
+    return Data_Wrap_Struct(klass, NULL, finalizer, (void*)obj);	\
+  } while (false);
+
+#define UNWRAP_OBJC(klass) do {			\
+    klass* unwrapped;				\
+    Data_Get_Struct(obj, klass, unwrapped);	\
+    return unwrapped;				\
+  } while (false);
+
 #define WRAP_ARRAY(wrapper) do {				\
     CFIndex length = CFArrayGetCount(array);			\
     VALUE      ary = rb_ary_new2(length);			\
