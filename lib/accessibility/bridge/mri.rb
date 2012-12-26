@@ -6,7 +6,7 @@ class CGPoint
   # @param x [Number]
   # @param y [Number]
   def initialize x = 0.0, y = 0.0
-    super
+    super x.to_f, y.to_f
   end
 
   # @!attribute [rw] x
@@ -38,7 +38,7 @@ class CGSize
   # @param width [Number]
   # @param height [Number]
   def initialize width = 0.0, height = 0.0
-    super
+    super width.to_f, height.to_f
   end
 
   # @!attribute [rw] width
