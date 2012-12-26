@@ -2,10 +2,15 @@
 
   * Add `NSContainsRect()` for MRI
   * Add `CGRect#contains?` as equivalent of `NSContainsRect()`
+  * Change `Object#spin` to use `NSRunLoop` instead of `CFRunLoop`
+    (they are not as equivalent as the docs led me to believe)
+  * Change `Object#spin` to take a default argument of 0 seconds
+
 
 # 0.3.3 - The real 0.3.2 release
 
   * Release the real 0.3.2 gem, none of this non-regenerating gem bull
+
 
 # 0.3.2 - Adjustments for AXElements
 
