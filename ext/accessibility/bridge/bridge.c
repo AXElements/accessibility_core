@@ -5,7 +5,9 @@
 void
 spin(double seconds)
 {
-  CFRunLoopRunInMode(kCFRunLoopDefaultMode, seconds, false);
+  NSDate* interval = [NSDate dateWithTimeIntervalSinceNow:seconds];
+  [[NSRunLoop currentRunLoop] runUntilDate:interval];
+  [interval release];
 }
 
 

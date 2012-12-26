@@ -200,7 +200,7 @@ class Object
   #
   # @param seconds [Number]
   def spin seconds
-    CFRunLoopRunInMode(KCFRunLoopDefaultMode, seconds, false)
+    NSRunLoop.currentRunLoop.runUntilDate Time.now + seconds
   end
 
 end
