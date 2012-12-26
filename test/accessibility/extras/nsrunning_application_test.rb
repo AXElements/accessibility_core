@@ -1,12 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-# perhaps I'm in denial about the state of MacRuby, but it seems like the
-# version of NSRunningApplication that ships with the garbage collected
-# version of AppKit is super broken and cannot be relied upon. When
-# MacRuby get's off of the Objective-C garbage collector I will re-enable
-# these tests
-unless on_macruby?
+
 class NSRunningApplicationTest < MiniTest::Unit::TestCase
 
   def app
@@ -113,5 +108,4 @@ class NSRunningApplicationTest < MiniTest::Unit::TestCase
     # @todo test some other stuff...launch app and quit it?
   end
 
-end
 end
