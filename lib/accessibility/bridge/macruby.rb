@@ -50,6 +50,19 @@ class NSObject
   def to_ruby
     self
   end
+
+  ##
+  # @api semi-private
+  #
+  # Spin the run loop for the given number of seconds
+  #
+  # The script will effectively be paused while the run loop
+  # is "spinning".
+  #
+  # @param seconds [Number]
+  def spin seconds = 0
+    NSRunLoop.currentRunLoop.runUntilDate Time.now + seconds
+  end
 end
 
 ##
@@ -186,21 +199,4 @@ class NSArray
   def to_ruby
     map do |obj| obj.to_ruby end
   end
-end
-
-##
-# `accessibility-core` extensions to `Object`
-class Object
-
-  ##
-  # Spin the run loop for the given number of seconds
-  #
-  # The script will effectively be paused while the run loop
-  # is "spinning".
-  #
-  # @param seconds [Number]
-  def spin seconds
-    NSRunLoop.currentRunLoop.runUntilDate Time.now + seconds
-  end
-
 end

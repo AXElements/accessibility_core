@@ -557,9 +557,13 @@ to_ax(VALUE obj)
 
 static
 VALUE
-rb_spin(VALUE self, VALUE seconds)
+rb_spin(int argc, VALUE* argv, VALUE self)
 {
-  spin(NUM2DBL(seconds));
+  if (argc == 0)
+    spin(0);
+  else
+    spin(NUM2DBL(argv[0]));
+
   return self;
 }
 
@@ -590,6 +594,6 @@ Init_bridge()
   rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
   rb_cURI           = rb_const_get(rb_mURI, rb_intern("Generic"));
 
-  rb_define_method(rb_cObject, "spin", rb_spin, 1); // semi-private method
+  rb_define_method(rb_cObject, "spin", rb_spin, -1); // semi-private method
 #endif
 }
