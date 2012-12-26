@@ -57,6 +57,18 @@ class ObjectTest < MiniTest::Unit::TestCase
     refute NSContainsRect(rect, [101,101,  1,  0])
   end
 
+  def test_spin
+    assert_respond_to Object.new, :spin
+    assert_equal -1, Object.method(:spin).arity
+
+    start = Time.now
+    Object.new.spin
+    assert Time.now - start < 0.01
+
+    start = Time.now
+    Object.new.spin 0.2
+    assert Time.now - start > 0.2
+  end
   # we may have other tests for extensions to the Object class
 
 end
