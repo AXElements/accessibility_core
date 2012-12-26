@@ -62,6 +62,7 @@ wrap_unknown(CFTypeRef obj)
 CFTypeRef
 unwrap_unknown(VALUE obj)
 {
+  // TODO: rb_check_convert_type instead?
   obj = rb_funcall(obj, sel_to_s, 0);
   rb_raise(
 	   rb_eRuntimeError,
@@ -235,11 +236,7 @@ unwrap_value(VALUE value)
 VALUE wrap_array_values(CFArrayRef array) { WRAP_ARRAY(wrap_value) }
 
 
-VALUE
-wrap_ref(AXUIElementRef ref)
-{
-  return Data_Wrap_Struct(rb_cElement, NULL, cf_finalizer, (void*)ref);
-}
+VALUE wrap_ref(AXUIElementRef obj) { WRAP_OBJC(rb_cElement, cf_finalizer); }
 
 AXUIElementRef
 unwrap_ref(VALUE obj)
@@ -418,6 +415,7 @@ wrap_nsurl(NSURL* url)
 CFURLRef
 unwrap_url(VALUE url)
 {
+  // TODO: should also force encoding to UTF-8 first?
   url = rb_funcall(url, sel_to_s, 0);
   CFStringRef string = CFStringCreateWithCString(
 						 NULL,
@@ -429,7 +427,14 @@ unwrap_url(VALUE url)
   return url_ref;
 }
 
+NSURL*
+unwrap_nsurl(VALUE url)
+{
+  return (NSURL*)unwrap_url(url);
+}
+
 VALUE wrap_array_urls(CFArrayRef array) { WRAP_ARRAY(wrap_url) }
+
 
 VALUE
 wrap_date(CFDateRef date)
@@ -484,6 +489,21 @@ wrap_array(CFArrayRef array)
   else if (di == CFDateGetTypeID())      return wrap_array_dates(array);
   else                                   return wrap_unknown(obj);
 }
+
+
+VALUE
+wrap_dictionary(NSDictionary* dict)
+{
+  __block VALUE hash = rb_hash_new();
+
+  [dict enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL* stop) {
+      rb_hash_aset(hash, to_ruby(key), to_ruby(obj));
+    }];
+
+  return hash;
+}
+
+
 
 VALUE
 to_ruby(CFTypeRef obj)

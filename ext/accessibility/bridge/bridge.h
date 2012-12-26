@@ -107,6 +107,7 @@ CFNumberRef unwrap_number(VALUE number);
 VALUE wrap_url(CFURLRef url);
 VALUE wrap_nsurl(NSURL* url);
 CFURLRef unwrap_url(VALUE url);
+NSURL* unwrap_nsurl(VALUE url);
 VALUE wrap_array_urls(CFArrayRef array);
 
 VALUE wrap_date(CFDateRef date);
@@ -121,6 +122,8 @@ CFBooleanRef unwrap_boolean(VALUE bool_val);
 // this function assumes that arrays are homogeneous;
 // which is usually the case coming from the CF world
 VALUE wrap_array(CFArrayRef array);
+
+VALUE wrap_dictionary(NSDictionary* dict);
 
 VALUE to_ruby(CFTypeRef obj);
 CFTypeRef to_ax(VALUE obj);
