@@ -120,5 +120,13 @@ class String
   end
 end
 
+##
+# `accessibility-core` extensions to the `Object` class
+class Object
+  # (see NSObject#to_ruby)
+  def to_ruby
+    self
+  end
+end
 
 require 'accessibility/bridge/common'

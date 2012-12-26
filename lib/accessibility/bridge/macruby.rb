@@ -43,6 +43,10 @@ class NSObject
 
   ##
   # Return a usable object from an AXAPI pointer
+  #
+  # Given an arbitrary return value from an AXAPI function
+  # this method is called to delegate the work of actually
+  # wrapping the returned value in the correct way.
   def to_ruby
     self
   end
