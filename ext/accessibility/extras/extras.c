@@ -432,6 +432,17 @@ rb_bundle_info_dict(VALUE self)
   return hash;
 }
 
+static
+VALUE
+rb_bundle_object_for_info_dict_key(VALUE self, VALUE key)
+{
+  NSString* nskey = unwrap_nsstring(key);
+  id obj = [unwrap_bundle(self) objectForInfoDictionaryKey:nskey];
+  if (obj)
+    return to_ruby(obj);
+  return Qnil;
+}
+
 
 VALUE wrap_screen(NSScreen* obj) { WRAP_OBJC(rb_cScreen, NULL); }
 VALUE wrap_array_screens(CFArrayRef array) { WRAP_ARRAY(wrap_screen); }
@@ -824,7 +835,8 @@ Init_extras()
    */
   rb_cBundle = rb_define_class("NSBundle", rb_cObject);
   rb_define_singleton_method(rb_cBundle, "bundleWithURL", rb_bundle_with_url, 1);
-  rb_define_method(rb_cBundle, "infoDictionary", rb_bundle_info_dict, 0);
+  rb_define_method(rb_cBundle, "infoDictionary",             rb_bundle_info_dict,                0);
+  rb_define_method(rb_cBundle, "objectForInfoDictionaryKey", rb_bundle_object_for_info_dict_key, 1);
 #endif
 
 
