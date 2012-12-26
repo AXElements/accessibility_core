@@ -509,15 +509,16 @@ VALUE
 to_ruby(CFTypeRef obj)
 {
   CFTypeID di = CFGetTypeID(obj);
-  if      (di == CFArrayGetTypeID())     return wrap_array(obj);
-  else if (di == AXUIElementGetTypeID()) return wrap_ref(obj);
-  else if (di == AXValueGetTypeID())     return wrap_value(obj);
-  else if (di == CFStringGetTypeID())    return wrap_string(obj);
-  else if (di == CFNumberGetTypeID())    return wrap_number(obj);
-  else if (di == CFBooleanGetTypeID())   return wrap_boolean(obj);
-  else if (di == CFURLGetTypeID())       return wrap_url(obj);
-  else if (di == CFDateGetTypeID())      return wrap_date(obj);
-  else                                   return wrap_unknown(obj);
+  if      (di == CFArrayGetTypeID())       return wrap_array(obj);
+  else if (di == AXUIElementGetTypeID())   return wrap_ref(obj);
+  else if (di == AXValueGetTypeID())       return wrap_value(obj);
+  else if (di == CFStringGetTypeID())      return wrap_string(obj);
+  else if (di == CFNumberGetTypeID())      return wrap_number(obj);
+  else if (di == CFBooleanGetTypeID())     return wrap_boolean(obj);
+  else if (di == CFURLGetTypeID())         return wrap_url(obj);
+  else if (di == CFDateGetTypeID())        return wrap_date(obj);
+  else if (di == CFDictionaryGetTypeID())  return wrap_dictionary(obj);
+  else                                     return wrap_unknown(obj);
 }
 
 CFTypeRef
