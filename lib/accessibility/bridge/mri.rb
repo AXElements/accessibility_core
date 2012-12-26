@@ -129,4 +129,13 @@ class Object
   end
 end
 
+##
+# `accessibility-core` extensions to the `Array` class
+class Array
+  # (see NSArray#to_ruby)
+  def to_ruby
+    map do |obj| obj.to_ruby end
+  end
+end
+
 require 'accessibility/bridge/common'

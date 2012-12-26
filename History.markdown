@@ -7,7 +7,7 @@
   * Add a 10% drop-in replacement for `NSBundle` for AXElements
   * Add `wrap_dictionary` to wrap `NSDictionary` objects
   * Force `CGPoint`/`CGSize` attrs to be `Float` type at initialize time
-  * Add `Object#to_ruby` when running on MRI
+  * Add `Object#to_ruby` and `Array#to_ruby` when running on MRI
 
 
 # 0.3.1 - Fix it up
