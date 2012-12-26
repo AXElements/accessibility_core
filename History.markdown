@@ -4,6 +4,8 @@
   * Conditionally defined `CGPoint`/`CGSize`/`CGRect` on MRI
   * Tweak various bits of documentation related to Cocoa mappings
   * Calculate `NSString` length properly when wrapping in the C extension
+  * Add a 5% drop-in replacement for `NSBundle` for AXElements
+  * Add `wrap_dictionary` to wrap `NSDictionary` objects
 
 
 # 0.3.1 - Fix it up
