@@ -746,7 +746,7 @@ module Accessibility::Element
     KAXErrorCannotComplete                    => [
       RuntimeError,
       lambda { |*args|
-        NSRunLoop.currentRunLoop.runUntilDate Time.now # spin the run loop once
+        spin # spin the run loop once
         pid = args[0].pid
         app = NSRunningApplication.runningApplicationWithProcessIdentifier pid
         if app
