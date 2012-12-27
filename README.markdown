@@ -24,6 +24,7 @@ runtimes.
 
   * bridging for `NSAttributedString`
   * more descriptive error handling for the C extension
+  * handle string encodings that are not UTF8 (or a subset of UTF8)
 
 
 ## Tests
