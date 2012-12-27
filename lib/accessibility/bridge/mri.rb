@@ -149,5 +149,43 @@ class Array
 end
 
 
+##
+# `accessibility-core` extensions to the `Range` class
+class Range
+
+  ##
+  # Returns a new Range instance which has negative values in
+  # the receiver expanded relative to `max`
+  #
+  # @example
+  #
+  #  (1..10).relative_to(10)   # => (1..10)
+  #  (-3..-1).relative_to(10)  # => (7..9)
+  #
+  # @param max [Fixnum]
+  # @return [Range]
+  def relative_to max
+    beg = adjust_index self.begin, max
+    len = adjust_index self.end, max
+    len -= 1 if exclude_end?
+    beg..len
+  end
+
+
+  private
+
+  def adjust_index val, max
+    if val >= max
+      exclude_end? ? max : max - 1
+    elsif val < 0
+      max + val
+    else
+      val
+    end
+  end
+
+end
+
+
 require 'accessibility/bridge/common'
 require 'accessibility/bridge/bridge.bundle'

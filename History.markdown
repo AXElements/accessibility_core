@@ -1,3 +1,8 @@
+# 0.3.5 - Add some missing bits for MRI
+
+  * Add `Range#relative_to` to convert ranges to positive indicies
+
+
 # 0.3.4 - More adjustments for AXElements
 
   * Add `NSContainsRect()` for MRI
