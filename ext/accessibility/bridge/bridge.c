@@ -255,30 +255,7 @@ VALUE wrap_array_refs(CFArrayRef array) { WRAP_ARRAY(wrap_ref) }
 VALUE
 wrap_string(CFStringRef string)
 {
-  // flying by the seat of our pants here, this hasn't failed yet
-  // but probably will one day when I'm not looking
-  VALUE ruby_string;
-  CFIndex    length = CFStringGetLength(string);
-  char*        name = (char*)CFStringGetCStringPtr(string, kCFStringEncodingMacRoman);
-
-  if (name) {
-    ruby_string = rb_usascii_str_new(name, length);
-  }
-  else {
-    // currently we will always assume UTF-8
-    // perhaps we could use CFStringGetSystemEncoding in the future?
-    name = malloc(length+1);
-    CFStringGetCString(
-		       string,
-		       name,
-		       length+1,
-		       kCFStringEncodingUTF8
-		       );
-    ruby_string = rb_enc_str_new(name, length, rb_utf8_encoding());
-    free(name);
-  }
-
-  return ruby_string;
+  return wrap_nsstring((NSString*)string);
 }
 
 VALUE
@@ -297,17 +274,13 @@ wrap_nsstring(NSString* string)
 CFStringRef
 unwrap_string(VALUE string)
 {
-  return CFStringCreateWithCStringNoCopy(
-					 NULL,
-					 StringValueCStr(string),
-					 0,
-					 kCFAllocatorNull
-					 );
-  /* return CFStringCreateWithCString( */
-  /* 				   NULL, */
-  /* 				   StringValuePtr(string), */
-  /* 				   kCFStringEncodingUTF8 */
-  /* 				   ); */
+  return CFStringCreateWithBytes(
+                                 NULL,
+                                 (UInt8*)StringValueCStr(string),
+                                 RSTRING_LEN(string),
+                                 kCFStringEncodingUTF8,
+                                 false
+                                 );
 }
 
 NSString*
