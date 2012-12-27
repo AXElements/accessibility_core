@@ -284,11 +284,14 @@ wrap_string(CFStringRef string)
 VALUE
 wrap_nsstring(NSString* string)
 {
-  return rb_enc_str_new(
-			[string UTF8String],
-			[string lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
-			rb_utf8_encoding()
-			);
+  // TODO: find a larger scope to apply this autoreleasepool
+  @autoreleasepool{
+    return rb_enc_str_new(
+        [string UTF8String],
+        [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+        rb_utf8_encoding()
+        );
+  }
 }
 
 CFStringRef
