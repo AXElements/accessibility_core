@@ -106,6 +106,19 @@ class URI::Generic
   def to_url
     self
   end
+
+  ##
+  # Return the last component of the path of the URL
+  #
+  # @example
+  #
+  #   url = "https://macruby.macosforge.org/files/nightlies/macruby_nightly-latest.pkg"
+  #   URI.parse(url).lastPathComponent # => "macruby_nightly-latest.pkg"
+  #
+  # @return [String]
+  def lastPathComponent
+    self.path.split(%r{/+}).last
+  end
 end
 
 ##

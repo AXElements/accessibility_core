@@ -1,16 +1,32 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-unless on_macruby?
 class TestURIExtensions < MiniTest::Unit::TestCase
 
+  if on_macruby?
+    def parse url
+      NSURL.URLWithString url
+    end
+  else
+    def parse url
+      URI.parse url
+    end
+  end
+
   def test_to_url_returns_self
-    url = URI.parse 'http://macruby.org'
+    url = parse 'http://macruby.org'
     assert_same url, url.to_url
 
-    url = URI.parse 'ftp://herp.com'
+    url = parse 'ftp://herp.com'
     assert_same url, url.to_url
   end
 
-end
+  def test_last_path_component
+    url = parse "https://macruby.macosforge.org/files/nightlies/macruby_nightly-latest.pkg"
+    assert_equal 'macruby_nightly-latest.pkg', url.lastPathComponent
+
+    url = parse "file:///localhost/Users/mrada/Desktop/"
+    assert_equal 'Desktop', url.lastPathComponent
+  end
+
 end
