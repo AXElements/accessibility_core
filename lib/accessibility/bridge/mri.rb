@@ -110,6 +110,9 @@ class URI::Generic
   ##
   # Return the last component of the path of the URL
   #
+  # This is intended to help make {URI::Generic} closer to being
+  # a drop-in replacement for {NSURL}.
+  #
   # @example
   #
   #   url = "https://macruby.macosforge.org/files/nightlies/macruby_nightly-latest.pkg"
@@ -118,6 +121,23 @@ class URI::Generic
   # @return [String]
   def lastPathComponent
     self.path.split(%r{/+}).last
+  end
+
+  ##
+  # Returns the path extension of a file URL
+  #
+  # This is intended to help make {URI::Generic} closer to being
+  # a drop-in replacement for {NSURL}.
+  #
+  # @example
+  #
+  #   url = "https://macruby.macosforge.org/files/nightlies/macruby_nightly-latest.pkg"
+  #   URI.parse(url).pathExtension # => "pkg"
+  #
+  # @return [String]
+  def pathExtension
+    split = self.path.split '.', -1
+    split.size > 1 ? split.last : ''
   end
 end
 

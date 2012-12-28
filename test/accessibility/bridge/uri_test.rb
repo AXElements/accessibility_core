@@ -22,11 +22,22 @@ class TestURIExtensions < MiniTest::Unit::TestCase
   end
 
   def test_last_path_component
-    url = parse "https://macruby.macosforge.org/files/nightlies/macruby_nightly-latest.pkg"
+    url = parse 'https://macruby.macosforge.org/files/nightlies/macruby_nightly-latest.pkg'
     assert_equal 'macruby_nightly-latest.pkg', url.lastPathComponent
 
-    url = parse "file:///localhost/Users/mrada/Desktop/"
+    url = parse 'file:///localhost/Users/mrada/Desktop/'
     assert_equal 'Desktop', url.lastPathComponent
+  end
+
+  def test_path_extension
+    url = parse 'https://macruby.macosforge.org/files/nightlies/macruby_nightly-latest.pkg'
+    assert_equal 'pkg', url.pathExtension
+
+    url = parse 'file:///localhost/Users/mrada/Desktop'
+    assert_equal '', url.pathExtension
+
+    url = parse 'file:///localhost/Users/mrada/Desktop/'
+    assert_equal '', url.pathExtension
   end
 
 end
