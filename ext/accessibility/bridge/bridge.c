@@ -13,6 +13,8 @@ spin(double seconds)
 
 #ifdef NOT_MACRUBY
 
+VALUE rb_cData;
+VALUE rb_cAttributedString;
 VALUE rb_mAccessibility;
 VALUE rb_cElement;
 VALUE rb_cCGPoint;
@@ -297,6 +299,50 @@ VALUE wrap_array_nsstrings(NSArray* ary)
 }
 
 
+VALUE
+wrap_attributed_string(CFAttributedStringRef string)
+{
+  return wrap_nsattributed_string((NSAttributedString*)string);
+}
+
+VALUE
+wrap_nsattributed_string(NSAttributedString* obj)
+{
+  WRAP_OBJC(rb_cAttributedString, objc_finalizer);
+}
+
+CFAttributedStringRef
+unwrap_attributed_string(VALUE string)
+{
+  return (CFAttributedStringRef)unwrap_nsattributed_string(string);
+}
+
+NSAttributedString*
+unwrap_nsattributed_string(VALUE obj)
+{
+  UNWRAP_OBJC(NSAttributedString);
+}
+
+VALUE
+wrap_array_attributed_strings(CFArrayRef array)
+{
+  WRAP_ARRAY(wrap_attributed_string);
+}
+
+VALUE wrap_array_nsattributed_strings(NSArray* ary)
+{
+  CFArrayRef array = (CFArrayRef)ary;
+  WRAP_ARRAY(wrap_nsattributed_string);
+}
+
+static
+VALUE
+rb_astring_alloc(VALUE self)
+{
+  return wrap_nsattributed_string([NSAttributedString alloc]);
+}
+
+
 #define WRAP_NUM(type, cookie, macro) do {		        \
     type value;							\
     if (CFNumberGetValue(num, cookie, &value))			\
@@ -487,16 +533,18 @@ VALUE
 to_ruby(CFTypeRef obj)
 {
   CFTypeID di = CFGetTypeID(obj);
-  if      (di == CFArrayGetTypeID())       return wrap_array(obj);
-  else if (di == AXUIElementGetTypeID())   return wrap_ref(obj);
-  else if (di == AXValueGetTypeID())       return wrap_value(obj);
-  else if (di == CFStringGetTypeID())      return wrap_string(obj);
-  else if (di == CFNumberGetTypeID())      return wrap_number(obj);
-  else if (di == CFBooleanGetTypeID())     return wrap_boolean(obj);
-  else if (di == CFURLGetTypeID())         return wrap_url(obj);
-  else if (di == CFDateGetTypeID())        return wrap_date(obj);
-  else if (di == CFDictionaryGetTypeID())  return wrap_dictionary(obj);
-  else                                     return wrap_unknown(obj);
+  if      (di == CFArrayGetTypeID())            return wrap_array(obj);
+  else if (di == AXUIElementGetTypeID())        return wrap_ref(obj);
+  else if (di == AXValueGetTypeID())            return wrap_value(obj);
+  else if (di == CFStringGetTypeID())           return wrap_string(obj);
+  else if (di == CFNumberGetTypeID())           return wrap_number(obj);
+  else if (di == CFBooleanGetTypeID())          return wrap_boolean(obj);
+  else if (di == CFURLGetTypeID())              return wrap_url(obj);
+  else if (di == CFDateGetTypeID())             return wrap_date(obj);
+  else if (di == CFDataGetTypeID())             return wrap_data(obj);
+  else if (di == CFAttributedStringGetTypeID()) return wrap_attributed_string(obj);
+  else if (di == CFDictionaryGetTypeID())       return wrap_dictionary(obj);
+  else                                          return wrap_unknown(obj);
 }
 
 CFTypeRef
@@ -522,6 +570,10 @@ to_ax(VALUE obj)
     return unwrap_date(obj);
   else if (type == rb_cRange)
     return unwrap_value_range(obj);
+  else if (type == rb_cAttributedString)
+    return unwrap_attributed_string(obj);
+  else if (type == rb_cData)
+    return unwrap_data(obj);
 
   if (rb_obj_is_kind_of(obj, rb_cURI))
     return unwrap_url(obj);
@@ -531,8 +583,114 @@ to_ax(VALUE obj)
 }
 
 
+VALUE
+wrap_data(CFDataRef data)
+{
+  return wrap_nsdata((NSData*)data);
+}
+
+VALUE
+wrap_nsdata(NSData* obj)
+{
+  WRAP_OBJC(rb_cData, objc_finalizer);
+}
+
+VALUE wrap_array_data(CFArrayRef array) { WRAP_ARRAY(wrap_data); }
+VALUE
+wrap_array_nsdata(NSArray* ary)
+{
+  CFArrayRef array = (CFArrayRef)ary;
+  WRAP_ARRAY(wrap_data);
+}
+
+CFDataRef
+unwrap_data(VALUE data)
+{
+  return (CFDataRef)unwrap_nsdata(data);
+}
+
+NSData*
+unwrap_nsdata(VALUE obj)
+{
+  UNWRAP_OBJC(NSData);
+}
+
+
 static
 VALUE
+rb_data_data(VALUE self)
+{
+  return wrap_nsdata([NSData data]);
+}
+
+static
+VALUE
+rb_data_with_contents_of_url(VALUE self, VALUE url)
+{
+  NSData* data = [NSData dataWithContentsOfURL:unwrap_nsurl(url)];
+  if (data)
+    return wrap_nsdata(data);
+  return Qnil;
+}
+
+static
+VALUE
+rb_data_length(VALUE self)
+{
+  return ULONG2NUM([unwrap_nsdata(self) length]);
+}
+
+static
+VALUE
+rb_data_equality(VALUE self, VALUE other)
+{
+  OBJC_EQUALITY(rb_cData, unwrap_nsdata);
+}
+
+static
+VALUE
+rb_data_write_to_file(int argc, VALUE* argv, VALUE self)
+{
+  if (argc < 2)
+    rb_raise(
+	     rb_eArgError,
+	     "wrong number of arguments, got %d, expected 2",
+	     argc
+	     );
+
+  NSString* path = unwrap_nsstring(argv[0]);
+  BOOL    result = [unwrap_nsdata(self) writeToFile:path
+		                         atomically:(argv[1] == Qtrue)];
+
+  [path release];
+
+  return (result ? Qtrue : Qfalse);
+}
+
+
+static
+VALUE
+rb_data_to_str(VALUE self)
+{
+  NSData*      data = unwrap_nsdata(self);
+  const void* bytes = [data bytes];
+  NSUInteger length = [data length];
+  return rb_enc_str_new(bytes, length, rb_ascii8bit_encoding());
+}
+
+static
+VALUE
+rb_str_to_data(VALUE self)
+{
+  NSData* data = [NSData dataWithBytes:(void*)StringValuePtr(self)
+		                length:RSTRING_LEN(self)];
+  if (data)
+    return wrap_nsdata(data);
+  return Qnil; // I don't think this is possible except in case of ENOMEM
+}
+
+
+static VALUE
 rb_spin(int argc, VALUE* argv, VALUE self)
 {
   if (argc == 0)
@@ -570,6 +728,67 @@ Init_bridge()
   rb_mURI           = rb_const_get(rb_cObject, rb_intern("URI"));
   rb_cURI           = rb_const_get(rb_mURI, rb_intern("Generic"));
 
+
+  /*
+   * Document-class: NSAttributedString
+   *
+   * A 90% drop-in replacement for Cocoa's `NSAttributedString` class. The most likely
+   * to use methods have been bridged. Remaining methods can be bridged upon request.
+   *
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSAttributedString_Class/Reference/Reference.html)
+   * for documentation on the methods available in this class.
+   */
+  rb_cAttributedString = rb_define_class("NSAttributedString", rb_cObject);
+
+  // LOL, but required to be a drop-in replacement
+  rb_define_singleton_method(rb_cAttributedString, "alloc", rb_astring_alloc, 0);
+
+  // TODO: all these methods :(
+  /* rb_define_method(rb_cAttributedString, "initWithString", rb_astring_init_with_string, -1); */
+  /* rb_define_method(rb_cAttributedString, "initWithAttributedString", rb_astring_init_with_astring, 2); */
+  /* rb_define_method(rb_cAttributedString, "string", rb_astring_string, 0); */
+  /* rb_define_method(rb_cAttributedString, "length", rb_astring_length, 0); */
+  /* rb_define_method(rb_cAttributedString, "attributesAtIndex", rb_astring_attrs_at_index, -1); */
+  /* rb_define_method(rb_cAttributedString, "isEqualToAttributedString", rb_astring_equality, 1); */
+  /* rb_define_method(rb_cAttributedString, "attributedSubstringFromRange", rb_astring_astring_from_range, 1); */
+
+  /* rb_define_alias(rb_cAttributedString,  "string", "to_s"); */
+  /* rb_define_alias(rb_cAttributedString,  "string", "to_str"); */
+  /* rb_define_alias(rb_cAttributedString,  "isEqualToAttributedString", "=="); */
+
+
+  /*
+   * Document-class: NSData
+   *
+   * A 70% drop-in replacement for Cocoa's `NSData` class. Almost all
+   * non-deprecated methods have been bridged.
+   *
+   * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSData_Class/Reference/Reference.html)
+   * for documentation on the methods available in this class.
+   */
+  rb_cData = rb_define_class("NSData", rb_cObject);
+
+  // TODO: implement commented out methods
+  rb_define_singleton_method(rb_cData, "data", rb_data_data, 0);
+  //rb_define_singleton_method(rb_cData, "dataWithBytes", rb_data_with_bytes, 2);
+  //rb_define_singleton_method(rb_cData, "dataWithContentsOfFile", rb_data_with_contents_of_file, 1);
+  rb_define_singleton_method(rb_cData, "dataWithContentsOfURL", rb_data_with_contents_of_url, 1);
+  //rb_define_singleton_method(rb_cData, "dataWithData", rb_data_with_data, 1);
+
+  //rb_define_method(rb_cData, "bytes",            rb_data_bytes, 0);
+  //rb_define_method(rb_cData, "description",      rb_data_description, 0);
+  //rb_define_method(rb_cData, "subdataWithRange", rb_data_subrange, 1);
+  rb_define_method(rb_cData, "isEqualToData",    rb_data_equality, 1);
+  rb_define_method(rb_cData, "length",           rb_data_length, 0);
+  rb_define_method(rb_cData, "writeToFile",      rb_data_write_to_file, -1);
+  //rb_define_method(rb_cData, "writeToURL",       rb_data_write_to_url, -1);
+  rb_define_method(rb_cData, "to_str",           rb_data_to_str, 0);
+
+  rb_define_alias(rb_cData,  "isEqualToData", "==");
+
+
+  // misc freedom patches
+  rb_define_method(rb_cString, "to_data", rb_str_to_data, 0);
   rb_define_method(rb_cObject, "spin", rb_spin, -1); // semi-private method
 #endif
 }

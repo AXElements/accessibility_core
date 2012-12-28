@@ -11,6 +11,8 @@ void Init_bridge();
 
 #ifdef NOT_MACRUBY
 
+extern VALUE rb_cData;
+extern VALUE rb_cAttributedString;
 extern VALUE rb_mAccessibility;
 extern VALUE rb_cElement;
 extern VALUE rb_cCGPoint;
@@ -41,6 +43,13 @@ extern ID sel_parse;
     klass* unwrapped;				\
     Data_Get_Struct(obj, klass, unwrapped);	\
     return unwrapped;				\
+  } while (false);
+
+#define OBJC_EQUALITY(type, unwrapper) do {		\
+    if (CLASS_OF(other) == type)			\
+      if ([unwrapper(self) isEqual:unwrapper(other)])	\
+	return Qtrue;					\
+    return Qfalse;					\
   } while (false);
 
 #define WRAP_ARRAY(wrapper) do {				\
@@ -129,6 +138,11 @@ VALUE wrap_boolean(CFBooleanRef bool_val);
 VALUE wrap_array_booleans(CFArrayRef array);
 CFBooleanRef unwrap_boolean(VALUE bool_val);
 
+VALUE wrap_data(CFDataRef data);
+VALUE wrap_nsdata(NSData* data);
+CFDataRef unwrap_data(VALUE data);
+NSData* unwrap_nsdata(VALUE data);
+
 // this function assumes that arrays are homogeneous;
 // which is usually the case coming from the CF world
 VALUE wrap_array(CFArrayRef array);
@@ -141,5 +155,19 @@ CFTypeRef to_ax(VALUE obj);
 VALUE wrap_screen(NSScreen* screen);
 VALUE wrap_array_screens(CFArrayRef array);
 NSScreen* unwrap_screen(VALUE screen);
+
+VALUE wrap_attributed_string(CFAttributedStringRef string);
+VALUE wrap_nsattributed_string(NSAttributedString* string);
+VALUE wrap_array_attributed_strings(CFArrayRef array);
+VALUE wrap_array_nsattributed_strings(NSArray* ary);
+CFAttributedStringRef unwrap_attributed_string(VALUE string);
+NSAttributedString* unwrap_nsattributed_string(VALUE string);
+
+VALUE wrap_data(CFDataRef data);
+VALUE wrap_nsdata(NSData* data);
+VALUE wrap_array_data(CFArrayRef array);
+VALUE wrap_array_nsdata(NSArray* array);
+CFDataRef unwrap_data(VALUE data);
+NSData* unwrap_nsdata(VALUE data);
 
 #endif
