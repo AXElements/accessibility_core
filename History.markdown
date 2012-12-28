@@ -1,3 +1,12 @@
+# 0.4.0 - Fill in the gaps and other dubious requirements
+
+  * Add `URI::Generic#lastPathComponent` to match `NSURL#lastPathComponent`
+  * Add a 90% drop-in replacement for `NSData`
+  * Add a 90% drop-in replacement for `NSAttributedString`
+  * Add `Object#description` as a freedom patch on MRI
+    `NSObject#description` is the Objective-C equivalent to `Object#inspect` in Ruby
+
+
 # 0.3.5 - Add some missing bits for MRI
 
   * Add `Range#relative_to` to convert ranges to positive indicies
