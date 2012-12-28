@@ -148,6 +148,7 @@ NSData* unwrap_nsdata(VALUE data);
 VALUE wrap_array(CFArrayRef array);
 
 VALUE wrap_dictionary(NSDictionary* dict);
+VALUE wrap_array_dictionaries(CFArrayRef array);
 
 VALUE to_ruby(CFTypeRef obj);
 CFTypeRef to_ax(VALUE obj);

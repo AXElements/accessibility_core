@@ -527,6 +527,7 @@ wrap_dictionary(NSDictionary* dict)
   return hash;
 }
 
+VALUE wrap_array_dictionaries(CFArrayRef array) { WRAP_ARRAY(wrap_dictionary); }
 
 
 VALUE
