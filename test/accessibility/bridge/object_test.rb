@@ -70,14 +70,16 @@ class ObjectTest < MiniTest::Unit::TestCase
     assert Time.now - start > 0.2
   end
 
-  def test_description
-    [
-      self,
-      rand(1000),
-      Time.now,
-      'a string'
-    ].each do |obj|
-      assert_equal obj.inspect, obj.description
+  unless on_macruby?
+    def test_description
+      [
+        self,
+        rand(1000),
+        Time.now,
+        'a string'
+      ].each do |obj|
+        assert_equal obj.inspect, obj.description
+      end
     end
   end
 
