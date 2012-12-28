@@ -137,6 +137,17 @@ class Object
   def NSContainsRect outer, inner
     outer.to_rect.contains? inner
   end
+
+  ##
+  # An alias for `Object#inspect`
+  #
+  # This exists to help make code more compatible between MacRuby
+  # and CRuby.
+  #
+  # @return [String]
+  def description
+    inspect
+  end
 end
 
 ##

@@ -69,6 +69,18 @@ class ObjectTest < MiniTest::Unit::TestCase
     Object.new.spin 0.2
     assert Time.now - start > 0.2
   end
+
+  def test_description
+    [
+      self,
+      rand(1000),
+      Time.now,
+      'a string'
+    ].each do |obj|
+      assert_equal obj.inspect, obj.description
+    end
+  end
+
   # we may have other tests for extensions to the Object class
 
 end
