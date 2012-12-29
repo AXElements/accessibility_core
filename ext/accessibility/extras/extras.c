@@ -455,8 +455,12 @@ rb_load_plist(VALUE self, VALUE plist_data)
                      	                                   options:0
 		                                            format:nil
        	                                                     error:&err];
-  if (plist)
-    return to_ruby(plist);
+  [data release];
+  if (plist) {
+    VALUE list = to_ruby(plist);
+    [plist release];
+    return list;
+  }
 
   rb_raise(rb_eArgError, "error loading property list: '%s'",
 	   [[err localizedDescription] UTF8String]);
