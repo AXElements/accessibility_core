@@ -581,8 +581,9 @@ to_ax(VALUE obj)
     case T_FLOAT:
       return unwrap_number(obj);
     case T_TRUE:
+      return kCFBooleanTrue;
     case T_FALSE:
-      return unwrap_boolean(obj);
+      return kCFBooleanFalse;
     }
 
   VALUE type = CLASS_OF(obj);
