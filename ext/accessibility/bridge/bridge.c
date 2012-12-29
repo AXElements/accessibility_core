@@ -502,16 +502,21 @@ VALUE wrap_array_booleans(CFArrayRef array) { WRAP_ARRAY(wrap_boolean) }
 VALUE
 wrap_array(CFArrayRef array)
 {
-  CFTypeRef obj = CFArrayGetValueAtIndex(array, 0);
-  CFTypeID   di = CFGetTypeID(obj);
-  if      (di == AXUIElementGetTypeID()) return wrap_array_refs(array);
-  else if (di == AXValueGetTypeID())     return wrap_array_values(array);
-  else if (di == CFStringGetTypeID())    return wrap_array_strings(array);
-  else if (di == CFNumberGetTypeID())    return wrap_array_numbers(array);
-  else if (di == CFBooleanGetTypeID())   return wrap_array_booleans(array);
-  else if (di == CFURLGetTypeID())       return wrap_array_urls(array);
-  else if (di == CFDateGetTypeID())      return wrap_array_dates(array);
-  else                                   return wrap_unknown(obj);
+  CFIndex length = CFArrayGetCount(array);
+  if (length) {
+    CFTypeRef obj = CFArrayGetValueAtIndex(array, 0);
+    CFTypeID   di = CFGetTypeID(obj);
+    if      (di == AXUIElementGetTypeID())  return wrap_array_refs(array);
+    else if (di == AXValueGetTypeID())      return wrap_array_values(array);
+    else if (di == CFStringGetTypeID())     return wrap_array_strings(array);
+    else if (di == CFNumberGetTypeID())     return wrap_array_numbers(array);
+    else if (di == CFBooleanGetTypeID())    return wrap_array_booleans(array);
+    else if (di == CFURLGetTypeID())        return wrap_array_urls(array);
+    else if (di == CFDateGetTypeID())       return wrap_array_dates(array);
+    else if (di == CFDictionaryGetTypeID()) return wrap_array_dictionaries(array);
+    else                                    return wrap_unknown(obj);
+  }
+  return rb_ary_new();
 }
 
 
