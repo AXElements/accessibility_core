@@ -444,6 +444,25 @@ rb_bundle_object_for_info_dict_key(VALUE self, VALUE key)
 }
 
 
+static
+VALUE
+rb_load_plist(VALUE self, VALUE plist_data)
+{
+  NSData* data = [NSData dataWithBytes:(void*)StringValueCStr(plist_data)
+		                length:RSTRING_LEN(plist_data)];
+  NSError* err = nil;
+  id     plist = [NSPropertyListSerialization propertyListWithData:data
+                     	                                   options:0
+		                                            format:nil
+       	                                                     error:&err];
+  if (plist)
+    return to_ruby(plist);
+
+  rb_raise(rb_eArgError, "error loading property list: '%s'",
+	   [[err localizedDescription] UTF8String]);
+  return Qnil; // unreachable
+}
+
 VALUE wrap_screen(NSScreen* obj) { WRAP_OBJC(rb_cScreen, NULL); }
 VALUE wrap_array_screens(CFArrayRef array) { WRAP_ARRAY(wrap_screen); }
 NSScreen* unwrap_screen(VALUE obj) { UNWRAP_OBJC(NSScreen); }
@@ -837,6 +856,9 @@ Init_extras()
   rb_define_singleton_method(rb_cBundle, "bundleWithURL", rb_bundle_with_url, 1);
   rb_define_method(rb_cBundle, "infoDictionary",             rb_bundle_info_dict,                0);
   rb_define_method(rb_cBundle, "objectForInfoDictionaryKey", rb_bundle_object_for_info_dict_key, 1);
+
+
+  rb_define_method(rb_cObject, "load_plist", rb_load_plist, 1);
 #endif
 
 

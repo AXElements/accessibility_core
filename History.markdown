@@ -1,5 +1,6 @@
 # 0.4.0 - Fill in the gaps and other dubious requirements
 
+  * Add `Object#load_plist` to match MacRuby's `Object#load_plist`
   * Add `URI::Generic#lastPathComponent` to match `NSURL#lastPathComponent`
   * Add `URI::Generic#pathExtension` to match `NSURL#pathExtension`
   * Add a 90% drop-in replacement for `NSData`
@@ -7,6 +8,8 @@
   * Add `Object#description` as a freedom patch on MRI
     `NSObject#description` is the Objective-C equivalent to `Object#inspect` in Ruby.
     While the intention is the same, the exact behaviour cannot be mimicked.
+
+  * Fixed some bugs related to converting arrays from Cocoa to Ruby
 
 
 # 0.3.5 - Add some missing bits for MRI
