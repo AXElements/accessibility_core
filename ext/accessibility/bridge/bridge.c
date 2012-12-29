@@ -257,20 +257,34 @@ VALUE wrap_array_refs(CFArrayRef array) { WRAP_ARRAY(wrap_ref) }
 VALUE
 wrap_string(CFStringRef string)
 {
-  return wrap_nsstring((NSString*)string);
+  VALUE   rb_str = Qnil;
+  CFDataRef data = CFStringCreateExternalRepresentation(
+							NULL,
+							string,
+							kCFStringEncodingUTF8,
+							0
+							);
+  if (data) {
+    rb_str = rb_enc_str_new(
+			    (char*)CFDataGetBytePtr(data),
+			    CFDataGetLength(data),
+			    rb_utf8_encoding()
+			    );
+    CFRelease(data);
+  }
+  else {
+    CFRelease(data);
+    CFShow(string);
+    rb_raise(rb_eRuntimeError, "Could not convert a string to a Ruby string");
+  }
+
+  return rb_str;
 }
 
 VALUE
 wrap_nsstring(NSString* string)
 {
-  // TODO: find a larger scope to apply this autoreleasepool
-  @autoreleasepool{
-    return rb_enc_str_new(
-        [string UTF8String],
-        [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
-        rb_utf8_encoding()
-        );
-  }
+  return wrap_string((CFStringRef)string);
 }
 
 CFStringRef
