@@ -356,6 +356,46 @@ rb_astring_alloc(VALUE self)
   return wrap_nsattributed_string([NSAttributedString alloc]);
 }
 
+static
+VALUE
+rb_astring_init_with_string(int argc, VALUE* argv, VALUE self)
+{
+  if (!argc)
+    rb_raise(rb_eArgError, "wrong number of arguments (0 for 1+)");
+
+  NSString*              nsstring = unwrap_nsstring(argv[0]);
+  NSAttributedString* old_astring = unwrap_nsattributed_string(self);
+  NSAttributedString* new_astring = [old_astring initWithString:nsstring];
+  [nsstring release];
+  if (old_astring == new_astring)
+    return self;
+  return wrap_nsattributed_string(new_astring);
+}
+
+static
+VALUE
+rb_astring_string(VALUE self)
+{
+  NSString* string = [unwrap_nsattributed_string(self) string];
+  VALUE     rb_str = wrap_nsstring(string);
+  [string release];
+  return rb_str;
+}
+
+static
+VALUE
+rb_astring_length(VALUE self)
+{
+  return ULONG2NUM([unwrap_nsattributed_string(self) length]);
+}
+
+static
+VALUE
+rb_astring_equality(VALUE self, VALUE other)
+{
+  OBJC_EQUALITY(rb_cAttributedString, unwrap_nsattributed_string);
+}
+
 
 #define WRAP_NUM(type, cookie, macro) do {		        \
     type value;							\
@@ -765,17 +805,17 @@ Init_bridge()
   rb_define_singleton_method(rb_cAttributedString, "alloc", rb_astring_alloc, 0);
 
   // TODO: all these methods :(
-  /* rb_define_method(rb_cAttributedString, "initWithString", rb_astring_init_with_string, -1); */
+  rb_define_method(rb_cAttributedString, "initWithString", rb_astring_init_with_string, -1);
   /* rb_define_method(rb_cAttributedString, "initWithAttributedString", rb_astring_init_with_astring, 2); */
-  /* rb_define_method(rb_cAttributedString, "string", rb_astring_string, 0); */
-  /* rb_define_method(rb_cAttributedString, "length", rb_astring_length, 0); */
+  rb_define_method(rb_cAttributedString, "string", rb_astring_string, 0);
+  rb_define_method(rb_cAttributedString, "length", rb_astring_length, 0);
   /* rb_define_method(rb_cAttributedString, "attributesAtIndex", rb_astring_attrs_at_index, -1); */
-  /* rb_define_method(rb_cAttributedString, "isEqualToAttributedString", rb_astring_equality, 1); */
+  rb_define_method(rb_cAttributedString, "isEqualToAttributedString", rb_astring_equality, 1);
   /* rb_define_method(rb_cAttributedString, "attributedSubstringFromRange", rb_astring_astring_from_range, 1); */
 
-  /* rb_define_alias(rb_cAttributedString,  "string", "to_s"); */
-  /* rb_define_alias(rb_cAttributedString,  "string", "to_str"); */
-  /* rb_define_alias(rb_cAttributedString,  "isEqualToAttributedString", "=="); */
+  rb_define_alias(rb_cAttributedString, "to_s",   "string");
+  rb_define_alias(rb_cAttributedString, "to_str", "string");
+  rb_define_alias(rb_cAttributedString, "==",     "isEqualToAttributedString");
 
 
   /*

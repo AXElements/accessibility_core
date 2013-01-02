@@ -293,10 +293,8 @@ class CoreTest < MiniTest::Unit::TestCase
     attr = static_text.parameterized_attribute('AXStringForRange', 0..4)
     assert_equal expected, attr
 
-    if on_macruby?
-      attr = static_text.parameterized_attribute('AXAttributedStringForRange', 0..4)
-      assert_equal expected, attr.string
-    end
+    attr = static_text.parameterized_attribute('AXAttributedStringForRange', 0..4)
+    assert_equal expected, attr.string
 
     assert_nil invalid_element.parameterized_attribute('AXStringForRange', 0..0),
       'dead elements should return nil for any parameterized attribute'
