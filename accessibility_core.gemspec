@@ -37,6 +37,6 @@ Originally extracted from the AXElements project.
                   ]
   s.test_files  = Dir.glob('test/**/test_*.rb') + [ 'test/helper.rb' ]
 
-  s.add_development_dependency 'yard', '~> 0.8.3'
+  s.add_development_dependency 'yard',     '~> 0.8.3'
   s.add_development_dependency 'kramdown', '~> 0.14.1'
 end
