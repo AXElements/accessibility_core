@@ -696,7 +696,7 @@ rb_data_to_str(VALUE self)
   NSData*      data = unwrap_nsdata(self);
   const void* bytes = [data bytes];
   NSUInteger length = [data length];
-  return rb_enc_str_new(bytes, length, rb_ascii8bit_encoding());
+  return rb_enc_str_new(bytes, length, rb_utf8_encoding());
 }
 
 static
@@ -781,7 +781,7 @@ Init_bridge()
   /*
    * Document-class: NSData
    *
-   * A 70% drop-in replacement for Cocoa's `NSData` class. Almost all
+   * A 50% drop-in replacement for Cocoa's `NSData` class. Almost all
    * non-deprecated methods have been bridged.
    *
    * See [Apple's Developer Reference](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/Classes/NSData_Class/Reference/Reference.html)
@@ -805,7 +805,7 @@ Init_bridge()
   //rb_define_method(rb_cData, "writeToURL",       rb_data_write_to_url, -1);
   rb_define_method(rb_cData, "to_str",           rb_data_to_str, 0);
 
-  rb_define_alias(rb_cData,  "isEqualToData", "==");
+  rb_define_alias(rb_cData,  "==", "isEqualToData");
 
 
   // misc freedom patches
