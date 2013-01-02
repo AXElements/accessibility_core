@@ -378,7 +378,6 @@ rb_astring_string(VALUE self)
 {
   NSString* string = [unwrap_nsattributed_string(self) string];
   VALUE     rb_str = wrap_nsstring(string);
-  [string release];
   return rb_str;
 }
 
