@@ -24,17 +24,26 @@ class AppDelegate
 
   def add_accessibility_attributes
     def window.accessibilityAttributeNames
-      super + ['AXLol', 'AXPie', 'AXIsNyan', KAXURLAttribute, KAXDescriptionAttribute]
+      super + ['AXLol', 'AXPie', 'AXIsNyan', 'AXData', KAXURLAttribute, KAXDescriptionAttribute]
+    end
+    def window.accessibilityIsAttributeSettable attr
+      attr == 'AXData' ? true : super
     end
     def window.accessibilityAttributeValue name
       case name
-      when 'AXLol' then NSValue.valueWithRect(CGRectZero)
-      when 'AXPie' then NSValue.valueWithRange(NSRange.new(10,10))
+      when 'AXLol'    then NSValue.valueWithRect(CGRectZero)
+      when 'AXPie'    then NSValue.valueWithRange(NSRange.new(10,10))
       when 'AXIsNyan' then false
+      when 'AXData'   then icon_data
       when KAXURLAttribute then NSURL.URLWithString('http://macruby.org/')
       when KAXDescriptionAttribute then 'Test Fixture'
       else super
       end
+    end
+    def window.icon_data
+      url = NSBundle.mainBundle.resourceURL.
+             URLByAppendingPathComponent('transmute.icns')
+      NSData.dataWithContentsOfURL url
     end
   end
 
