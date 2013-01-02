@@ -3,8 +3,8 @@
   * Add `Object#load_plist` to match MacRuby's `Object#load_plist`
   * Add `URI::Generic#lastPathComponent` to match `NSURL#lastPathComponent`
   * Add `URI::Generic#pathExtension` to match `NSURL#pathExtension`
-  * Add a 90% drop-in replacement for `NSData`
-  * Add a 90% drop-in replacement for `NSAttributedString`
+  * Add a 50% drop-in replacement for `NSData`
+  * Add a 50% drop-in replacement for `NSAttributedString`
   * Add `Object#description` as a freedom patch on MRI
     `NSObject#description` is the Objective-C equivalent to `Object#inspect` in Ruby.
     While the intention is the same, the exact behaviour cannot be mimicked.
