@@ -158,6 +158,10 @@ class CoreTest < MiniTest::Unit::TestCase
     assert_equal app,                 window.attribute('AXParent')
     assert_equal 10..19,              window.attribute('AXPie') # custom attribute!
 
+    data = window.attribute('AXData')
+    assert_kind_of NSData, data
+    assert data.length > 0
+
     assert_nil window.attribute('AXGrowArea'), 'KAXErrorNoValue == nil'
 
     assert_nil invalid_element.attribute('AXRole'), 'Dead element == nil'
