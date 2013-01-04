@@ -740,7 +740,7 @@ module Accessibility::Element
     KAXErrorInvalidUIElementObserver          => [
       ArgumentError,
       lambda { |*args|
-        'AXElements no longer supports notifications'
+        "Invalid observer passed to the method for #{args[0].inspect}"
       }
     ],
     KAXErrorCannotComplete                    => [
@@ -771,7 +771,7 @@ module Accessibility::Element
     KAXErrorNotificationUnsupported           => [
       ArgumentError,
       lambda { |*args|
-        'AXElements no longer supports notifications'
+        'Notification Unsupported'
       }
     ],
     KAXErrorNotImplemented                    => [

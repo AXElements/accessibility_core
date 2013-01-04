@@ -25,20 +25,124 @@ static
 VALUE
 handle_error(VALUE self, AXError code)
 {
-  // TODO port the error handler from AXElements
-  switch (code)
-    {
-    case kAXErrorInvalidUIElement:
-      rb_raise(rb_eArgError, "invalid element (probably dead)");
-    case kAXErrorAttributeUnsupported:
-      rb_raise(rb_eArgError, "attribute unsupported");
-    case kAXErrorActionUnsupported:
-      rb_raise(rb_eArgError, "action unsupported");
-    case kAXErrorParameterizedAttributeUnsupported:
-      rb_raise(rb_eArgError, "parameterized attribute unsupported");
-    default:
-      rb_raise(rb_eRuntimeError, "you done goofed [%d]", code);
-    }
+  @autoreleasepool {
+    NSString* description = (NSString*)CFCopyDescription(unwrap_ref(self));
+    [description autorelease];
+
+    const char* inspected_self = CFStringGetCStringPtr(
+						       (CFStringRef)description,
+						       kCFStringEncodingUTF8
+						       );
+
+    switch (code)
+      {
+      case kAXErrorSuccess:
+	rb_raise(
+		 rb_eRuntimeError,
+		 "internal accessibility_core error"
+		 );
+      case kAXErrorFailure:
+	rb_raise(
+		 rb_eRuntimeError,
+		 "An accessibility system failure, possibly an allocation " \
+		 "failure, occurred with %s; stopping to be safe",
+		 inspected_self
+		 );
+      case kAXErrorIllegalArgument:
+	rb_raise(
+		 rb_eArgError,
+		 "illegal argument was passed to the method for %s",
+		 inspected_self
+		 );
+      case kAXErrorInvalidUIElement:
+	rb_raise(
+		 rb_eArgError,
+		 "invalid element `%s' (probably dead)",
+		 inspected_self
+		 );
+      case kAXErrorInvalidUIElementObserver:
+	rb_raise(
+		 rb_eArgError,
+		 "invalid observer passed to the method for %s",
+		 inspected_self
+		 );
+      case kAXErrorCannotComplete:
+	spin(0);
+	pid_t pid = 0;
+	AXUIElementGetPid(unwrap_ref(self), &pid);
+	NSRunningApplication* app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+	if (app)
+	  rb_raise(
+		   rb_eRuntimeError,
+		   "accessibility messaging failure. "			\
+		   "Perhaps the application is busy on unresponsive?"
+		   );
+	else
+	  rb_raise(
+		   rb_eRuntimeError,
+		   "application for pid=%d is no longer running. "	\
+		   "Maybe it crashed?",
+		   pid
+		   );
+      case kAXErrorAttributeUnsupported:
+	rb_raise(
+		 rb_eArgError,
+		 "attribute unsupported"
+		 );
+      case kAXErrorActionUnsupported:
+	rb_raise(
+		 rb_eArgError,
+		 "action unsupported"
+		 );
+      case kAXErrorNotificationUnsupported:
+	rb_raise(
+		 rb_eArgError,
+		 "notification unsupported"
+		 );
+      case kAXErrorNotImplemented:
+	rb_raise(
+		 rb_eNotImpError,
+		 "method not supported by the receiver"
+		 );
+      case kAXErrorNotificationAlreadyRegistered:
+	rb_raise(
+		 rb_eArgError,
+		 "notification has already been registered"
+		 );
+      case kAXErrorNotificationNotRegistered:
+	rb_raise(
+		 rb_eRuntimeError,
+		 "notification is not registered yet"
+		 );
+      case kAXErrorAPIDisabled:
+	rb_raise(
+		 rb_eRuntimeError,
+		 "AXAPI has been disabled"
+		 );
+      case kAXErrorNoValue:
+	rb_raise(
+		 rb_eRuntimeError,
+		 "accessibility_core internal error; "	\
+		 "should be handled internally"
+		 );
+      case kAXErrorParameterizedAttributeUnsupported:
+	rb_raise(
+		 rb_eArgError,
+		 "parameterized attribute unsupported"
+		 );
+      case kAXErrorNotEnoughPrecision:
+	rb_raise(
+		 rb_eRuntimeError,
+		 "AXAPI said there was not enough precision ¯\\(°_o)/¯"
+		 );
+      default:
+	rb_raise(
+		 rb_eRuntimeError,
+		 "accessibility_core majorly goofed [%d]",
+		 code
+		 );
+      }
+  }
 
   return Qnil;
 }
