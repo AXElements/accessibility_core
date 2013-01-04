@@ -1,3 +1,9 @@
+# 0.4.1 - Polish
+
+  * Plug various memory leaks in `core.c`
+  * Improved error messages for `accessibility/core` on MRI
+
+
 # 0.4.0 - Fill in the gaps and other dubious requirements
 
   * Add `Object#load_plist` to match MacRuby's `Object#load_plist`
