@@ -53,15 +53,16 @@ extern ID sel_parse;
   } while (false);
 
 #define WRAP_ARRAY(wrapper) do {				\
+    CFTypeRef  obj = NULL;				        \
     CFIndex length = CFArrayGetCount(array);			\
     VALUE      ary = rb_ary_new2(length);			\
-								\
-    for (CFIndex idx = 0; idx < length; idx++)			\
-      rb_ary_store(						\
-		   ary,						\
-		   idx,						\
-		   wrapper(CFArrayGetValueAtIndex(array, idx))	\
-		   );	                                        \
+    								\
+    for (CFIndex idx = 0; idx < length; idx++) {		\
+      obj = CFArrayGetValueAtIndex(array, idx);			\
+      CFRetain(obj);						\
+      rb_ary_store(ary, idx, wrapper(obj));			\
+    }								\
+    								\
     return ary;							\
   } while (false);
 

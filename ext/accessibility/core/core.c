@@ -50,7 +50,7 @@ rb_acore_application_for(VALUE self, VALUE pid)
 {
   NSDate* date = [NSDate date];
   [[NSRunLoop currentRunLoop] runUntilDate:date];
-  CFRelease(date);
+  [date release];
 
   pid_t                     the_pid = NUM2PIDT(pid);
   NSRunningApplication* running_app =
@@ -58,8 +58,8 @@ rb_acore_application_for(VALUE self, VALUE pid)
 
   if (running_app) {
     VALUE app = wrap_ref(AXUIElementCreateApplication(the_pid));
-    CFRelease(running_app);
-    return app;
+    [running_app release];
+      return app;
   }
 
   rb_raise(
@@ -161,6 +161,7 @@ static
 VALUE
 rb_acore_attribute(VALUE self, VALUE name)
 {
+  VALUE             obj;
   CFTypeRef        attr = NULL;
   CFStringRef attr_name = unwrap_string(name);
   AXError          code = AXUIElementCopyAttributeValue(
@@ -172,7 +173,10 @@ rb_acore_attribute(VALUE self, VALUE name)
   switch (code)
     {
     case kAXErrorSuccess:
-      return to_ruby(attr);
+      obj = to_ruby(attr);
+      if (TYPE(obj) != T_DATA)
+        CFRelease(attr);
+      return obj;
     case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
@@ -247,6 +251,7 @@ rb_acore_set(VALUE self, VALUE name, VALUE value)
 						       attr_name,
 						       ax_value
 						       );
+  CFRelease(ax_value);
   switch (code)
     {
     case kAXErrorSuccess:
@@ -261,6 +266,7 @@ static
 VALUE
 rb_acore_role(VALUE self)
 {
+  VALUE       obj;
   CFTypeRef value = NULL;
   AXError    code = AXUIElementCopyAttributeValue(
 						  unwrap_ref(self),
@@ -270,7 +276,9 @@ rb_acore_role(VALUE self)
   switch (code)
     {
     case kAXErrorSuccess:
-      return wrap_string(value);
+      obj = wrap_string(value);
+      CFRelease(value);
+      return obj;
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return Qnil;
@@ -284,6 +292,7 @@ static
 VALUE
 rb_acore_subrole(VALUE self)
 {
+  VALUE       obj;
   CFTypeRef value = NULL;
   AXError    code = AXUIElementCopyAttributeValue(
 						  unwrap_ref(self),
@@ -293,7 +302,12 @@ rb_acore_subrole(VALUE self)
   switch (code)
     {
     case kAXErrorSuccess:
-      return wrap_string((CFStringRef)value);
+      if (value) {
+	obj = wrap_string(value);
+	CFRelease(value);
+	return obj;
+      }
+      return Qnil;
     case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
@@ -334,6 +348,7 @@ static
 VALUE
 rb_acore_children(VALUE self)
 {
+  VALUE       obj;
   CFTypeRef value = NULL;
   AXError    code = AXUIElementCopyAttributeValue(
 						  unwrap_ref(self),
@@ -343,7 +358,9 @@ rb_acore_children(VALUE self)
   switch (code)
     {
     case kAXErrorSuccess:
-      return wrap_array_refs(value);
+      obj = wrap_array_refs(value);
+      CFRelease(value);
+      return obj;
     case kAXErrorFailure:
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
@@ -358,6 +375,7 @@ static
 VALUE
 rb_acore_value(VALUE self)
 {
+  VALUE       obj;
   CFTypeRef value = NULL;
   AXError    code = AXUIElementCopyAttributeValue(
 						  unwrap_ref(self),
@@ -367,7 +385,10 @@ rb_acore_value(VALUE self)
   switch (code)
     {
     case kAXErrorSuccess:
-      return to_ruby(value);
+      obj = to_ruby(value);
+      if (TYPE(obj) != T_DATA)
+        CFRelease(value);
+      return obj;
     default:
       return handle_error(self, code);
     }
@@ -436,6 +457,7 @@ static
 VALUE
 rb_acore_parameterized_attribute(VALUE self, VALUE name, VALUE parameter)
 {
+  VALUE             obj;
   CFTypeRef       param = to_ax(parameter);
   CFTypeRef        attr = NULL;
   CFStringRef attr_name = unwrap_string(name);
@@ -450,7 +472,10 @@ rb_acore_parameterized_attribute(VALUE self, VALUE name, VALUE parameter)
   switch (code)
     {
     case kAXErrorSuccess:
-      return to_ruby(attr);
+      obj = to_ruby(attr);
+      if (TYPE(obj) != T_DATA)
+        CFRelease(attr);
+      return obj;
     case kAXErrorNoValue:
     case kAXErrorInvalidUIElement:
       return Qnil;
