@@ -6,6 +6,8 @@ runtimes.
 
 [Documentation](http://rdoc.info/gems/accessibility_core/frames)
 
+[![Code Climate](https://codeclimate.com/badge.png)](https://codeclimate.com/github/AXElements/accessibility_core)
+
 
 ## Examples
 
