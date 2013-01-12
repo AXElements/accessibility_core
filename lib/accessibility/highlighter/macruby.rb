@@ -18,7 +18,7 @@
 #
 class Accessibility::Highlighter < NSWindow
 
-  # @param bounds [CGRect]
+  # @param bounds [CGRect,#to_rect]
   # @param opts [Hash]
   # @option opts [Number] :timeout
   # @option opts [NSColor] :colour (NSColor.magentaColor)
