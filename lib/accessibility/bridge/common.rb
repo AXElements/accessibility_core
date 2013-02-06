@@ -28,6 +28,16 @@ class CGRect
   end
 
   ##
+  # Returns the center point for the rectangle as a {CGPoint}
+  #
+  # @return [CGPoint]
+  def to_point
+    o = origin
+    s = size
+    CGPoint.new((o.x + (s.width / 2)), (o.y + (s.height / 2)))
+  end
+
+  ##
   # Whether or not the receiver completely encloses the `inner` rect
   #
   # On MacRuby this is equivalent to calling `NSContainsRect()`.
