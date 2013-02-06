@@ -6,7 +6,8 @@ runtimes.
 
 [Documentation](http://rdoc.info/gems/accessibility_core/frames)
 
-[![Code Climate](https://codeclimate.com/badge.png)](https://codeclimate.com/github/AXElements/accessibility_core)
+[![Dependency Status](https://gemnasium.com/AXElements/accessibility_core.png)](https://gemnasium.com/AXElements/accessibility_core)
+[![Code Climate](https://codeclimate.com/github/AXElements/accessibility_core.png)](https://codeclimate.com/github/AXElements/accessibility_core)
 
 
 ## Examples
