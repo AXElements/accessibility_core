@@ -638,6 +638,9 @@ static
 VALUE
 rb_acore_post(VALUE self, VALUE events)
 {
+#if MAC_OS_X_VERSION_MIN_ALLOWED <= MAC_OS_X_VERSION_10_9
+  rb_raise(rb_eRuntimeError, "Posting keyboard events is deprecated in 10.9 and later");
+#else
   events = rb_ary_to_ary(events);
   long length = RARRAY_LEN(events);
   useconds_t sleep_time = NUM2DBL(rb_ivar_get(rb_cElement, ivar_key_rate)) * 100000;
@@ -671,6 +674,7 @@ rb_acore_post(VALUE self, VALUE events)
   }
 
   return self;
+#endif
 }
 
 
