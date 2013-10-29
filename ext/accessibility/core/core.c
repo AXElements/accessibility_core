@@ -765,7 +765,7 @@ Init_core()
   Init_bridge();
 
 #ifdef NOT_MACRUBY
-
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_9
   if (!AXAPIEnabled())
     rb_raise(
 	     rb_eRuntimeError,
@@ -776,7 +776,24 @@ Init_core()
 	     "See https://github.com/Marketcircle/AXElements#getting-setup\n"             \
 	     "------------------------------------------------------------------------\n"
 	     );
+#else
+    CFMutableDictionaryRef options = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+     CFDictionarySetValue(options, kAXTrustedCheckOptionPrompt, kCFBooleanTrue);
 
+    if (!AXIsProcessTrustedWithOptions(options)) {
+      rb_raise(rb_eRuntimeError,
+               "\n"
+               "-------------------------------------------------------------------\n" \
+               "The Application that is running AXElements is not trused to control\n" \
+               "your computer. A window promting you to grant permission to the\n"     \
+               "application should appear right now. Please grant the application\n"   \
+               "permission to control your computer and try again\n"                   \
+               "-------------------------------------------------------------------");
+    }
+     CFRelease(options);
+
+
+#endif
   // bs that needs to be initialized from the bridge.c import
   sel_x        = rb_intern("x");
   sel_y        = rb_intern("y");
