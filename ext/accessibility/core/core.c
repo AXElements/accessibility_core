@@ -785,9 +785,9 @@ Init_core()
                "\n"
                "-------------------------------------------------------------------\n" \
                "The Application that is running AXElements is not trused to control\n" \
-               "your computer. A window promting you to grant permission to the\n"     \
+               "your computer. A window prompting you to grant permission to the\n"     \
                "application should appear right now. Please grant the application\n"   \
-               "permission to control your computer and try again\n"                   \
+               "permission to control your computer and try again.\n"                   \
                "-------------------------------------------------------------------");
     }
      CFRelease(options);
