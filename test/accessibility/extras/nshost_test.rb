@@ -2,7 +2,7 @@ require 'test/helper'
 require 'accessibility/extras'
 
 class NSHostTest < MiniTest::Unit::TestCase
-  try_to_parallelize!
+#  try_to_parallelize!
 
   def host
     NSHost.currentHost
