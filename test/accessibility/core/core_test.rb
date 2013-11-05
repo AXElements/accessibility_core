@@ -405,7 +405,10 @@ class CoreTest < MiniTest::Unit::TestCase
   # this assumes that radar://10040865 is not fixed;
   # once it is fixed this case becomes less of an
   # issue anyways
+  #
+  # @todo this is fixed on Sea Lion, so we need to implement the test another way
   def test_nil_children_returns_empty_array
+    skip if on_sea_lion?
     menu = app.attribute('AXMenuBar').children.find { |child|
       child.attribute('AXTitle') =='Help'
     }

@@ -13,6 +13,16 @@ else
   end
 end
 
+if `uname -r`.to_i >= 13
+  def on_sea_lion?
+    true
+  end
+else
+  def on_sea_lion?
+    false
+  end
+end
+
 
 class MiniTest::Unit::TestCase
 
