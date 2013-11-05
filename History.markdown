@@ -1,3 +1,14 @@
+# 0.4.2 - Sea Lion Compatability
+
+  * Print notice to standard out when AX access is required for an app (@tbartelmess)
+  * Added `CGRect#to_point`
+  * `Highlighter` now accepts bounds object that responds to `#to_rect`
+
+  * Disable keyboard events on Sea Lion (@tbartelmess)
+
+  * Remove development dependencies from gemspec, keep them in the Gemfile
+
+
 # 0.4.1 - Polish
 
   * Plug various memory leaks in `core.c`
