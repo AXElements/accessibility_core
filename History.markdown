@@ -1,3 +1,8 @@
+# 0.4.3 - Oops, -Werror
+
+  * Fix a C warning generated in the Sea Lion compatability code path
+
+
 # 0.4.2 - Sea Lion Compatability
 
   * Print notice to standard out when AX access is required for an app (@tbartelmess)
