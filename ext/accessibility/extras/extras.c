@@ -313,12 +313,40 @@ rb_workspace_launch(VALUE self, VALUE bundle_id, VALUE opts)
 	        	 launchAppWithBundleIdentifier:identifier
         		                       options:options
         		additionalEventParamDescriptor:nil
-                                      launchIdentifier:nil];
+                              launchIdentifier:nil];
 
   [identifier release];
   return result ? Qtrue : Qfalse;
 }
 
+static
+VALUE
+rb_workspace_path_for_bundle_id(VALUE self, VALUE bundle_id)
+{
+    NSString* identifier = unwrap_nsstring(bundle_id);
+
+    NSString* path = [[NSWorkspace sharedWorkspace] 
+        absolutePathForAppBundleWithIdentifier:identifier];
+
+    [identifier release];
+    return wrap_nsstring(path);
+}
+
+
+static
+VALUE
+rb_workspace_launch_at_path(VALUE self, VALUE bundle_path)
+{
+    NSURL* bundle_url = [NSURL fileURLWithPath:unwrap_nsstring(bundle_path)];
+    if (!bundle_url)
+        return Qnil;
+
+    return wrap_app([[NSWorkspace sharedWorkspace] 
+            launchApplicationAtURL:bundle_url
+                           options:NSWorkspaceLaunchAsync
+                     configuration:nil
+                             error:nil]);
+}
 
 static
 VALUE
@@ -784,12 +812,14 @@ Init_extras()
    */
   rb_cWorkspace = rb_define_class("NSWorkspace", rb_cObject);
 
-  rb_define_singleton_method(rb_cWorkspace, "runningApplications",             rb_workspace_running_apps,   0);
-  rb_define_singleton_method(rb_cWorkspace, "sharedWorkspace",                 rb_workspace_shared,         0);
-  rb_define_singleton_method(rb_cWorkspace, "frontmostApplication",            rb_workspace_frontmost_app,  0);
-  rb_define_singleton_method(rb_cWorkspace, "menuBarOwningApplication",        rb_workspace_menu_bar_owner, 0);
-  rb_define_singleton_method(rb_cWorkspace, "showSearchResultsForQueryString", rb_workspace_find,           1);
-  rb_define_singleton_method(rb_cWorkspace, "launchAppWithBundleIdentifier",   rb_workspace_launch,         2);
+  rb_define_singleton_method(rb_cWorkspace, "runningApplications",                    rb_workspace_running_apps,       0);
+  rb_define_singleton_method(rb_cWorkspace, "sharedWorkspace",                        rb_workspace_shared,             0);
+  rb_define_singleton_method(rb_cWorkspace, "frontmostApplication",                   rb_workspace_frontmost_app,      0);
+  rb_define_singleton_method(rb_cWorkspace, "menuBarOwningApplication",               rb_workspace_menu_bar_owner,     0);
+  rb_define_singleton_method(rb_cWorkspace, "showSearchResultsForQueryString",        rb_workspace_find,               1);
+  rb_define_singleton_method(rb_cWorkspace, "launchAppWithBundleIdentifier",          rb_workspace_launch,             2);
+  rb_define_singleton_method(rb_cWorkspace, "absolutePathForAppBundleWithIdentifier", rb_workspace_path_for_bundle_id, 1);
+  rb_define_singleton_method(rb_cWorkspace, "launchApplicationAtURL",                 rb_workspace_launch_at_path,     1);
 
   key_opts         = ID2SYM(rb_intern("options"));
   //  key_event_params = ID2SYM(rb_intern("additionalEventParamDescriptor"));
