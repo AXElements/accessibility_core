@@ -40,10 +40,12 @@ class NSWorkspaceTest < MiniTest::Unit::TestCase
   end
 
   def test_launch_at_path
-      running = shared.launchApplicationAtURL '/Applications/TextEdit.app'
+      app = shared.launchApplicationAtURL '/Applications/TextEdit.app'
       spin 1
-      assert running != nil
-      assert running.processIdentifier != 0
+      assert app != nil
+      assert app.processIdentifier != 0
+      app.terminate
+      spin 0.2
   end
       
 end
