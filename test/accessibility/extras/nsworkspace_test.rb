@@ -34,4 +34,18 @@ class NSWorkspaceTest < MiniTest::Unit::TestCase
     assert app.terminated?
   end
 
+  def test_path_for_bundle_id
+      id = 'com.apple.TextEdit'
+      assert shared.absolutePathForAppBundleWithIdentifier(id) == '/Applications/TextEdit.app'
+  end
+
+  def test_launch_at_path
+      app = shared.launchApplicationAtURL '/Applications/TextEdit.app'
+      spin 1
+      assert app != nil
+      assert app.processIdentifier != 0
+      app.terminate
+      spin 0.2
+  end
+      
 end
