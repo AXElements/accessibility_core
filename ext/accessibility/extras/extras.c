@@ -489,7 +489,7 @@ static
 VALUE
 rb_screen_frame(VALUE self)
 {
-  return wrap_rect([unwrap_screen(self) frame]);
+  return wrap_rect(NSRectToCGRect([unwrap_screen(self) frame]));
 }
 
 #endif
@@ -518,7 +518,7 @@ rb_screen_wake(VALUE self, SEL sel)
     }
   }
 
-  CGPoint      mouse = [NSEvent mouseLocation];
+  CGPoint      mouse = NSPointToCGPoint([NSEvent mouseLocation]);
   IOGPoint     point = { mouse.x, mouse.y };
   unsigned int flags = (unsigned int)[NSEvent modifierFlags];
   NXEventData   data;
