@@ -39,6 +39,11 @@ class NSWorkspaceTest < MiniTest::Unit::TestCase
       assert shared.absolutePathForAppBundleWithIdentifier(id) == '/Applications/TextEdit.app'
   end
 
+  def test_path_for_not_exist_bundle_id
+      id = 'not.exist.app'
+      assert shared.absolutePathForAppBundleWithIdentifier(id) == nil
+  end
+
   def test_launch_at_path
       app = shared.launchApplicationAtURL '/Applications/TextEdit.app'
       spin 1
