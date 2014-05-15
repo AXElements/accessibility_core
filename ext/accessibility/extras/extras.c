@@ -329,7 +329,7 @@ rb_workspace_path_for_bundle_id(VALUE self, VALUE bundle_id)
         absolutePathForAppBundleWithIdentifier:identifier];
 
     [identifier release];
-    return wrap_nsstring(path);
+    return path ? wrap_nsstring(path) : Qnil;
 }
 
 
