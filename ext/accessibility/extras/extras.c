@@ -54,13 +54,14 @@ static VALUE wrap_array_apps(NSArray* const ary)
 
 static
 VALUE
-rb_running_app_with_pid(VALUE self, VALUE pid)
+rb_running_app_with_pid(VALUE self, VALUE num_pid)
 {
-  NSRunningApplication* app = [NSRunningApplication
-			       runningApplicationWithProcessIdentifier:NUM2PIDT(pid)];
-  if (app)
-    return wrap_app(app);
-  return Qnil; // ruby behaviour would be to raise, but we want "drop-in" compat
+    const pid_t pid = NUM2PIDT(num_pid);
+    NSRunningApplication* const app =
+      [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+
+    if (app) return wrap_app(app);
+    return Qnil; // ruby behaviour would be to raise, but we want "drop-in" compat
 }
 
 static
