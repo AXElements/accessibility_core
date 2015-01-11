@@ -5,7 +5,7 @@
 #import <Cocoa/Cocoa.h>
 
 // these functions are available on MacRuby as well as MRI
-void spin(double seconds);
+void spin(const double seconds);
 
 // initialize all the dynamic data (e.g. class pointers)
 void Init_bridge();
@@ -35,141 +35,139 @@ extern ID sel_to_s;
 extern ID sel_parse;
 
 
-#define WRAP_OBJC(klass, finalizer) do {				\
-    return Data_Wrap_Struct(klass, NULL, finalizer, (void*)obj);	\
-  } while (false);
+#define WRAP_OBJC(klass, finalizer) \
+    return Data_Wrap_Struct(klass, NULL, finalizer, (void*)obj);
 
-#define UNWRAP_OBJC(klass) do {			\
+#define UNWRAP_OBJC(klass)                      \
     klass* unwrapped;				\
     Data_Get_Struct(obj, klass, unwrapped);	\
-    return unwrapped;				\
-  } while (false);
+    return unwrapped;
 
-#define OBJC_EQUALITY(type, unwrapper) do {		\
+#define OBJC_EQUALITY(type, unwrapper)                  \
     if (CLASS_OF(other) == type)			\
       if ([unwrapper(self) isEqual:unwrapper(other)])	\
 	return Qtrue;					\
-    return Qfalse;					\
-  } while (false);
+    return Qfalse;
 
-#define WRAP_ARRAY(wrapper) do {				\
-    CFTypeRef  obj = NULL;				        \
-    CFIndex length = CFArrayGetCount(array);			\
-    VALUE      ary = rb_ary_new2(length);			\
-    								\
-    for (CFIndex idx = 0; idx < length; idx++) {		\
-      obj = CFArrayGetValueAtIndex(array, idx);			\
-      CFRetain(obj);						\
-      rb_ary_store(ary, idx, wrapper(obj));			\
-    }								\
-    								\
-    return ary;							\
-  } while (false);
+#define WRAP_ARRAY(wrapper)                                             \
+    const CFIndex length = CFArrayGetCount(array);                      \
+    const VALUE  new_ary = rb_ary_new2(length);                         \
+                                                                        \
+    for (CFIndex idx = 0; idx < length; idx++) {                        \
+        CFTypeRef const obj = CFArrayGetValueAtIndex(array, idx);       \
+        CFRetain(obj);                                                  \
+        rb_ary_store(new_ary, idx, wrapper(obj));			\
+    }                                                                   \
+                                                                        \
+    return new_ary;
 
 
-void cf_finalizer(void* obj);
-void objc_finalizer(void* obj);
+static void __attribute__ ((unused))
+cf_finalizer(void* obj)   { CFRelease((CFTypeRef)obj); }
 
-VALUE wrap_unknown(CFTypeRef obj);
-CFTypeRef unwrap_unknown(VALUE obj);
+static void __attribute__ ((unused))
+objc_finalizer(void* obj) { [(id)obj release]; }
 
-VALUE wrap_point(CGPoint point);
-CGPoint unwrap_point(VALUE point);
+VALUE wrap_unknown(CFTypeRef const obj);
+CFTypeRef unwrap_unknown(const VALUE obj);
 
-VALUE wrap_size(CGSize size);
-CGSize unwrap_size(VALUE size);
+VALUE wrap_point(const CGPoint point);
+CGPoint unwrap_point(const VALUE point);
 
-VALUE wrap_rect(CGRect rect);
-VALUE coerce_to_rect(VALUE obj);
-CGRect unwrap_rect(VALUE rect);
+VALUE wrap_size(const CGSize size);
+CGSize unwrap_size(const VALUE size);
 
-VALUE convert_cf_range(CFRange range);
-CFRange convert_rb_range(VALUE range);
+VALUE wrap_rect(const CGRect rect);
+VALUE coerce_to_rect(const VALUE obj);
+CGRect unwrap_rect(const VALUE rect);
 
-VALUE wrap_value_point(AXValueRef value);
-VALUE wrap_value_size(AXValueRef value);
-VALUE wrap_value_rect(AXValueRef value);
-VALUE wrap_value_range(AXValueRef value);
-VALUE wrap_value_error(AXValueRef value);
-VALUE wrap_value(AXValueRef value);
-VALUE wrap_array_values(CFArrayRef array);
+VALUE convert_cf_range(const CFRange range);
+CFRange convert_rb_range(const VALUE range);
 
-AXValueRef unwrap_value_point(VALUE val);
-AXValueRef unwrap_value_size(VALUE val);
-AXValueRef unwrap_value_rect(VALUE val);
-AXValueRef unwrap_value_range(VALUE val);
-AXValueRef unwrap_value(VALUE value);
+VALUE wrap_value_point(AXValueRef const value);
+VALUE wrap_value_size(AXValueRef const value);
+VALUE wrap_value_rect(AXValueRef const value);
+VALUE wrap_value_range(AXValueRef const value);
+VALUE wrap_value_error(AXValueRef const value);
+VALUE wrap_value(AXValueRef const value);
+VALUE wrap_array_values(CFArrayRef const array);
 
-VALUE wrap_ref(AXUIElementRef ref);
-VALUE wrap_array_refs(CFArrayRef array);
-AXUIElementRef unwrap_ref(VALUE obj);
+AXValueRef unwrap_value_point(const VALUE val);
+AXValueRef unwrap_value_size(const VALUE val);
+AXValueRef unwrap_value_rect(const VALUE val);
+AXValueRef unwrap_value_range(const VALUE val);
+AXValueRef unwrap_value(const VALUE value);
 
-VALUE wrap_string(CFStringRef string);
-VALUE wrap_nsstring(NSString* string);
-VALUE wrap_array_strings(CFArrayRef array);
-VALUE wrap_array_nsstrings(NSArray* ary);
-CFStringRef unwrap_string(VALUE string);
-NSString*   unwrap_nsstring(VALUE string);
+VALUE wrap_ref(AXUIElementRef const ref);
+VALUE wrap_array_refs(CFArrayRef const array);
+AXUIElementRef unwrap_ref(const VALUE obj);
 
-VALUE wrap_long(CFNumberRef num);
-VALUE wrap_long_long(CFNumberRef num);
-VALUE wrap_float(CFNumberRef num);
+VALUE wrap_string(CFStringRef const string);
+VALUE wrap_nsstring(NSString* const string);
+VALUE wrap_array_strings(CFArrayRef const array);
+VALUE wrap_array_nsstrings(NSArray* const ary);
+CFStringRef unwrap_string(const VALUE string);
+NSString*   unwrap_nsstring(const VALUE string);
+
+VALUE wrap_long(CFNumberRef const num);
+VALUE wrap_long_long(CFNumberRef const num);
+VALUE wrap_float(CFNumberRef const num);
 // Generic CFNumber wrapper, use it if you do not
 // know the primitive type of number
-VALUE wrap_number(CFNumberRef number);
-VALUE wrap_array_numbers(CFArrayRef array);
+VALUE wrap_number(CFNumberRef const number);
+VALUE wrap_array_numbers(CFArrayRef const array);
 
-CFNumberRef unwrap_long(VALUE num);
-CFNumberRef unwrap_long_long(VALUE num);
-CFNumberRef unwrap_float(VALUE num);
-CFNumberRef unwrap_number(VALUE number);
+CFNumberRef unwrap_long(const VALUE num);
+CFNumberRef unwrap_long_long(const VALUE num);
+CFNumberRef unwrap_float(const VALUE num);
+CFNumberRef unwrap_number(const VALUE number);
 
-VALUE wrap_url(CFURLRef url);
-VALUE wrap_nsurl(NSURL* url);
-CFURLRef unwrap_url(VALUE url);
-NSURL* unwrap_nsurl(VALUE url);
-VALUE wrap_array_urls(CFArrayRef array);
+VALUE wrap_url(CFURLRef const url);
+VALUE wrap_nsurl(NSURL* const url);
+CFURLRef unwrap_url(const VALUE url);
+NSURL* unwrap_nsurl(const VALUE url);
+VALUE wrap_array_urls(CFArrayRef const array);
 
-VALUE wrap_date(CFDateRef date);
-VALUE wrap_nsdate(NSDate* date);
-VALUE wrap_array_dates(CFArrayRef array);
-CFDateRef unwrap_date(VALUE date);
+VALUE wrap_date(CFDateRef const date);
+VALUE wrap_nsdate(NSDate* const date);
+VALUE wrap_array_dates(CFArrayRef const array);
+CFDateRef unwrap_date(const VALUE date);
 
-VALUE wrap_boolean(CFBooleanRef bool_val);
-VALUE wrap_array_booleans(CFArrayRef array);
-CFBooleanRef unwrap_boolean(VALUE bool_val);
+VALUE wrap_boolean(CFBooleanRef const bool_val);
+VALUE wrap_array_booleans(CFArrayRef const array);
+CFBooleanRef unwrap_boolean(const VALUE bool_val);
 
-VALUE wrap_data(CFDataRef data);
-VALUE wrap_nsdata(NSData* data);
-CFDataRef unwrap_data(VALUE data);
-NSData* unwrap_nsdata(VALUE data);
+VALUE wrap_data(CFDataRef const data);
+VALUE wrap_nsdata(NSData* const data);
+CFDataRef unwrap_data(const VALUE data);
+NSData* unwrap_nsdata(const VALUE data);
 
 // this function assumes that arrays are homogeneous;
 // which is usually the case coming from the CF world
-VALUE wrap_array(CFArrayRef array);
+VALUE wrap_array(CFArrayRef const array);
 
-VALUE wrap_dictionary(NSDictionary* dict);
-VALUE wrap_array_dictionaries(CFArrayRef array);
+VALUE wrap_dictionary(NSDictionary* const dict);
+VALUE wrap_array_dictionaries(CFArrayRef const array);
 
-VALUE to_ruby(CFTypeRef obj);
-CFTypeRef to_ax(VALUE obj);
+VALUE to_ruby(CFTypeRef const obj);
+CFTypeRef to_ax(const VALUE obj);
 
-VALUE wrap_screen(NSScreen* screen);
-VALUE wrap_array_screens(CFArrayRef array);
-NSScreen* unwrap_screen(VALUE screen);
+VALUE wrap_screen(NSScreen* const screen);
+VALUE wrap_array_screens(CFArrayRef const array);
+NSScreen* unwrap_screen(const VALUE screen);
 
-VALUE wrap_attributed_string(CFAttributedStringRef string);
-VALUE wrap_nsattributed_string(NSAttributedString* string);
-VALUE wrap_array_attributed_strings(CFArrayRef array);
-VALUE wrap_array_nsattributed_strings(NSArray* ary);
-CFAttributedStringRef unwrap_attributed_string(VALUE string);
-NSAttributedString* unwrap_nsattributed_string(VALUE string);
+VALUE wrap_attributed_string(CFAttributedStringRef const string);
+VALUE wrap_nsattributed_string(NSAttributedString* const string);
+VALUE wrap_array_attributed_strings(CFArrayRef const array);
+VALUE wrap_array_nsattributed_strings(NSArray* const ary);
+CFAttributedStringRef unwrap_attributed_string(const VALUE string);
+NSAttributedString* unwrap_nsattributed_string(const VALUE string);
 
-VALUE wrap_data(CFDataRef data);
-VALUE wrap_nsdata(NSData* data);
-VALUE wrap_array_data(CFArrayRef array);
-VALUE wrap_array_nsdata(NSArray* array);
-CFDataRef unwrap_data(VALUE data);
-NSData* unwrap_nsdata(VALUE data);
+VALUE wrap_data(CFDataRef const data);
+VALUE wrap_nsdata(NSData* const data);
+VALUE wrap_array_data(CFArrayRef const array);
+VALUE wrap_array_nsdata(NSArray* const array);
+CFDataRef unwrap_data(const VALUE data);
+NSData* unwrap_nsdata(const VALUE data);
 
 #endif
