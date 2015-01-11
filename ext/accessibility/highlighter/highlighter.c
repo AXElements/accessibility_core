@@ -51,9 +51,9 @@ static
 CGRect
 flip(CGRect rect)
 {
-  double screen_height = NSMaxY([[NSScreen mainScreen] frame]);
-  rect.origin.y        = screen_height - NSMaxY(rect);
-  return rect;
+    const double screen_height = NSMaxY([[NSScreen mainScreen] frame]);
+    rect.origin.y              = screen_height - NSMaxY(NSRectFromCGRect(rect));
+    return rect;
 }
 
 static
@@ -63,14 +63,12 @@ rb_highlighter_new(int argc, VALUE* argv, VALUE self)
   if (!argc)
     rb_raise(rb_eArgError, "wrong number of arguments (0 for 1+)");
 
-  CGRect bounds = unwrap_rect(coerce_to_rect(argv[0]));
-  bounds = flip(bounds); // we assume the rect is in the other co-ordinate system
-
-  NSWindow* window =
-    [[NSWindow alloc] initWithContentRect:bounds
-                                styleMask:NSBorderlessWindowMask
-		                  backing:NSBackingStoreBuffered
-                                    defer:true];
+  const CGRect bounds = flip(unwrap_rect(coerce_to_rect(argv[0])));
+  NSWindow* const window =
+      [[NSWindow alloc] initWithContentRect:NSRectFromCGRect(bounds)
+                                  styleMask:NSBorderlessWindowMask
+		                    backing:NSBackingStoreBuffered
+                                      defer:true];
 
   NSColor* color = [NSColor magentaColor];
 
@@ -87,7 +85,7 @@ rb_highlighter_new(int argc, VALUE* argv, VALUE self)
   [window setLevel:NSStatusWindowLevel];
   [window setBackgroundColor:color];
   [window setIgnoresMouseEvents:true];
-  [window setFrame:bounds display:false];
+  [window setFrame:NSRectFromCGRect(bounds) display:false];
   [window makeKeyAndOrderFront:NSApp];
   [window setReleasedWhenClosed:false];
 
@@ -130,7 +128,7 @@ static
 VALUE
 rb_highlighter_frame(VALUE self)
 {
-  return wrap_rect([unwrap_window(self) frame]);
+    return wrap_rect(NSRectToCGRect([unwrap_window(self) frame]));
 }
 
 static
