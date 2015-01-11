@@ -31,6 +31,7 @@ runtimes.
 - [ ] remove all old MacRuby related code
 - [ ] more descriptive error handling
 - [ ] handle stirng encodings that are not UTF8
+- [ ] sign the gem
 
 ## Tests
 
