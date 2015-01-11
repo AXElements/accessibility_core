@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>4319F5E3-3FEB-4F79-AE12-EB140560535A</string>
+	<key>IDESourceControlProjectName</key>
+	<string>AXElementsTester</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>0556EB370915DBFE82AAADD70DAC585B80CCED75</key>
+		<string>github.com:ferrous26/AXElements.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>test/AXElementsTester/AXElementsTester.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>0556EB370915DBFE82AAADD70DAC585B80CCED75</key>
+		<string>../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>github.com:ferrous26/AXElements.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>0556EB370915DBFE82AAADD70DAC585B80CCED75</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>0556EB370915DBFE82AAADD70DAC585B80CCED75</string>
+			<key>IDESourceControlWCCName</key>
+			<string>AXElements</string>
+		</dict>
+	</array>
+</dict>
+</plist>
