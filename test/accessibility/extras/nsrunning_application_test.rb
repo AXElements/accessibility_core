@@ -66,7 +66,12 @@ class NSRunningApplicationTest < MiniTest::Unit::TestCase
   end
 
   def test_bundle_url
-    assert_nil app.bundleURL
+    bundle_url = app.bundleURL
+    if bundle_url
+      assert_match %r{/System/Library/Frameworks/Ruby.framework/}, bundle_url.to_s
+    else
+      assert_nil bundle_url
+    end
     assert_match %r{/Applications/Utilities/Terminal.app}, terminals.first.bundleURL.path
   end
 

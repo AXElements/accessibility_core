@@ -11,7 +11,7 @@ import Cocoa
 @NSApplicationMain
 class AppDelegate : NSObject, NSApplicationDelegate {
 
-    @IBOutlet var window           : NSWindow?
+    @IBOutlet var window           : TesterWindow?
     @IBOutlet var yes_button       : NSButton?
     @IBOutlet var bye_button       : NSButton?
     @IBOutlet var scroll_area      : NSScrollView?

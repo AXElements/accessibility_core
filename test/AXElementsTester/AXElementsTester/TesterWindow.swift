@@ -8,11 +8,12 @@
 
 import Cocoa
 
-let AXLol : String                  = "AXLol"
-let AXPie : String                  = "AXPie"
-let AXIsNyan : String               = "AXIsNyan"
-let AXURLAttribute : String         = "AXURL"
-let AXDescriptionAttribute : String = "AXDescription"
+let AXLol : NSString                  = "AXLol"
+let AXPie : NSString                  = "AXPie"
+let AXIsNyan : NSString               = "AXIsNyan"
+let AXURLAttribute : NSString         = "AXURL"
+let AXDescriptionAttribute : NSString = "AXDescription"
+let AXData : NSString                 = "AXData"
 
 class TesterWindow : NSWindow {
 
@@ -21,7 +22,8 @@ class TesterWindow : NSWindow {
         AXPie,
         AXIsNyan,
         AXURLAttribute,
-        AXDescriptionAttribute
+        AXDescriptionAttribute,
+        AXData
     ]
 
     override func accessibilityAttributeNames() -> [AnyObject] {
@@ -30,14 +32,25 @@ class TesterWindow : NSWindow {
     }
 
     override func accessibilityAttributeValue(name : String) -> AnyObject? {
-        switch name {
-        case AXLol    : return NSValue(rect: CGRectZero)
-        case AXPie    : return NSValue(range: NSRange(location: 10,length: 10))
-        case AXIsNyan : return false
-        case AXURLAttribute : return NSURL(string: "http://macruby.org/")
-        case AXDescriptionAttribute : return "Test Fixture"
-        default : return super.accessibilityAttributeValue(name)
+        if (name == AXLol) {
+            return NSValue(rect: CGRectZero)
         }
+        if (name == AXPie) {
+            return NSValue(range: NSRange(location: 10,length: 10))
+        }
+        if (name == AXIsNyan) {
+            return false
+        }
+        if (name == AXURLAttribute) {
+            return NSURL(string: "http://macruby.org/")
+        }
+        if (name == AXDescriptionAttribute) {
+            return "Test Fixture"
+        }
+        if (name == AXData) {
+            return NSData(contentsOfFile: "/bin/cat")
+        }
+        return super.accessibilityAttributeValue(name)
     }
 
 }

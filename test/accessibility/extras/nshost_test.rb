@@ -4,6 +4,11 @@ require 'accessibility/extras'
 class NSHostTest < MiniTest::Unit::TestCase
 #  try_to_parallelize!
 
+  def script name
+    path = File.expand_path File.join(File.dirname(__FILE__), name)
+    path + '.swift'
+  end
+
   def host
     NSHost.currentHost
   end
@@ -14,7 +19,7 @@ class NSHostTest < MiniTest::Unit::TestCase
     assert_kind_of String, names.first
     refute_empty names.first
 
-    assert_equal `macruby -e 'puts NSHost.currentHost.names.first'`.chomp, host.names.first
+    assert_equal `swift #{script 'first_name'}`.chomp, host.names.first
   end
 
   def test_addresses
@@ -29,7 +34,7 @@ class NSHostTest < MiniTest::Unit::TestCase
     assert_kind_of String, name
     refute_empty name
 
-    assert_equal `macruby -e 'puts NSHost.currentHost.localizedName'`.chomp, host.localizedName
+    assert_equal `swift #{script 'local_name'}`.chomp, host.localizedName
   end
 
 end

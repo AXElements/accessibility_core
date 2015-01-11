@@ -339,6 +339,8 @@ class CoreTest < MiniTest::Unit::TestCase
   # of an element using other methods in the class; thus it is
   # an integration test.
   def test_post
+    skip if on_sea_lion?
+
     events = [[0x56,true], [0x56,false], [0x54,true], [0x54,false]]
     string = '42'
 
