@@ -137,8 +137,7 @@ handle_error(VALUE self, AXError code)
 	rb_raise(
 		 rb_eRuntimeError,
 		 "accessibility_core majorly goofed [%d]",
-		 code
-		 );
+		 (int)code);
       }
   }
 
