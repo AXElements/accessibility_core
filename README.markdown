@@ -27,9 +27,10 @@ runtimes.
 
 ## TODO
 
-  * more descriptive error handling for the C extension
-  * handle string encodings that are not UTF8 (or a subset of UTF8)
-
+- [ ] run static analyzer on code and change warning level to -Weverything
+- [ ] remove all old MacRuby related code
+- [ ] more descriptive error handling
+- [ ] handle stirng encodings that are not UTF8
 
 ## Tests
 
