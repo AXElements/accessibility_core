@@ -1,3 +1,9 @@
+# 0.5.0 - Yosemite Compatability
+
+  * Fix various warnings that show up when compiling against Yosemite system ruby
+  * Remove MacRuby support
+  * Convert test app to Swift
+
 # 0.4.3 - Oops, -Werror
 
   * Fix a C warning generated in the Sea Lion compatability code path
