@@ -4,8 +4,6 @@
 #include "../extras/extras.h"
 
 
-#ifdef NOT_MACRUBY
-
 static VALUE rb_cHighlighter;
 static VALUE rb_cColor;
 
@@ -225,7 +223,6 @@ rb_color_equality(VALUE self, VALUE other)
   return Qfalse;
 }
 
-#endif
 
 
 void
@@ -233,8 +230,6 @@ Init_highlighter()
 {
   Init_bridge();
   Init_extras();
-
-#ifdef NOT_MACRUBY
 
   // force initialization or NSWindow won't work
   [NSApplication sharedApplication];
@@ -292,6 +287,4 @@ Init_highlighter()
   //rb_define_singleton_method(rb_cColor, "colorWithSRGBRed", rb_color_rgb,        2);
 
   rb_define_method(rb_cColor, "==", rb_color_equality, 1);
-
-#endif
 }

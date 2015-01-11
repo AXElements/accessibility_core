@@ -48,13 +48,4 @@ class CGRectTest < MiniTest::Unit::TestCase
     assert_match /Rect origin=#{p2.inspect} size=#{s2.inspect}>/, r2.inspect
   end
 
-  if on_macruby?
-    def test_to_ax
-      value = CGRectZero.to_ax
-      ptr   = Pointer.new CGRect.type
-      AXValueGetValue(value, 3, ptr)
-      assert_equal CGRectZero, ptr.value, 'rect makes a value'
-    end
-  end
-
 end

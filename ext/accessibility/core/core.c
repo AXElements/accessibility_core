@@ -3,8 +3,6 @@
 #import <Cocoa/Cocoa.h>
 
 
-#ifdef NOT_MACRUBY /* This entire extension is pointless when running on MacRuby */
-
 static ID ivar_attrs;
 static ID ivar_param_attrs;
 static ID ivar_actions;
@@ -761,7 +759,6 @@ rb_acore_equality(VALUE self, VALUE other)
       return Qtrue;
   return Qfalse;
 }
-#endif
 
 
 void
@@ -769,7 +766,6 @@ Init_core()
 {
   Init_bridge();
 
-#ifdef NOT_MACRUBY
 #if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_9
   if (!AXAPIEnabled())
     rb_raise(
@@ -871,5 +867,4 @@ Init_core()
   rb_define_method(rb_cElement, "element_at",                rb_acore_element_at,               1);
   rb_define_method(rb_cElement, "==",                        rb_acore_equality,                 1);
 
-#endif
 }

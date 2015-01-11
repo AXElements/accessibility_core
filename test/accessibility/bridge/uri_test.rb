@@ -3,14 +3,8 @@ require 'accessibility/bridge'
 
 class TestURIExtensions < MiniTest::Unit::TestCase
 
-  if on_macruby?
-    def parse url
-      NSURL.URLWithString url
-    end
-  else
-    def parse url
-      URI.parse url
-    end
+  def parse url
+    URI.parse url
   end
 
   def test_to_url_returns_self

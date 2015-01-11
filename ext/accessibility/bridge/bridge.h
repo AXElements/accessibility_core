@@ -1,6 +1,8 @@
+#ifndef ACCESSIBILITY_BRIDGE
+#define ACCESSIBILITY_BRIDGE
+
 #include "ruby.h"
 #import <Cocoa/Cocoa.h>
-
 
 // these functions are available on MacRuby as well as MRI
 void spin(double seconds);
@@ -8,8 +10,6 @@ void spin(double seconds);
 // initialize all the dynamic data (e.g. class pointers)
 void Init_bridge();
 
-
-#ifdef NOT_MACRUBY
 
 extern VALUE rb_cData;
 extern VALUE rb_cAttributedString;

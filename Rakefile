@@ -1,17 +1,3 @@
-if defined? MACRUBY_REVISION
-  def on_macruby?
-    true
-  end
-else
-  def on_macruby?
-    false
-  end
-end
-
-def on_mri?
-  !on_macruby?
-end
-
 task :default => :test
 
 # @todo restore the clang analyze task, don't forget to add rubyhdrdir

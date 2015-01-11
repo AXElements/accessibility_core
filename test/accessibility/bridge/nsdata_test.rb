@@ -7,14 +7,8 @@ class TestNSData < MiniTest::Unit::TestCase
     '/Applications/Calendar.app/Contents/Info.plist'
   end
 
-  if on_macruby?
-    def plist
-      NSData.dataWithContentsOfURL NSURL.URLWithString "file://#{path}"
-    end
-  else
-    def plist
-      NSData.dataWithContentsOfURL URI.parse "file://#{path}"
-    end
+  def plist
+    NSData.dataWithContentsOfURL URI.parse "file://#{path}"
   end
 
   def test_data

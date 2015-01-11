@@ -10,12 +10,6 @@ class ExtensionTask < Rake::TaskLib
   def needs_regeneration? source, bundle
     return true unless File.exists? bundle
     return true unless File.mtime(bundle) > File.mtime(source)
-    return true if on_macruby? && ext_platform(bundle) == :mri
-    return true if on_mri?     && ext_platform(bundle) == :macruby
-  end
-
-  def ext_platform bundle
-    `otool -L #{bundle}`.match(/MacRuby/) ? :macruby : :mri
   end
 
   def define name, dir, *deps
@@ -60,10 +54,4 @@ ExtensionTask.new 'bridge',      'ext/accessibility/bridge'
 ExtensionTask.new 'extras',      'ext/accessibility/extras',      'bridge'
 ExtensionTask.new 'core',        'ext/accessibility/core',        'bridge', 'extras'
 ExtensionTask.new 'highlighter', 'ext/accessibility/highlighter', 'bridge', 'extras'
-
-
-if on_macruby?
-  require 'rake/compiletask'
-  Rake::CompileTask.new
-end
 

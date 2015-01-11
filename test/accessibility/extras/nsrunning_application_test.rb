@@ -97,10 +97,8 @@ class NSRunningApplicationTest < MiniTest::Unit::TestCase
     refute app.ownsMenuBar
     assert terminals.first.ownsMenuBar
 
-    unless on_macruby?
-      refute app.ownsMenuBar?
-      assert terminals.first.ownsMenuBar?
-    end
+    refute app.ownsMenuBar?
+    assert terminals.first.ownsMenuBar?
   end
 
   def test_terminated?

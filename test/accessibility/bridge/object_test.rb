@@ -8,13 +8,6 @@ class ObjectTest < MiniTest::Unit::TestCase
     assert_same 10, 10.to_ruby
   end
 
-  if on_macruby?
-    def test_to_ax
-      assert_same Object, Object.to_ax
-      assert_same 10, 10.to_ax
-    end
-  end
-
   # running this on MacRuby gives expected behaviour,
   # then run on MRI to check that behaviour matches
   def test_NSContainsRect
@@ -70,16 +63,14 @@ class ObjectTest < MiniTest::Unit::TestCase
     assert Time.now - start > 0.2
   end
 
-  unless on_macruby?
-    def test_description
-      [
-        self,
-        rand(1000),
-        Time.now,
-        'a string'
-      ].each do |obj|
-        assert_equal obj.inspect, obj.description
-      end
+  def test_description
+    [
+      self,
+      rand(1000),
+      Time.now,
+      'a string'
+    ].each do |obj|
+      assert_equal obj.inspect, obj.description
     end
   end
 

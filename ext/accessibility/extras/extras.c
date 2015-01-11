@@ -7,11 +7,9 @@
 #import <IOKit/ps/IOPSKeys.h>
 #import <IOKit/pwr_mgt/IOPMLib.h>
 #import <IOKit/hidsystem/IOHIDShared.h>
+#import <Cocoa/Cocoa.h>
 
 static VALUE rb_mBattery;
-#ifndef NOT_MACRUBY
-static VALUE rb_cScreen;
-#endif
 
 static VALUE battery_not_installed;
 static VALUE battery_charged;
@@ -19,11 +17,6 @@ static VALUE battery_charging;
 static VALUE battery_discharging;
 
 static io_connect_t screen_connection = MACH_PORT_NULL;
-
-
-#ifdef NOT_MACRUBY
-
-#import <Cocoa/Cocoa.h>
 
 static VALUE rb_cRunningApp;
 static VALUE rb_cWorkspace;
@@ -38,9 +31,9 @@ static VALUE key_opts;
 
 static
 VALUE
-wrap_app(NSRunningApplication* app)
+wrap_app(NSRunningApplication* const app)
 {
-  return Data_Wrap_Struct(rb_cRunningApp, NULL, objc_finalizer, (void*)app);
+    return Data_Wrap_Struct(rb_cRunningApp, NULL, objc_finalizer, (void*)app);
 }
 
 static
@@ -52,9 +45,9 @@ unwrap_app(VALUE app)
   return running_app;
 }
 
-static VALUE wrap_array_apps(NSArray* ary)
+static VALUE wrap_array_apps(NSArray* const ary)
 {
-  CFArrayRef array = (CFArrayRef)ary;
+  CFArrayRef const array = (CFArrayRef const)ary;
   WRAP_ARRAY(wrap_app);
 }
 
@@ -82,10 +75,9 @@ static
 VALUE
 rb_running_app_current_app(VALUE self)
 {
-  NSRunningApplication* app = [NSRunningApplication currentApplication];
-  if (app)
-    return wrap_app(app);
-  return Qnil;
+    NSRunningApplication* const app = [NSRunningApplication currentApplication];
+    if (app) return wrap_app(app);
+    return Qnil;
 }
 
 static
@@ -482,7 +474,7 @@ static
 VALUE
 rb_screen_screens(VALUE self)
 {
-  return wrap_array_screens((CFArrayRef)[NSScreen screens]);
+    return wrap_array_screens((CFArrayRef)[NSScreen screens]);
 }
 
 static
@@ -492,16 +484,9 @@ rb_screen_frame(VALUE self)
   return wrap_rect([unwrap_screen(self) frame]);
 }
 
-#endif
-
-
 static
 VALUE
-#ifdef NOT_MACRUBY
 rb_screen_wake(VALUE self)
-#else
-rb_screen_wake(VALUE self, SEL sel)
-#endif
 {
   // don't bother if we are awake
   if (!CGDisplayIsAsleep(CGMainDisplayID()))
@@ -720,8 +705,6 @@ Init_extras()
   // force Ruby to be registered as an app with the system
   [NSApplication sharedApplication];
 
-#ifdef NOT_MACRUBY
-
   /*
    * Document-class: NSRunningApplication
    *
@@ -861,9 +844,7 @@ Init_extras()
   rb_define_method(rb_cBundle, "infoDictionary",             rb_bundle_info_dict,                0);
   rb_define_method(rb_cBundle, "objectForInfoDictionaryKey", rb_bundle_object_for_info_dict_key, 1);
 
-
   rb_define_method(rb_cObject, "load_plist", rb_load_plist, 1);
-#endif
 
 
   /*
@@ -877,15 +858,10 @@ Init_extras()
    */
   rb_cScreen = rb_define_class("NSScreen", rb_cObject);
 
-#ifdef NOT_MACRUBY
   rb_define_singleton_method(rb_cScreen, "mainScreen", rb_screen_main,    0);
   rb_define_singleton_method(rb_cScreen, "screens",    rb_screen_screens, 0);
   rb_define_singleton_method(rb_cScreen, "wakeup",     rb_screen_wake,    0); // our custom method
   rb_define_method(          rb_cScreen, "frame",      rb_screen_frame,   0);
-#else
-  rb_objc_define_method(*(VALUE*)rb_cScreen, "wakeup", rb_screen_wake, 0);
-#endif
-
 
   /*
    * Document-module: Battery
