@@ -17,7 +17,7 @@ Originally extracted from the AXElements project.
 
   s.authors     = ['Mark Rada']
   s.email       = 'markrada26@gmail.com'
-  s.homepage    = 'http://github.com/AXElements/accessibility_core'
+  s.homepage    = 'https://github.com/AXElements/accessibility_core'
   s.licenses    = ['BSD 3-clause']
   s.has_rdoc    = 'yard'
 
