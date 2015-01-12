@@ -32,6 +32,7 @@ runtimes.
 - [ ] more descriptive error handling
 - [ ] handle stirng encodings that are not UTF8
 - [ ] sign the gem
+- [ ] binary gem packaging (via rake-compiler)
 
 ## Tests
 
