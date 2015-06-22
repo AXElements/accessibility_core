@@ -32,6 +32,7 @@ runtimes.
 - [ ] more descriptive error handling
 - [ ] handle stirng encodings that are not UTF8
 - [ ] sign the gem
+- [ ] binary gem packaging (via rake-compiler)
 
 ## Tests
 
@@ -45,7 +46,7 @@ MacRuby and get the same results.
 
 ## Copyright
 
-Copyright (c) 2012-2013, Mark Rada
+Copyright (c) 2012-2015, Mark Rada
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
