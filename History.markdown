@@ -1,3 +1,7 @@
+# 0.6.1 - Fix Screen Shooting
+
+  * Fix building of the ScreenShooter extension
+
 # 0.6.0 - Screen Shooting
 
   * Add a ScreenShooter module for taking screenshots

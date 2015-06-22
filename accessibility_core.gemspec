@@ -25,7 +25,8 @@ Originally extracted from the AXElements project.
                    'ext/accessibility/core/extconf.rb',
                    'ext/accessibility/bridge/extconf.rb',
                    'ext/accessibility/extras/extconf.rb',
-                   'ext/accessibility/highlighter/extconf.rb'
+                   'ext/accessibility/highlighter/extconf.rb',
+                   'ext/accessibility/screen_shooter/extconf.rb'
                   ]
   s.files       = Dir.glob('lib/**/*.rb') +
                   Dir.glob('ext/**/*.{c,h,rb}') +

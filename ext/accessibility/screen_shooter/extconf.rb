@@ -15,7 +15,7 @@ unless RbConfig::CONFIG['CC'].match(/clang/)
   RbConfig::MAKEFILE_CONFIG['CXX'] = clang
 end
 
-create_makefile 'screen_shooter/screen_shooter'
+create_makefile 'accessibility/screen_shooter/screen_shooter'
 
 makefile = File.read 'Makefile'
 makefile.gsub! '$(DLLIB): $(OBJS) Makefile', '$(DLLIB): $(OBJS) Makefile ../bridge/bridge.o'
