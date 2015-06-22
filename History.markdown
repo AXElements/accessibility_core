@@ -1,3 +1,7 @@
+# 0.6.0 - Screen Shooting
+
+  * Add a ScreenShooter module for taking screenshots
+
 # 0.5.0 - Yosemite Compatability
 
   * Fix various warnings that show up when compiling against Yosemite system ruby

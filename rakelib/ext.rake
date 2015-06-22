@@ -50,8 +50,8 @@ class ExtensionTask < Rake::TaskLib
 end
 
 
-ExtensionTask.new 'bridge',      'ext/accessibility/bridge'
-ExtensionTask.new 'extras',      'ext/accessibility/extras',      'bridge'
-ExtensionTask.new 'core',        'ext/accessibility/core',        'bridge', 'extras'
-ExtensionTask.new 'highlighter', 'ext/accessibility/highlighter', 'bridge', 'extras'
-
+ExtensionTask.new 'bridge',         'ext/accessibility/bridge'
+ExtensionTask.new 'extras',         'ext/accessibility/extras',         'bridge'
+ExtensionTask.new 'core',           'ext/accessibility/core',           'bridge', 'extras'
+ExtensionTask.new 'highlighter',    'ext/accessibility/highlighter',    'bridge', 'extras'
+ExtensionTask.new 'screen_shooter', 'ext/accessibility/screen_shooter', 'bridge'

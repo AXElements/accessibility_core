@@ -9,7 +9,7 @@ end
 
 desc 'Startup an IRb console with everything loaded'
 task :console_complete => :compile do
-  sh 'irb -Ilib -raccessibility/bridge -raccessibility/core -raccessibility/extras -raccessibility/highlighter'
+  sh 'irb -Ilib -raccessibility/bridge -raccessibility/core -raccessibility/extras -raccessibility/highlighter -raccessibility/screen_shooter'
 end
 
 # Gem stuff
@@ -24,4 +24,3 @@ task :install => :gem do
   require 'rubygems/installer'
   Gem::Installer.new("pkg/#{SPEC.file_name}").install
 end
-
