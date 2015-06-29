@@ -195,27 +195,33 @@ AXValueRef unwrap_value_range(VALUE val) { UNWRAP_VALUE(CFRange, kAXValueCFRange
 VALUE
 wrap_value(AXValueRef value)
 {
-  switch (AXValueGetType(value))
-    {
-    case kAXValueIllegalType:
-      rb_raise(rb_eArgError, "cannot wrap %s objects", rb_class2name(CLASS_OF(value)));
-    case kAXValueCGPointType:
-      return wrap_value_point(value);
-    case kAXValueCGSizeType:
-      return wrap_value_size(value);
-    case kAXValueCGRectType:
-      return wrap_value_rect(value);
-    case kAXValueCFRangeType:
-      return wrap_value_range(value);
-    case kAXValueAXErrorType:
-      return wrap_value_error(value);
-    default:
-      // TODO better error message
-      rb_raise(
-	       rb_eRuntimeError,
-	       "Either accessibility_core is out of date or your system has had a serious error"
-	       );
-    }
+  AXValueType type = AXValueGetType(value);
+  
+  if (type == kAXValueIllegalType) {
+    rb_raise(rb_eArgError, "cannot wrap %s objects", rb_class2name(CLASS_OF(value)));
+  }
+  else if (type == kAXValueCGPointType) {
+    return wrap_value_point(value);
+  }
+  else if (type == kAXValueCGSizeType) {
+    return wrap_value_size(value);
+  }
+  else if (type == kAXValueCGRectType) {
+    return wrap_value_rect(value);
+  }
+  else if (type == kAXValueCFRangeType) {
+    return wrap_value_range(value);
+  }
+  else if (type == kAXValueAXErrorType) {
+    return wrap_value_error(value);
+  }
+  else {
+    // TODO better error message
+    rb_raise(
+       rb_eRuntimeError,
+       "Either accessibility_core is out of date or your system has had a serious error"
+       );
+  }
 
   return Qnil; // unreachable
 }

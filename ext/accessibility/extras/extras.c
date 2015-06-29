@@ -338,14 +338,15 @@ VALUE
 rb_workspace_launch_at_path(VALUE self, VALUE bundle_path)
 {
     NSURL* bundle_url = [NSURL fileURLWithPath:unwrap_nsstring(bundle_path)];
-    if (!bundle_url)
+    if (bundle_url == nil)
         return Qnil;
 
+    NSError *err = nil;
     return wrap_app([[NSWorkspace sharedWorkspace] 
             launchApplicationAtURL:bundle_url
                            options:NSWorkspaceLaunchAsync
-                     configuration:nil
-                             error:nil]);
+                     configuration:@{}
+                             error:&err]);
 }
 
 static
@@ -832,8 +833,6 @@ Init_extras()
     WORKSPACE_CONST("NSWorkspaceLaunchWithoutAddingToRecents",   NSWorkspaceLaunchWithoutAddingToRecents);
     WORKSPACE_CONST("NSWorkspaceLaunchWithoutActivation",        NSWorkspaceLaunchWithoutActivation);
     WORKSPACE_CONST("NSWorkspaceLaunchAsync",                    NSWorkspaceLaunchAsync);
-    WORKSPACE_CONST("NSWorkspaceLaunchAllowingClassicStartup",   NSWorkspaceLaunchAllowingClassicStartup);
-    WORKSPACE_CONST("NSWorkspaceLaunchPreferringClassic",        NSWorkspaceLaunchPreferringClassic);
     WORKSPACE_CONST("NSWorkspaceLaunchNewInstance",              NSWorkspaceLaunchNewInstance);
     WORKSPACE_CONST("NSWorkspaceLaunchAndHide",                  NSWorkspaceLaunchAndHide);
     WORKSPACE_CONST("NSWorkspaceLaunchAndHideOthers",            NSWorkspaceLaunchAndHideOthers);
