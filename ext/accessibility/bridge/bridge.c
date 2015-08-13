@@ -2,6 +2,15 @@
 #include "ruby/encoding.h"
 #include "assert.h"
 
+//For versions OS X < 10.11 use old constants
+#ifndef MAC_OS_X_VERSION_10_11
+#define	kAXValueTypeIllegal kAXValueIllegalType
+#define kAXValueTypeCGPoint kAXValueCGPointType
+#define kAXValueTypeCGSize kAXValueCGSizeType
+#define kAXValueTypeCGRect kAXValueCGRectType
+#define kAXValueTypeCFRange kAXValueCFRangeType
+#define kAXValueTypeAXError kAXValueAXErrorType
+#endif
 
 void
 spin(const double seconds)
@@ -155,37 +164,36 @@ convert_rb_range(const VALUE range)
     assert(result);                                             \
     return wrapper(st);
 
-VALUE wrap_value_point(AXValueRef const value) { WRAP_VALUE(CGPoint,  kAXValueCGPointType, wrap_point) }
-VALUE wrap_value_size(AXValueRef  const value) { WRAP_VALUE(CGSize,   kAXValueCGSizeType,  wrap_size)  }
-VALUE wrap_value_rect(AXValueRef  const value) { WRAP_VALUE(CGRect,   kAXValueCGRectType,  wrap_rect)  }
-VALUE wrap_value_range(AXValueRef const value) { WRAP_VALUE(CFRange,  kAXValueCFRangeType, convert_cf_range) }
-VALUE wrap_value_error(AXValueRef const value) { WRAP_VALUE(AXError,  kAXValueAXErrorType, INT2NUM)    }
+VALUE wrap_value_point(AXValueRef const value) { WRAP_VALUE(CGPoint,  kAXValueTypeCGPoint, wrap_point) }
+VALUE wrap_value_size(AXValueRef  const value) { WRAP_VALUE(CGSize,   kAXValueTypeCGSize,  wrap_size)  }
+VALUE wrap_value_rect(AXValueRef  const value) { WRAP_VALUE(CGRect,   kAXValueTypeCGRect,  wrap_rect)  }
+VALUE wrap_value_range(AXValueRef const value) { WRAP_VALUE(CFRange,  kAXValueTypeCFRange, convert_cf_range) }
+VALUE wrap_value_error(AXValueRef const value) { WRAP_VALUE(AXError,  kAXValueTypeAXError, INT2NUM)    }
 
 #define UNWRAP_VALUE(type, value, unwrapper)     \
     const type st = unwrapper(val);              \
     return AXValueCreate(value, &st);
 
-AXValueRef unwrap_value_point(VALUE val) { UNWRAP_VALUE(CGPoint, kAXValueCGPointType, unwrap_point) }
-AXValueRef unwrap_value_size(VALUE val)  { UNWRAP_VALUE(CGSize,  kAXValueCGSizeType,  unwrap_size)  }
-AXValueRef unwrap_value_rect(VALUE val)  { UNWRAP_VALUE(CGRect,  kAXValueCGRectType,  unwrap_rect)  }
-AXValueRef unwrap_value_range(VALUE val) { UNWRAP_VALUE(CFRange, kAXValueCFRangeType, convert_rb_range) }
-
+AXValueRef unwrap_value_point(VALUE val) { UNWRAP_VALUE(CGPoint, kAXValueTypeCGPoint, unwrap_point) }
+AXValueRef unwrap_value_size(VALUE val)  { UNWRAP_VALUE(CGSize,  kAXValueTypeCGSize,  unwrap_size)  }
+AXValueRef unwrap_value_rect(VALUE val)  { UNWRAP_VALUE(CGRect,  kAXValueTypeCGRect,  unwrap_rect)  }
+AXValueRef unwrap_value_range(VALUE val) { UNWRAP_VALUE(CFRange, kAXValueTypeCFRange, convert_rb_range) }
 
 VALUE
 wrap_value(AXValueRef const value)
 {
     switch (AXValueGetType(value)) {
-    case kAXValueIllegalType:
+    case kAXValueTypeIllegal:
         rb_raise(rb_eArgError, "cannot wrap %s objects", rb_class2name(CLASS_OF(value)));
-    case kAXValueCGPointType:
+    case kAXValueTypeCGPoint:
         return wrap_value_point(value);
-    case kAXValueCGSizeType:
+    case kAXValueTypeCGSize:
         return wrap_value_size(value);
-    case kAXValueCGRectType:
+    case kAXValueTypeCGRect:
         return wrap_value_rect(value);
-    case kAXValueCFRangeType:
+    case kAXValueTypeCFRange:
         return wrap_value_range(value);
-    case kAXValueAXErrorType:
+    case kAXValueTypeAXError:
         return wrap_value_error(value);
     default:
         // TODO better error message
