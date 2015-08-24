@@ -17,7 +17,7 @@ let AXData : NSString                 = "AXData"
 
 class TesterWindow : NSWindow {
 
-    let extra_attrs : NSArray = [
+    let extra_attrs : [NSString] = [
         AXLol,
         AXPie,
         AXIsNyan,

@@ -18,7 +18,7 @@ class AppDelegate : NSObject, NSApplicationDelegate {
     @IBOutlet var menu             : NSMenu?
     @IBOutlet var array_controller : TesterArrayController?
 
-    func applicationDidFinishLaunching(_ : AnyObject) {
+    func applicationDidFinishLaunching(_ : NSNotification) {
         populate_table()
         set_identifiers()
         populate_menu()
@@ -28,9 +28,9 @@ class AppDelegate : NSObject, NSApplicationDelegate {
         let attrs : NSArray = self.window!.accessibilityAttributeNames()
         attrs.enumerateObjectsUsingBlock { (name, _, _) in
             let value : NSObject? =
-                self.window!.accessibilityAttributeValue(name as NSString) as? NSObject
+                self.window!.accessibilityAttributeValue(name as! String) as? NSObject
             let row : TableRow =
-                TableRow(init_name: name as NSString, init_value: value?.description)
+                TableRow(init_name: name as! NSString, init_value: value?.description)
 
             self.array_controller!.addObject(row)
         }
@@ -52,7 +52,7 @@ class AppDelegate : NSObject, NSApplicationDelegate {
 
     @IBAction func post_notification(_ : AnyObject) {
         NSAccessibilityPostNotification(yes_button!.cell(), "Cheezburger")
-        (self.window!.contentView as NSView).addSubview(bye_button!)
+        (self.window!.contentView as! NSView).addSubview(bye_button!)
     }
 
     @IBAction func remove_bye_button(_ : AnyObject) {

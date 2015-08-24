@@ -11,11 +11,15 @@ import Foundation
 @objc class TableRow : NSObject {
 
     var name  : NSString
-    var value : NSString?
+    var val : NSString?
+
+    override func value() -> AnyObject? {
+        return val
+    }
 
     init(init_name : NSString, init_value : NSString?) {
         name  = init_name
-        value = init_value
+        val   = init_value
     }
     
 }

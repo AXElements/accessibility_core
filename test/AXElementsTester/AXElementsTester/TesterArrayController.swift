@@ -10,8 +10,12 @@ import Cocoa
 
 class TesterArrayController : NSArrayController {
 
-    func selectsInsertedObjects() -> Bool {
-        return false
+    override var selectsInsertedObjects: Bool {
+        get {
+            return true
+        }
+        set(derp) {
+            // derp
+        }
     }
-
 }
