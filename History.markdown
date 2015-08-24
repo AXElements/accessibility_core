@@ -1,3 +1,8 @@
+# 0.6.2 - Fix building on The Captain
+
+  * Update AXValue constants for OS X 10.11 changes (@fjwagner)
+  * Update test app for most recent Swift changes
+
 # 0.6.1 - Fix Screen Shooting
 
   * Fix building of the ScreenShooter extension
