@@ -67,7 +67,7 @@ handle_error(VALUE self, const AXError code)
 	if (app)
             rb_raise(rb_eRuntimeError,
                      "accessibility messaging failure. "
-                     "Perhaps the application is busy on unresponsive?");
+                     "Perhaps the application is busy or unresponsive?");
 	else
             rb_raise(rb_eRuntimeError,
                      "application for pid=%d is no longer running. "
