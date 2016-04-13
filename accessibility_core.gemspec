@@ -22,6 +22,7 @@ Originally extracted from the AXElements project.
   s.has_rdoc    = 'yard'
 
   s.extensions  = [
+                   'ext/accessibility/mkmf_helper.rb',
                    'ext/accessibility/core/extconf.rb',
                    'ext/accessibility/bridge/extconf.rb',
                    'ext/accessibility/extras/extconf.rb',
