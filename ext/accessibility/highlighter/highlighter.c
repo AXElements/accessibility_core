@@ -66,7 +66,7 @@ rb_highlighter_new(int argc, VALUE* argv, VALUE self)
   const CGRect bounds = flip(unwrap_rect(coerce_to_rect(argv[0])));
   NSWindow* const window =
       [[NSWindow alloc] initWithContentRect:NSRectFromCGRect(bounds)
-                                  styleMask:NSBorderlessWindowMask
+                                  styleMask:NSWindowStyleMaskBorderless
 		                    backing:NSBackingStoreBuffered
                                       defer:true];
 
