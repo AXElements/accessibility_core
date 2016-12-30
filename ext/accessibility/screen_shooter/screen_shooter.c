@@ -10,9 +10,9 @@ rb_ss_take_shot(__unused const VALUE self, const VALUE rbrect, const VALUE path)
 {
     NSString* const ns_path =
 	[[NSString alloc] initWithBytesNoCopy:RSTRING_PTR(path)
-	                               length:RSTRING_LEN(path)
-	                             encoding:NSUTF8StringEncoding
-	                         freeWhenDone:NO];
+                                       length:RSTRING_LEN(path)
+                                     encoding:NSUTF8StringEncoding
+                                 freeWhenDone:NO];
 
     CGRect rect = unwrap_rect(rbrect);
     if (rect.size.width < 0 || rect.size.height < 0)
@@ -28,7 +28,7 @@ rb_ss_take_shot(__unused const VALUE self, const VALUE rbrect, const VALUE path)
 	[[NSBitmapImageRep alloc] initWithCGImage:image];
 
     NSData* const data = [rep representationUsingType:NSPNGFileType
-			                   properties:nil];
+                                           properties:@{}];
 
     const VALUE result =
 	[data writeToFile:ns_path atomically:NO] ? Qtrue : Qfalse;
