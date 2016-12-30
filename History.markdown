@@ -1,6 +1,8 @@
 # 0.7.0 - Fix building on Sierra
 
   * Update deprecated constant uses (@asterix23)
+  * Update some documentation for Ruby 2.4
+  * Update test environment for Xcode 8.2 on macOS Sierra
 
 # 0.6.2 - Fix building on The Captain
 
