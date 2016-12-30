@@ -1,3 +1,7 @@
+# 0.7.0 - Fix building on Sierra
+
+  * Update deprecated constant uses (@asterix23)
+
 # 0.6.2 - Fix building on The Captain
 
   * Update AXValue constants for OS X 10.11 changes (@fjwagner)
