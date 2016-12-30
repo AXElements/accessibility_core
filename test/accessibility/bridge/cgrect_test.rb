@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class CGRectTest < MiniTest::Unit::TestCase
+class CGRectTest < Minitest::Test
 
   def test_attributes
     r = CGRect.new
@@ -38,14 +38,14 @@ class CGRectTest < MiniTest::Unit::TestCase
   end
 
   def test_inspect
-    p1 = CGPoint.new *rand_nums(2)
-    p2 = CGPoint.new *rand_nums(2)
-    s1 = CGSize.new *rand_nums(2)
-    s2 = CGSize.new *rand_nums(2)
+    p1 = CGPoint.new(*rand_nums(2))
+    p2 = CGPoint.new(*rand_nums(2))
+    s1 = CGSize.new(*rand_nums(2))
+    s2 = CGSize.new(*rand_nums(2))
     r1 = CGRect.new p1, s1
     r2 = CGRect.new p2, s2
-    assert_match /Rect origin=#{p1.inspect} size=#{s1.inspect}>/, r1.inspect
-    assert_match /Rect origin=#{p2.inspect} size=#{s2.inspect}>/, r2.inspect
+    assert_match(/Rect origin=#{p1.inspect} size=#{s1.inspect}>/, r1.inspect)
+    assert_match(/Rect origin=#{p2.inspect} size=#{s2.inspect}>/, r2.inspect)
   end
 
 end

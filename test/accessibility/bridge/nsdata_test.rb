@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class TestNSData < MiniTest::Unit::TestCase
+class TestNSData < Minitest::Test
 
   def path
     '/Applications/Calendar.app/Contents/Info.plist'

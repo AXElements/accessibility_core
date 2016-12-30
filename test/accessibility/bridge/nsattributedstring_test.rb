@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class TestNSAttributedString < MiniTest::Unit::TestCase
+class TestNSAttributedString < Minitest::Test
 
   def test_string
     string  = 'hi'

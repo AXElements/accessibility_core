@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class NSHostTest < MiniTest::Unit::TestCase
+class NSHostTest < Minitest::Test
 #  try_to_parallelize!
 
   def script name

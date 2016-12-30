@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'lib/accessibility/highlighter'
 
-class NSColorTest < MiniTest::Unit::TestCase
+class NSColorTest < Minitest::Test
 
   def test_equality
     assert_equal NSColor.redColor, NSColor.redColor

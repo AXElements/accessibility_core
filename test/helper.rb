@@ -14,7 +14,7 @@ else
 end
 
 
-class MiniTest::Unit::TestCase
+class Minitest::Test
 
   if respond_to? :parallelize_me!
     class << self

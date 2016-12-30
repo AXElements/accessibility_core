@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class BatteryTest < MiniTest::Unit::TestCase
+class BatteryTest < Minitest::Test
 
   def states
     [:not_installed, :charged, :charging, :discharging]
@@ -18,10 +18,10 @@ class BatteryTest < MiniTest::Unit::TestCase
   end
 
   def test_time_to_discharged_or_charged
-    assert_kind_of Fixnum, Battery.time_to_discharged
-    assert_kind_of Fixnum, Battery.time_to_empty
-    assert_kind_of Fixnum, Battery.time_to_charged
-    assert_kind_of Fixnum, Battery.time_to_full_charge
+    assert_kind_of Integer, Battery.time_to_discharged
+    assert_kind_of Integer, Battery.time_to_empty
+    assert_kind_of Integer, Battery.time_to_charged
+    assert_kind_of Integer, Battery.time_to_full_charge
 
     assert_equal Battery.time_to_discharged, Battery.time_to_empty
     assert_equal Battery.time_to_charged, Battery.time_to_full_charge

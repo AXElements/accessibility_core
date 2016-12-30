@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class StringTest < MiniTest::Unit::TestCase
+class StringTest < Minitest::Test
 
   def test_to_url
     site = 'http://marketcircle.com/'

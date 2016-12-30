@@ -5,7 +5,7 @@ require 'test/accessibility/core/fixture'
 # integration tests. In general I try to make the tests as isolated
 # as possible, but some methods are impossible to meaningfully test
 # without involving other parts of the same class.
-class CoreTest < MiniTest::Unit::TestCase
+class CoreTest < Minitest::Test
 
 
   # @!group Helpers
@@ -68,7 +68,7 @@ class CoreTest < MiniTest::Unit::TestCase
 
   def static_text
     @@static_text ||= window_child('AXStaticText') { |x|
-      x.value.match /My Little Pony/
+      x.value.match(/My Little Pony/)
     }
   end
 

@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class CGSizeTest < MiniTest::Unit::TestCase
+class CGSizeTest < Minitest::Test
 
   def test_attributes
     s = CGSize.new
@@ -39,8 +39,8 @@ class CGSizeTest < MiniTest::Unit::TestCase
   end
 
   def test_inspect
-    assert_match /Size width=1.0 height=2.0>/, CGSize.new(1, 2).inspect
-    assert_match /Size width=3.0 height=5.0>/, CGSize.new(3, 5).inspect
+    assert_match(/Size width=1.0 height=2.0>/, CGSize.new(1, 2).inspect)
+    assert_match(/Size width=3.0 height=5.0>/, CGSize.new(3, 5).inspect)
   end
 
 end

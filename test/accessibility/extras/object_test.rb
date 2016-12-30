@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class ObjectTest < MiniTest::Unit::TestCase
+class ObjectTest < Minitest::Test
 
   def test_load_plist
     input = File.read '/System/Library/Accessibility/AccessibilityDefinitions.plist'

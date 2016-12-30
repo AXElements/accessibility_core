@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class NSBundleTest < MiniTest::Unit::TestCase
+class NSBundleTest < Minitest::Test
 
   def cocoa
     'file:///System/Library/Frameworks/Cocoa.framework'.to_url

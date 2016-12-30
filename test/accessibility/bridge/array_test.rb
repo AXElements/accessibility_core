@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class ArrayTest < MiniTest::Unit::TestCase
+class ArrayTest < Minitest::Test
 
   def test_to_point
     x, y = rand_nums 2

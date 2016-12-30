@@ -20,7 +20,7 @@ require 'accessibility/core'
 require 'accessibility/extras'
 
 
-class MiniTest::Unit::TestCase
+class Minitest::Test
 
   PID = NSWorkspace.sharedWorkspace.runningApplications.find do |app|
           app.bundleIdentifier == APP_BUNDLE_IDENTIFIER

@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class CGRectTest < MiniTest::Unit::TestCase
+class CGRectTest < Minitest::Test
 
   def test_flip!
     size = NSScreen.mainScreen.frame.size

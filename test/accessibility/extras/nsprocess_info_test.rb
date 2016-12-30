@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class NSProcessInfoTest < MiniTest::Unit::TestCase
+class NSProcessInfoTest < Minitest::Test
 
   def pinfo
     NSProcessInfo.processInfo
@@ -10,8 +10,8 @@ class NSProcessInfoTest < MiniTest::Unit::TestCase
   def test_os_version_string
     str = pinfo.operatingSystemVersionString
     assert_kind_of String, str
-    assert_match /Version 10/, str
-    assert_match /\(Build /, str
+    assert_match(/Version 10/, str)
+    assert_match(/\(Build /, str)
   end
 
   def test_system_uptime

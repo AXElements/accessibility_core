@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class ObjectTest < MiniTest::Unit::TestCase
+class ObjectTest < Minitest::Test
 
   def test_to_ruby
     assert_same Object, Object.to_ruby
@@ -52,7 +52,7 @@ class ObjectTest < MiniTest::Unit::TestCase
 
   def test_spin
     assert_respond_to Object.new, :spin
-    assert_equal -1, Object.method(:spin).arity
+    assert_equal(-1, Object.method(:spin).arity)
 
     start = Time.now
     Object.new.spin

@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class NSWorkspaceTest < MiniTest::Unit::TestCase
+class NSWorkspaceTest < Minitest::Test
 
   def shared
     NSWorkspace.sharedWorkspace

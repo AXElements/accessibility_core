@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class RangeTest < MiniTest::Unit::TestCase
+class RangeTest < Minitest::Test
 
   def test_relative_to
     assert_equal 0..10, ( 0 ..  10).relative_to(11)

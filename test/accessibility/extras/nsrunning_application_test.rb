@@ -2,7 +2,7 @@ require 'test/helper'
 require 'accessibility/extras'
 
 
-class NSRunningApplicationTest < MiniTest::Unit::TestCase
+class NSRunningApplicationTest < Minitest::Test
 
   def app
     @app ||= NSRunningApplication.runningApplicationWithProcessIdentifier(Process.pid)
@@ -43,16 +43,16 @@ class NSRunningApplicationTest < MiniTest::Unit::TestCase
 
   def test_hide_unhide
     terminal = terminals.first
-    spin 0.2
+    spin 0.3
     terminal.hide
-    spin 0.2
+    spin 0.3
     assert terminal.hidden?
     terminal.unhide
-    spin 0.2
+    spin 0.3
     refute terminal.hidden?
   ensure
     terminals.first.activateWithOptions NSRunningApplication::NSApplicationActivateIgnoringOtherApps
-    spin 0.2
+    spin 0.3
   end
 
   def test_localized_name

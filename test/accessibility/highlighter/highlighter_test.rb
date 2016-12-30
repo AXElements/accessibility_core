@@ -2,7 +2,7 @@ require 'test/helper'
 require 'accessibility/highlighter'
 require 'accessibility/extras'
 
-class HighlighterTest < MiniTest::Unit::TestCase
+class HighlighterTest < Minitest::Test
   try_to_parallelize!
 
   def teardown

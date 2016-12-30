@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/extras'
 
-class NSScreenTest < MiniTest::Unit::TestCase
+class NSScreenTest < Minitest::Test
 
   def test_main_screen
     assert_respond_to NSScreen, :mainScreen

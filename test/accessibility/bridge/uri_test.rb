@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class TestURIExtensions < MiniTest::Unit::TestCase
+class TestURIExtensions < Minitest::Test
 
   def parse url
     URI.parse url

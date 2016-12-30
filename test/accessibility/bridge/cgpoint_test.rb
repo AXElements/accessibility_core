@@ -1,7 +1,7 @@
 require 'test/helper'
 require 'accessibility/bridge'
 
-class CGPointTest < MiniTest::Unit::TestCase
+class CGPointTest < Minitest::Test
 
   def test_attributes
     p = CGPoint.new
@@ -39,8 +39,8 @@ class CGPointTest < MiniTest::Unit::TestCase
   end
 
   def test_inspect
-    assert_match /Point x=1.0 y=2.0>/, CGPoint.new(1, 2).inspect
-    assert_match /Point x=3.0 y=5.0>/, CGPoint.new(3, 5).inspect
+    assert_match(/Point x=1.0 y=2.0>/, CGPoint.new(1, 2).inspect)
+    assert_match(/Point x=3.0 y=5.0>/, CGPoint.new(3, 5).inspect)
   end
 
 end
