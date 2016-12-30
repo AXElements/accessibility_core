@@ -1,3 +1,3 @@
 import Foundation;
-println((NSHost.currentHost().localizedName!))
+print((Host.current().localizedName!))
 

@@ -1,3 +1,3 @@
 import Foundation;
-println("\(NSHost.currentHost().names.first!)")
+print("\(Host.current().names.first!)")
 

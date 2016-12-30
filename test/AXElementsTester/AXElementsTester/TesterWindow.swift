@@ -26,29 +26,29 @@ class TesterWindow : NSWindow {
         AXData
     ]
 
-    override func accessibilityAttributeNames() -> [AnyObject] {
+    override func accessibilityAttributeNames() -> [Any] {
         return (super.accessibilityAttributeNames() as NSArray)
-                .arrayByAddingObjectsFromArray(extra_attrs)
+                .addingObjects(from: extra_attrs)
     }
 
-    override func accessibilityAttributeValue(name : String) -> AnyObject? {
-        if (name == AXLol) {
-            return NSValue(rect: CGRectZero)
+    override func accessibilityAttributeValue(_ name : String) -> Any? {
+        if (name == AXLol as String) {
+            return NSValue(rect: CGRect.zero)
         }
-        if (name == AXPie) {
+        if (name == AXPie as String) {
             return NSValue(range: NSRange(location: 10,length: 10))
         }
-        if (name == AXIsNyan) {
+        if (name == AXIsNyan as String) {
             return false
         }
-        if (name == AXURLAttribute) {
-            return NSURL(string: "http://macruby.org/")
+        if (name == AXURLAttribute as String) {
+            return URL(string: "http://macruby.org/")
         }
-        if (name == AXDescriptionAttribute) {
+        if (name == AXDescriptionAttribute as String) {
             return "Test Fixture"
         }
-        if (name == AXData) {
-            return NSData(contentsOfFile: "/bin/cat")
+        if (name == AXData as String) {
+            return (try? Data(contentsOf: URL(fileURLWithPath: "/bin/cat")))
         }
         return super.accessibilityAttributeValue(name)
     }
