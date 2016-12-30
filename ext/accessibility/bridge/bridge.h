@@ -1,5 +1,4 @@
-#ifndef ACCESSIBILITY_BRIDGE
-#define ACCESSIBILITY_BRIDGE
+#pragma once
 
 #include "ruby.h"
 #import <Cocoa/Cocoa.h>
@@ -169,5 +168,3 @@ VALUE wrap_array_data(CFArrayRef const array);
 VALUE wrap_array_nsdata(NSArray* const array);
 CFDataRef unwrap_data(const VALUE data);
 NSData* unwrap_nsdata(const VALUE data);
-
-#endif
