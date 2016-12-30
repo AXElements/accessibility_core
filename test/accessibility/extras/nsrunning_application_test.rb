@@ -76,7 +76,7 @@ class NSRunningApplicationTest < MiniTest::Unit::TestCase
   end
 
   def test_executable_arch
-    assert_kind_of Fixnum, app.executableArchitecture
+    assert_kind_of Integer, app.executableArchitecture
   end
 
   def test_executable_url

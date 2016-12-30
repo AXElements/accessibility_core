@@ -206,7 +206,7 @@ class Range
   #  (1..10).relative_to(10)   # => (1..10)
   #  (-3..-1).relative_to(10)  # => (7..9)
   #
-  # @param max [Fixnum]
+  # @param max [Integer]
   # @return [Range]
   def relative_to max
     beg = adjust_index self.begin, max
