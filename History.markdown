@@ -1,3 +1,7 @@
+# 0.7.1 - Fix building on Rubygems 2.6
+
+  * Fix compiling extensions with Rubygems 2.6+
+
 # 0.7.0 - Fix building on Sierra
 
   * Update deprecated constant uses (@asterix23)

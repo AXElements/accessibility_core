@@ -6,6 +6,6 @@ module Accessibility
   # Namespace for `accessibility_core` specific classes
   module Core
     # return [String]
-    VERSION = '0.7.0'
+    VERSION = '0.7.1'
   end
 end
